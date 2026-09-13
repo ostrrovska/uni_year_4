@@ -1,0 +1,9 @@
+{
+  "name": "node-service",
+  "version": "1.0.0",
+  "description": "Basic in-memory HTTP CRUD service built with Node.js",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  }
+}

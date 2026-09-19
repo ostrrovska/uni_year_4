@@ -1,0 +1,649 @@
+<title>Fifteen Puzzle</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Karla:wght@400;500;700&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+  :root {
+    --page-bg: #ccd3d9;
+    --page-ink: #232a30;
+    --page-ink-dim: #5b6570;
+
+    --frame-bg: #ab3434;
+    --frame-edge: #7c2323;
+    --frame-ink: #f6e9d8;
+
+    --tray-bg: #d9d0ba;
+    --tray-well: #c7bda3;
+
+    --tile-bg: #fbf8f0;
+    --tile-border: #d8cfb8;
+    --tile-ink: #2b2320;
+    --tile-accent: #ab3434;
+
+    --display-bg: #241a12;
+    --display-edge: #14100b;
+    --display-ink: #f0a942;
+    --display-ink-dim: #8a5f30;
+
+    --led-on: #4caf6b;
+    --led-off: #6b6255;
+
+    --btn-bg: #d9d0ba;
+    --btn-ink: #2b2320;
+    --btn-border: #b6ab8d;
+
+    --tile: 78px;
+    --gap: 8px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --page-bg: #14171b;
+      --page-ink: #e4e8eb;
+      --page-ink-dim: #8b939b;
+
+      --frame-bg: #8f2e2a;
+      --frame-edge: #5c1c1a;
+      --frame-ink: #f3e3cf;
+
+      --tray-bg: #2a2620;
+      --tray-well: #1e1b16;
+
+      --tile-bg: #3a352d;
+      --tile-border: #4d4638;
+      --tile-ink: #f2ece0;
+      --tile-accent: #e2857a;
+
+      --display-bg: #120c08;
+      --display-edge: #050403;
+      --display-ink: #ffb85c;
+      --display-ink-dim: #7a5227;
+
+      --led-on: #5fd485;
+      --led-off: #3a362f;
+
+      --btn-bg: #332e26;
+      --btn-ink: #f2ece0;
+      --btn-border: #4d4638;
+    }
+  }
+  :root[data-theme="dark"] {
+    --page-bg: #14171b;
+    --page-ink: #e4e8eb;
+    --page-ink-dim: #8b939b;
+
+    --frame-bg: #8f2e2a;
+    --frame-edge: #5c1c1a;
+    --frame-ink: #f3e3cf;
+
+    --tray-bg: #2a2620;
+    --tray-well: #1e1b16;
+
+    --tile-bg: #3a352d;
+    --tile-border: #4d4638;
+    --tile-ink: #f2ece0;
+    --tile-accent: #e2857a;
+
+    --display-bg: #120c08;
+    --display-edge: #050403;
+    --display-ink: #ffb85c;
+    --display-ink-dim: #7a5227;
+
+    --led-on: #5fd485;
+    --led-off: #3a362f;
+
+    --btn-bg: #332e26;
+    --btn-ink: #f2ece0;
+    --btn-border: #4d4638;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--page-bg);
+    color: var(--page-ink);
+    font-family: "Karla", system-ui, sans-serif;
+    padding: 28px 16px 52px;
+  }
+  .page {
+    max-width: 620px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+  }
+  header h1 {
+    margin: 0 0 6px;
+    font-family: "Baloo 2", "Karla", sans-serif;
+    font-size: clamp(1.6rem, 5vw, 2.1rem);
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+  }
+  header p {
+    margin: 0;
+    color: var(--page-ink-dim);
+    font-size: 0.95rem;
+    max-width: 58ch;
+    line-height: 1.5;
+  }
+  header code {
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-size: 0.85em;
+  }
+
+  .console {
+    background: var(--frame-bg);
+    border-radius: 22px;
+    padding: 18px 18px 20px;
+    box-shadow: inset 0 -6px 0 var(--frame-edge), 0 10px 22px -12px rgba(0,0,0,0.45);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .console-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .wordmark {
+    font-family: "Baloo 2", sans-serif;
+    font-weight: 800;
+    font-size: 1.15rem;
+    letter-spacing: 0.06em;
+    color: var(--frame-ink);
+    text-transform: uppercase;
+  }
+  .status {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: var(--frame-ink);
+  }
+  .led {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--led-off);
+    box-shadow: inset 0 1px 1px rgba(0,0,0,0.4);
+  }
+  .led.on-good { background: var(--led-on); box-shadow: 0 0 6px 1px var(--led-on); }
+  .led.on-bad { background: #d1493f; box-shadow: 0 0 6px 1px #d1493f; }
+
+  .tray {
+    background: var(--tray-bg);
+    border-radius: 12px;
+    padding: 10px;
+    box-shadow: inset 0 2px 6px rgba(0,0,0,0.25);
+    display: flex;
+    justify-content: center;
+  }
+  .board {
+    position: relative;
+    width: calc(4 * var(--tile) + 3 * var(--gap));
+    height: calc(4 * var(--tile) + 3 * var(--gap));
+  }
+  .slots {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    grid-template-columns: repeat(4, var(--tile));
+    grid-template-rows: repeat(4, var(--tile));
+    gap: var(--gap);
+  }
+  .slot {
+    background: var(--tray-well);
+    border-radius: 6px;
+  }
+  .tile {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: var(--tile);
+    height: var(--tile);
+    border-radius: 6px;
+    background: var(--tile-bg);
+    border: 1px solid var(--tile-border);
+    box-shadow: 0 3px 0 var(--tile-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-variant-numeric: tabular-nums;
+    font-weight: 700;
+    font-size: 1.5rem;
+    color: var(--tile-ink);
+    cursor: pointer;
+    transition: transform 160ms ease, box-shadow 80ms ease, top 80ms ease;
+    user-select: none;
+  }
+  .tile.movable { color: var(--tile-accent); border-color: var(--tile-accent); }
+  .tile.movable:active { box-shadow: 0 1px 0 var(--tile-border); top: 2px; }
+
+  .console-controls {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  button {
+    font-family: "Karla", sans-serif;
+    font-weight: 700;
+    font-size: 0.92rem;
+    border: 1px solid var(--btn-border);
+    background: var(--btn-bg);
+    color: var(--btn-ink);
+    padding: 11px 20px;
+    border-radius: 8px;
+    box-shadow: 0 3px 0 var(--btn-border);
+    cursor: pointer;
+  }
+  button:active:not(:disabled) { box-shadow: 0 1px 0 var(--btn-border); transform: translateY(2px); }
+  button.primary {
+    background: var(--frame-edge);
+    color: var(--frame-ink);
+    border-color: var(--frame-edge);
+    box-shadow: 0 3px 0 #4a1414;
+  }
+  button.primary:active:not(:disabled) { box-shadow: 0 1px 0 #4a1414; }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+  button:focus-visible { outline: 2px solid var(--frame-ink); outline-offset: 2px; }
+
+  .readout {
+    background: var(--display-bg);
+    border-radius: 10px;
+    padding: 14px 16px;
+    box-shadow: inset 0 0 0 3px var(--display-edge);
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px 20px;
+  }
+  .readout .cell dt {
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--display-ink-dim);
+    margin-bottom: 3px;
+  }
+  .readout .cell dd {
+    margin: 0;
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-variant-numeric: tabular-nums;
+    font-weight: 700;
+    font-size: 1.2rem;
+    color: var(--display-ink);
+  }
+
+  footer {
+    color: var(--page-ink-dim);
+    font-size: 0.83rem;
+    line-height: 1.6;
+    border-top: 1px solid rgba(0,0,0,0.12);
+    padding-top: 14px;
+  }
+  footer code {
+    font-family: "JetBrains Mono", ui-monospace, monospace;
+    font-size: 0.85em;
+  }
+
+  @media (max-width: 420px) {
+    :root { --tile: 68px; --gap: 6px; }
+  }
+</style>
+
+<div class="page">
+  <header>
+    <h1>Fifteen Puzzle</h1>
+    <p>A state-space search demo. States are permutations of tiles 1&ndash;15 plus a blank; the operators slide the blank up, down, left or right. Move tiles by hand, or let A* find a shortest path to <code>1,2,&hellip;,15,blank</code>.</p>
+  </header>
+
+  <div class="console">
+    <div class="console-top">
+      <span class="wordmark">Fifteen</span>
+      <span class="status">
+        <span class="led" id="led"></span>
+        <span id="statusText">&mdash;</span>
+      </span>
+    </div>
+
+    <div class="tray">
+      <div class="board" id="board">
+        <div class="slots" id="slots"></div>
+      </div>
+    </div>
+
+    <div class="console-controls">
+      <button id="shuffleBtn">Shuffle</button>
+      <button class="primary" id="solveBtn">Solve with A*</button>
+    </div>
+  </div>
+
+  <dl class="readout">
+    <div class="cell"><dt>Your moves</dt><dd id="statUserMoves">0</dd></div>
+    <div class="cell"><dt>Solution length</dt><dd id="statSolutionLen">&mdash;</dd></div>
+    <div class="cell"><dt>States visited</dt><dd id="statNodes">&mdash;</dd></div>
+    <div class="cell"><dt>Search time</dt><dd id="statTime">&mdash;</dd></div>
+  </dl>
+
+  <footer>
+    Heuristic: Manhattan distance + linear-conflict correction (admissible, tighter than plain Manhattan). Solvability is checked from inversion parity before every search &mdash; that's the LED above the tray.
+  </footer>
+</div>
+
+<script>
+  const SIZE = 4;
+  const GOAL = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,0];
+  const TILE = 78, GAP = 8;
+
+  function neighbors(state) {
+    const blank = state.indexOf(0);
+    const row = (blank / SIZE) | 0, col = blank % SIZE;
+    const deltas = [[-1, 0, 'down'], [1, 0, 'up'], [0, -1, 'right'], [0, 1, 'left']];
+    const result = [];
+    for (const [dr, dc, move] of deltas) {
+      const nr = row + dr, nc = col + dc;
+      if (nr < 0 || nr >= SIZE || nc < 0 || nc >= SIZE) continue;
+      const swapIdx = nr * SIZE + nc;
+      const next = state.slice();
+      next[blank] = next[swapIdx];
+      next[swapIdx] = 0;
+      result.push({ state: next, move });
+    }
+    return result;
+  }
+
+  function isSolvable(state) {
+    const tiles = state.filter(v => v !== 0);
+    let inversions = 0;
+    for (let i = 0; i < tiles.length; i++) {
+      for (let j = i + 1; j < tiles.length; j++) {
+        if (tiles[i] > tiles[j]) inversions++;
+      }
+    }
+    const blankRowFromBottom = SIZE - ((state.indexOf(0) / SIZE) | 0);
+    return blankRowFromBottom % 2 === 0 ? inversions % 2 === 1 : inversions % 2 === 0;
+  }
+
+  // Number of tiles that must leave a line to remove every conflict in it,
+  // found by repeatedly discarding the tile involved in the most conflicts.
+  function lineConflicts(tiles) {
+    const n = tiles.length;
+    if (n < 2) return 0;
+    const conflictsWith = tiles.map(() => new Set());
+    for (let a = 0; a < n; a++) {
+      for (let b = a + 1; b < n; b++) {
+        if (tiles[a].goalPos > tiles[b].goalPos) {
+          conflictsWith[a].add(b);
+          conflictsWith[b].add(a);
+        }
+      }
+    }
+    let removed = 0;
+    while (true) {
+      let worst = -1, worstCount = 0;
+      for (let i = 0; i < n; i++) {
+        if (conflictsWith[i].size > worstCount) { worstCount = conflictsWith[i].size; worst = i; }
+      }
+      if (worst === -1) break;
+      removed++;
+      for (const other of conflictsWith[worst]) conflictsWith[other].delete(worst);
+      conflictsWith[worst].clear();
+    }
+    return removed;
+  }
+
+  function heuristic(state) {
+    let manhattan = 0;
+    for (let i = 0; i < 16; i++) {
+      const val = state[i];
+      if (val === 0) continue;
+      const goalIdx = val - 1;
+      manhattan += Math.abs(((i / SIZE) | 0) - ((goalIdx / SIZE) | 0)) + Math.abs((i % SIZE) - (goalIdx % SIZE));
+    }
+    let conflicts = 0;
+    for (let row = 0; row < SIZE; row++) {
+      const line = [];
+      for (let col = 0; col < SIZE; col++) {
+        const val = state[row * SIZE + col];
+        if (val === 0) continue;
+        const goalIdx = val - 1;
+        if (((goalIdx / SIZE) | 0) === row) line.push({ goalPos: goalIdx % SIZE });
+      }
+      conflicts += lineConflicts(line);
+    }
+    for (let col = 0; col < SIZE; col++) {
+      const line = [];
+      for (let row = 0; row < SIZE; row++) {
+        const val = state[row * SIZE + col];
+        if (val === 0) continue;
+        const goalIdx = val - 1;
+        if (goalIdx % SIZE === col) line.push({ goalPos: (goalIdx / SIZE) | 0 });
+      }
+      conflicts += lineConflicts(line);
+    }
+    return manhattan + 2 * conflicts;
+  }
+
+  class MinHeap {
+    constructor() { this.data = []; }
+    get size() { return this.data.length; }
+    push(item) {
+      this.data.push(item);
+      let i = this.data.length - 1;
+      while (i > 0) {
+        const parent = (i - 1) >> 1;
+        if (this.data[parent].f <= this.data[i].f) break;
+        [this.data[parent], this.data[i]] = [this.data[i], this.data[parent]];
+        i = parent;
+      }
+    }
+    pop() {
+      const top = this.data[0];
+      const last = this.data.pop();
+      if (this.data.length) {
+        this.data[0] = last;
+        let i = 0;
+        while (true) {
+          const l = 2 * i + 1, r = 2 * i + 2;
+          let smallest = i;
+          if (l < this.data.length && this.data[l].f < this.data[smallest].f) smallest = l;
+          if (r < this.data.length && this.data[r].f < this.data[smallest].f) smallest = r;
+          if (smallest === i) break;
+          [this.data[smallest], this.data[i]] = [this.data[i], this.data[smallest]];
+          i = smallest;
+        }
+      }
+      return top;
+    }
+  }
+
+  function solve(start) {
+    const startKey = start.join(',');
+    const open = new MinHeap();
+    open.push({ state: start, g: 0, f: heuristic(start) });
+    const gScore = new Map([[startKey, 0]]);
+    const cameFrom = new Map();
+    const stateOf = new Map([[startKey, start]]);
+    const closed = new Set();
+    let nodesExpanded = 0;
+
+    while (open.size) {
+      const current = open.pop();
+      const key = current.state.join(',');
+      if (closed.has(key)) continue;
+      closed.add(key);
+      nodesExpanded++;
+
+      if (key === GOAL.join(',')) {
+        const path = [];
+        let k = key;
+        while (k !== undefined) { path.push(stateOf.get(k)); k = cameFrom.get(k); }
+        path.reverse();
+        return { path, nodesExpanded };
+      }
+
+      for (const { state: next } of neighbors(current.state)) {
+        const nextKey = next.join(',');
+        if (closed.has(nextKey)) continue;
+        const tentativeG = current.g + 1;
+        if (!gScore.has(nextKey) || tentativeG < gScore.get(nextKey)) {
+          gScore.set(nextKey, tentativeG);
+          cameFrom.set(nextKey, key);
+          stateOf.set(nextKey, next);
+          open.push({ state: next, g: tentativeG, f: tentativeG + heuristic(next) });
+        }
+      }
+    }
+    return null;
+  }
+
+  function shuffle(steps) {
+    let state = GOAL.slice();
+    let lastMove = null;
+    const opposite = { up: 'down', down: 'up', left: 'right', right: 'left' };
+    for (let i = 0; i < steps; i++) {
+      const candidates = neighbors(state).filter(n => n.move !== opposite[lastMove]);
+      const pick = candidates[(Math.random() * candidates.length) | 0];
+      state = pick.state;
+      lastMove = pick.move;
+    }
+    return state;
+  }
+
+  // --- UI ---
+  const slotsEl = document.getElementById('slots');
+  const boardEl = document.getElementById('board');
+  const shuffleBtn = document.getElementById('shuffleBtn');
+  const solveBtn = document.getElementById('solveBtn');
+  const led = document.getElementById('led');
+  const statusText = document.getElementById('statusText');
+  const statUserMoves = document.getElementById('statUserMoves');
+  const statSolutionLen = document.getElementById('statSolutionLen');
+  const statNodes = document.getElementById('statNodes');
+  const statTime = document.getElementById('statTime');
+
+  for (let i = 0; i < 15; i++) {
+    const slot = document.createElement('div');
+    slot.className = 'slot';
+    slotsEl.appendChild(slot);
+  }
+
+  const tileEls = new Map();
+  for (let v = 1; v <= 15; v++) {
+    const el = document.createElement('div');
+    el.className = 'tile';
+    el.textContent = v;
+    el.addEventListener('click', () => onTileClick(v));
+    boardEl.appendChild(el);
+    tileEls.set(v, el);
+  }
+
+  let currentState = GOAL.slice();
+  let userMoves = 0;
+  let busy = false;
+
+  function place(value, index) {
+    const row = (index / SIZE) | 0, col = index % SIZE;
+    const el = tileEls.get(value);
+    el.style.transform = `translate(${col * (TILE + GAP)}px, ${row * (TILE + GAP)}px)`;
+  }
+
+  function render(state) {
+    for (let i = 0; i < 16; i++) {
+      if (state[i] !== 0) place(state[i], i);
+    }
+    const blank = state.indexOf(0);
+    const blankRow = (blank / SIZE) | 0, blankCol = blank % SIZE;
+    for (const [value, el] of tileEls) {
+      const idx = state.indexOf(value);
+      const row = (idx / SIZE) | 0, col = idx % SIZE;
+      const adjacent = (row === blankRow && Math.abs(col - blankCol) === 1) ||
+                        (col === blankCol && Math.abs(row - blankRow) === 1);
+      el.classList.toggle('movable', adjacent && !busy);
+    }
+    updateStatus(state);
+  }
+
+  function updateStatus(state) {
+    const solved = state.join(',') === GOAL.join(',');
+    if (solved) {
+      led.className = 'led on-good';
+      statusText.textContent = 'Solved';
+    } else {
+      const ok = isSolvable(state);
+      led.className = 'led ' + (ok ? 'on-good' : 'on-bad');
+      statusText.textContent = ok ? 'Solvable' : 'Unsolvable';
+    }
+  }
+
+  function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+  async function animateTo(state, stepDelay) {
+    render(state);
+    await sleep(stepDelay);
+  }
+
+  function onTileClick(value) {
+    if (busy) return;
+    const idx = currentState.indexOf(value);
+    const blank = currentState.indexOf(0);
+    const row = (idx / SIZE) | 0, col = idx % SIZE;
+    const blankRow = (blank / SIZE) | 0, blankCol = blank % SIZE;
+    const adjacent = (row === blankRow && Math.abs(col - blankCol) === 1) ||
+                      (col === blankCol && Math.abs(row - blankRow) === 1);
+    if (!adjacent) return;
+    const next = currentState.slice();
+    next[blank] = value;
+    next[idx] = 0;
+    currentState = next;
+    userMoves++;
+    statUserMoves.textContent = userMoves;
+    render(currentState);
+  }
+
+  shuffleBtn.addEventListener('click', () => {
+    if (busy) return;
+    currentState = shuffle(60);
+    userMoves = 0;
+    statUserMoves.textContent = '0';
+    statSolutionLen.textContent = '—';
+    statNodes.textContent = '—';
+    statTime.textContent = '—';
+    render(currentState);
+  });
+
+  solveBtn.addEventListener('click', async () => {
+    if (busy) return;
+    if (!isSolvable(currentState)) return;
+    busy = true;
+    shuffleBtn.disabled = true;
+    solveBtn.disabled = true;
+
+    const t0 = performance.now();
+    const result = solve(currentState);
+    const elapsed = performance.now() - t0;
+
+    if (!result) { busy = false; shuffleBtn.disabled = false; solveBtn.disabled = false; return; }
+
+    statSolutionLen.textContent = result.path.length - 1;
+    statNodes.textContent = result.nodesExpanded;
+    statTime.textContent = `${elapsed.toFixed(0)} ms`;
+
+    for (let i = 1; i < result.path.length; i++) {
+      currentState = result.path[i];
+      await animateTo(currentState, 180);
+    }
+
+    busy = false;
+    shuffleBtn.disabled = false;
+    solveBtn.disabled = false;
+    render(currentState);
+  });
+
+  render(currentState);
+</script>

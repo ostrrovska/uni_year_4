@@ -1,0 +1,140 @@
+name: cdn-control-plane
+
+x-api-environment: &api-environment
+  APP_ENV: development
+  LOG_LEVEL: INFO
+  DATABASE_URL: postgresql+asyncpg://cdn:cdn@postgres:5432/cdn_control_plane
+  DB_POOL_SIZE: 10
+  DB_MAX_OVERFLOW: 10
+  DB_POOL_TIMEOUT: 10
+  # 120s rather than the production-realistic 30s: a live demo should not have its
+  # seeded fleet age out of the routing pool between two curl commands. Lower it to
+  # watch automatic ejection of silent nodes happen faster.
+  HEARTBEAT_STALE_AFTER_SECONDS: 120
+  HEARTBEAT_INTERVAL_SECONDS: 10
+  NODE_OVERLOAD_THRESHOLD_PERCENT: 85
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: cdn
+      POSTGRES_PASSWORD: cdn
+      POSTGRES_DB: cdn_control_plane
+    ports:
+      # Host port 5434: 5432 is a native Windows PostgreSQL service on the development
+      # machine and 5433 belongs to another project's container. Inside the network
+      # everything still talks to postgres:5432.
+      - "5434:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cdn -d cdn_control_plane"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks: [cdn_net]
+
+  migrate:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    command: ["alembic", "upgrade", "head"]
+    # Inherited from the image, but only `api` serves HTTP — see docker/Dockerfile.
+    healthcheck:
+      disable: true
+    environment: *api-environment
+    # A one-shot job rather than an API startup hook: with `--scale api=N` every
+    # replica would otherwise race to run the same migration against the same
+    # database. Running it exactly once, before any replica starts, removes the race
+    # entirely — which is what makes Labs 2-3 possible without touching this file.
+    restart: "no"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks: [cdn_net]
+
+  api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    restart: unless-stopped
+    environment: *api-environment
+    # No container_name and no fixed host port on purpose: both would make
+    # `docker compose up --scale api=N` fail, and scaling this service is the whole
+    # point of the next two labs.
+    ports:
+      - "8000:8000"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    networks: [cdn_net]
+
+  seed:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    command: ["python", "-m", "scripts.seed"]
+    # Inherited from the image, but only `api` serves HTTP — see docker/Dockerfile.
+    healthcheck:
+      disable: true
+    environment: *api-environment
+    restart: "no"
+    profiles: [demo]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    networks: [cdn_net]
+
+  # Stands in for the agents that run on real edge servers. Without it any seeded fleet
+  # falls silent, every node ages past HEARTBEAT_STALE_AFTER_SECONDS and routing
+  # correctly reports that no node is reachable. The missing piece is the agents, not
+  # the control plane — so the stack ships them rather than papering over the symptom
+  # by inflating the staleness threshold.
+  #
+  # Deliberately NOT gated behind `profiles: [demo]` like `seed`: it depends only on
+  # `migrate` (harmless against an empty database — it just finds nothing to refresh),
+  # so it starts and, more importantly, is visible to `docker compose down` on every
+  # invocation. A profile-gated service with `restart: unless-stopped` is a trap — a
+  # `down` run without the matching `--profile` flag would not see it, leave it
+  # running, and the network removal would then fail with "Resource is still in use".
+  agents:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    command: ["python", "-m", "scripts.refresh_fleet", "--watch", "10"]
+    # Inherited from the image, but only `api` serves HTTP — see docker/Dockerfile.
+    healthcheck:
+      disable: true
+    environment: *api-environment
+    restart: unless-stopped
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    networks: [cdn_net]
+
+  # One-shot heartbeat round, kept for manual use: `docker compose run --rm refresh`.
+  # Not in the demo profile — the long-running `agents` service covers normal operation.
+  refresh:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    command: ["python", "-m", "scripts.refresh_fleet"]
+    # Inherited from the image, but only `api` serves HTTP — see docker/Dockerfile.
+    healthcheck:
+      disable: true
+    environment: *api-environment
+    restart: "no"
+    profiles: [tools]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    networks: [cdn_net]
+
+volumes:
+  pgdata:
+
+networks:
+  cdn_net:
+    driver: bridge

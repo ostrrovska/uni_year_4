@@ -1,0 +1,2845 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "CDN Control Plane API",
+    "description": "\nControl plane for a content delivery network: the service that decides **where**\ncontent lives and **which** edge node a client should talk to. It never serves the\ncontent bytes itself.\n\n* **Node management** — registration, lifecycle and continuous telemetry ingest.\n* **Routing** — ranked edge-node selection by proximity, load and cache state.\n* **Distribution** — asset metadata and the regional policy governing where it may be cached.\n* **Invalidation** — tracked purge campaigns with per-node acknowledgement.\n\nErrors follow RFC 9457 and are returned as `application/problem+json`.\nEvery response carries `X-Instance-ID`, `X-Request-ID` and `X-Response-Time-ms`.\n",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/health": {
+      "get": {
+        "tags": [
+          "ops"
+        ],
+        "summary": "Liveness probe",
+        "description": "Report that the process is running and able to serve HTTP.\n\nDeliberately checks nothing else. A liveness probe that touches the database\nwould make every instance restart when the database blips — turning a recoverable\ndependency failure into a fleet-wide outage.",
+        "operationId": "liveness_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object",
+                  "title": "Response Liveness Health Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health/ready": {
+      "get": {
+        "tags": [
+          "ops"
+        ],
+        "summary": "Readiness probe",
+        "description": "Report whether this instance can actually serve traffic.\n\nThis is the endpoint a load balancer polls (Lab 3): an instance whose database\nconnection is broken must be taken out of the upstream pool rather than handed\nrequests it can only fail.",
+        "operationId": "readiness_health_ready_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object",
+                  "title": "Response Readiness Health Ready Get"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "A dependency required to serve the request is unavailable.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/regions": {
+      "get": {
+        "tags": [
+          "regions"
+        ],
+        "summary": "List regions",
+        "operationId": "list_regions_api_v1_regions_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/RegionRead"
+                  },
+                  "type": "array",
+                  "title": "Response List Regions Api V1 Regions Get"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "regions"
+        ],
+        "summary": "Register a region",
+        "operationId": "create_region_api_v1_regions_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegionCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegionRead"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The request conflicts with the current state of the resource.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/nodes": {
+      "get": {
+        "tags": [
+          "nodes"
+        ],
+        "summary": "List edge nodes",
+        "operationId": "list_nodes_api_v1_nodes_get",
+        "parameters": [
+          {
+            "name": "region",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by region code.",
+              "title": "Region"
+            },
+            "description": "Filter by region code."
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/NodeStatus"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_NodeRead_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "nodes"
+        ],
+        "summary": "Register an edge node",
+        "operationId": "register_node_api_v1_nodes_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NodeRegister"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NodeRead"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Referenced resource does not exist.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The request conflicts with the current state of the resource.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/nodes/{node_id}": {
+      "get": {
+        "tags": [
+          "nodes"
+        ],
+        "summary": "Get one edge node",
+        "operationId": "get_node_api_v1_nodes__node_id__get",
+        "parameters": [
+          {
+            "name": "node_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Node Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NodeRead"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Referenced resource does not exist.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "nodes"
+        ],
+        "summary": "Update node status or capacity",
+        "operationId": "update_node_api_v1_nodes__node_id__patch",
+        "parameters": [
+          {
+            "name": "node_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Node Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NodeUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NodeRead"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Referenced resource does not exist.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The request conflicts with the current state of the resource.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request failed validation or violated a business rule.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "nodes"
+        ],
+        "summary": "Decommission an edge node",
+        "operationId": "delete_node_api_v1_nodes__node_id__delete",
+        "parameters": [
+          {
+            "name": "node_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Node Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "404": {
+            "description": "Referenced resource does not exist.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/nodes/{node_id}/heartbeat": {
+      "post": {
+        "tags": [
+          "nodes"
+        ],
+        "summary": "Report node telemetry",
+        "description": "Ingest one telemetry sample.\n\nAnswers 202 rather than 200: the sample is recorded, but the fleet-wide\nconsequences of it — routing weights, purge targeting — are observed by other\nendpoints, not computed and returned here.",
+        "operationId": "report_heartbeat_api_v1_nodes__node_id__heartbeat_post",
+        "parameters": [
+          {
+            "name": "node_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Node Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HeartbeatReport"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HeartbeatAccepted"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Referenced resource does not exist.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/nodes/{node_id}/replicas": {
+      "get": {
+        "tags": [
+          "nodes"
+        ],
+        "summary": "List content cached on a node",
+        "operationId": "list_replicas_api_v1_nodes__node_id__replicas_get",
+        "parameters": [
+          {
+            "name": "node_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Node Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ReplicaRead"
+                  },
+                  "title": "Response List Replicas Api V1 Nodes  Node Id  Replicas Get"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Referenced resource does not exist.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/nodes/{node_id}/replicas/{asset_id}": {
+      "put": {
+        "tags": [
+          "nodes"
+        ],
+        "summary": "Report cache state for one asset",
+        "description": "Declare what this node holds for one asset.\n\nPUT, because an agent reports the full current state of one replica and repeating\nthe same report must not change the outcome.",
+        "operationId": "report_replica_api_v1_nodes__node_id__replicas__asset_id__put",
+        "parameters": [
+          {
+            "name": "node_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Node Id"
+            }
+          },
+          {
+            "name": "asset_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Asset Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReplicaReport"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReplicaRead"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Referenced resource does not exist.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request failed validation or violated a business rule.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/assets": {
+      "get": {
+        "tags": [
+          "assets"
+        ],
+        "summary": "List assets",
+        "operationId": "list_assets_api_v1_assets_get",
+        "parameters": [
+          {
+            "name": "path_prefix",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "examples": [
+                "/static/"
+              ],
+              "title": "Path Prefix"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/AssetStatus"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_AssetRead_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "assets"
+        ],
+        "summary": "Register an asset",
+        "operationId": "create_asset_api_v1_assets_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssetCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssetRead"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The request conflicts with the current state of the resource.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/assets/{asset_id}": {
+      "get": {
+        "tags": [
+          "assets"
+        ],
+        "summary": "Get one asset",
+        "operationId": "get_asset_api_v1_assets__asset_id__get",
+        "parameters": [
+          {
+            "name": "asset_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Asset Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssetRead"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Referenced resource does not exist.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "assets"
+        ],
+        "summary": "Archive an asset and purge it from the edge",
+        "description": "Archive the asset and return the purge campaign it triggered.\n\n202 with the purge event rather than a bare 204: removal from the edge is\nasynchronous, and the caller needs a handle to follow it to completion.",
+        "operationId": "archive_asset_api_v1_assets__asset_id__delete",
+        "parameters": [
+          {
+            "name": "asset_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Asset Id"
+            }
+          },
+          {
+            "name": "requested_by",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128,
+              "title": "Requested By"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PurgeRead"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Referenced resource does not exist.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/assets/{asset_id}/versions": {
+      "post": {
+        "tags": [
+          "assets"
+        ],
+        "summary": "Publish a new version of an asset",
+        "description": "Publish new content under an existing path.\n\nOne call produces three effects, atomically: the version is bumped, every replica\nof the old bytes is marked stale, and a purge campaign is opened against the nodes\nholding them. That chain is the reason this is a POST to a sub-collection rather\nthan a PATCH on the asset — it creates a new version resource and a new purge.",
+        "operationId": "publish_version_api_v1_assets__asset_id__versions_post",
+        "parameters": [
+          {
+            "name": "asset_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Asset Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssetVersionPublish"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssetVersionPublished"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Referenced resource does not exist.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The request conflicts with the current state of the resource.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/assets/{asset_id}/distribution": {
+      "get": {
+        "tags": [
+          "assets"
+        ],
+        "summary": "Get an asset's distribution policy",
+        "operationId": "get_distribution_api_v1_assets__asset_id__distribution_get",
+        "parameters": [
+          {
+            "name": "asset_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Asset Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DistributionPolicyRead"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Referenced resource does not exist.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "assets"
+        ],
+        "summary": "Replace an asset's distribution policy",
+        "operationId": "replace_distribution_api_v1_assets__asset_id__distribution_put",
+        "parameters": [
+          {
+            "name": "asset_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Asset Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DistributionPolicy"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DistributionPolicyRead"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Referenced resource does not exist.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request failed validation or violated a business rule.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/routing/resolve": {
+      "get": {
+        "tags": [
+          "routing"
+        ],
+        "summary": "Resolve the best edge nodes for an asset",
+        "description": "Return ranked edge nodes for a client to download an asset from.\n\nThe read-intensive hot path of the whole system: every client download begins\nwith one of these calls, while writes to the underlying data are comparatively\nrare. That ratio is what makes it the primary caching target in Lab 4, and the\n`X-Cache` header below is already wired to report where the answer came from.",
+        "operationId": "resolve_route_api_v1_routing_resolve_get",
+        "parameters": [
+          {
+            "name": "path",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 512,
+              "examples": [
+                "/static/app.bundle.js"
+              ],
+              "title": "Path"
+            }
+          },
+          {
+            "name": "client_region",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Region code of the requesting client, used for proximity scoring.",
+              "title": "Client Region"
+            },
+            "description": "Region code of the requesting client, used for proximity scoring."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Number of candidates to return.",
+              "title": "Limit"
+            },
+            "description": "Number of candidates to return."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RouteResolution"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Referenced resource does not exist.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request failed validation or violated a business rule.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "A dependency required to serve the request is unavailable.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/purges": {
+      "get": {
+        "tags": [
+          "purges"
+        ],
+        "summary": "List purge campaigns",
+        "operationId": "list_purges_api_v1_purges_get",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/PurgeStatus"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_PurgeRead_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "purges"
+        ],
+        "summary": "Broadcast a cache invalidation",
+        "description": "Open a purge campaign against the nodes in scope.\n\n202, not 201: the campaign record is created synchronously, but the invalidation\nitself only completes when the targeted nodes acknowledge it. Returning 201 would\nclaim the content is already gone from the edge.",
+        "operationId": "create_purge_api_v1_purges_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PurgeCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PurgeRead"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Referenced resource does not exist.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Request failed validation or violated a business rule.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/purges/{purge_id}": {
+      "get": {
+        "tags": [
+          "purges"
+        ],
+        "summary": "Get purge progress",
+        "operationId": "get_purge_api_v1_purges__purge_id__get",
+        "parameters": [
+          {
+            "name": "purge_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Purge Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PurgeRead"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Referenced resource does not exist.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/purges/{purge_id}/acknowledgements": {
+      "post": {
+        "tags": [
+          "purges"
+        ],
+        "summary": "Acknowledge a purge from an edge node",
+        "description": "Record that one node has acted on the purge.\n\nIdempotent by primary key: an agent retrying after a timeout re-sends the same\nacknowledgement without inflating the campaign's progress counter.",
+        "operationId": "acknowledge_purge_api_v1_purges__purge_id__acknowledgements_post",
+        "parameters": [
+          {
+            "name": "purge_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Purge Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PurgeAcknowledge"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PurgeRead"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Referenced resource does not exist.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/stats/network": {
+      "get": {
+        "tags": [
+          "stats"
+        ],
+        "summary": "Aggregate network topology and health",
+        "description": "Snapshot of fleet, content and purge state.\n\nSeveral grouped aggregates over the largest tables, answering a question whose\nresult changes slowly — the textbook profile for a cached read, which is what\nLab 4 turns it into.",
+        "operationId": "network_stats_api_v1_stats_network_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NetworkStats"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AssetCreate": {
+        "properties": {
+          "origin_path": {
+            "type": "string",
+            "maxLength": 512,
+            "minLength": 1,
+            "pattern": "^/\\S*$",
+            "title": "Origin Path",
+            "examples": [
+              "/static/app.bundle.js"
+            ]
+          },
+          "content_hash": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 64,
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Content Hash",
+            "description": "Lowercase hex SHA-256 of the artifact bytes."
+          },
+          "size_bytes": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Size Bytes"
+          },
+          "content_type": {
+            "type": "string",
+            "maxLength": 127,
+            "minLength": 1,
+            "title": "Content Type",
+            "examples": [
+              "application/javascript"
+            ]
+          },
+          "cache_ttl_seconds": {
+            "type": "integer",
+            "maximum": 31536000.0,
+            "minimum": 0.0,
+            "title": "Cache Ttl Seconds",
+            "default": 3600
+          },
+          "publish": {
+            "type": "boolean",
+            "title": "Publish",
+            "default": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "origin_path",
+          "content_hash",
+          "size_bytes",
+          "content_type"
+        ],
+        "title": "AssetCreate"
+      },
+      "AssetRead": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "origin_path": {
+            "type": "string",
+            "title": "Origin Path"
+          },
+          "content_hash": {
+            "type": "string",
+            "title": "Content Hash"
+          },
+          "size_bytes": {
+            "type": "integer",
+            "title": "Size Bytes"
+          },
+          "content_type": {
+            "type": "string",
+            "title": "Content Type"
+          },
+          "version": {
+            "type": "integer",
+            "title": "Version"
+          },
+          "cache_ttl_seconds": {
+            "type": "integer",
+            "title": "Cache Ttl Seconds"
+          },
+          "status": {
+            "$ref": "#/components/schemas/AssetStatus"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "origin_path",
+          "content_hash",
+          "size_bytes",
+          "content_type",
+          "version",
+          "cache_ttl_seconds",
+          "status",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "AssetRead"
+      },
+      "AssetStatus": {
+        "type": "string",
+        "enum": [
+          "draft",
+          "published",
+          "archived"
+        ],
+        "title": "AssetStatus"
+      },
+      "AssetVersionPublish": {
+        "properties": {
+          "content_hash": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 64,
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Content Hash",
+            "description": "Lowercase hex SHA-256 of the artifact bytes."
+          },
+          "size_bytes": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Size Bytes"
+          },
+          "cache_ttl_seconds": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 31536000.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cache Ttl Seconds"
+          },
+          "requested_by": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Requested By",
+            "examples": [
+              "ci-pipeline"
+            ]
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 255
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          }
+        },
+        "type": "object",
+        "required": [
+          "content_hash",
+          "size_bytes",
+          "requested_by"
+        ],
+        "title": "AssetVersionPublish",
+        "description": "Publish new bytes under an existing origin path."
+      },
+      "AssetVersionPublished": {
+        "properties": {
+          "asset": {
+            "$ref": "#/components/schemas/AssetRead"
+          },
+          "previous_version": {
+            "type": "integer",
+            "title": "Previous Version"
+          },
+          "replicas_invalidated": {
+            "type": "integer",
+            "title": "Replicas Invalidated"
+          },
+          "purge_event_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Purge Event Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "asset",
+          "previous_version",
+          "replicas_invalidated",
+          "purge_event_id"
+        ],
+        "title": "AssetVersionPublished",
+        "description": "Result of a version bump: the new asset state plus the purge it triggered."
+      },
+      "DistributionPolicy": {
+        "properties": {
+          "rules": {
+            "items": {
+              "$ref": "#/components/schemas/DistributionRuleItem"
+            },
+            "type": "array",
+            "maxItems": 100,
+            "title": "Rules"
+          }
+        },
+        "type": "object",
+        "required": [
+          "rules"
+        ],
+        "title": "DistributionPolicy",
+        "description": "Full replacement of an asset's distribution rule set.\n\nModelled as PUT-with-full-body rather than per-rule POST/DELETE so the operation\nis idempotent: a CI pipeline can declare the desired policy repeatedly without\naccumulating duplicates or needing to diff against current state."
+      },
+      "DistributionPolicyRead": {
+        "properties": {
+          "rules": {
+            "items": {
+              "$ref": "#/components/schemas/DistributionRuleItem"
+            },
+            "type": "array",
+            "title": "Rules"
+          },
+          "unrestricted": {
+            "type": "boolean",
+            "title": "Unrestricted",
+            "description": "True when no enabled rule exists, meaning the asset may be cached in every region."
+          }
+        },
+        "type": "object",
+        "required": [
+          "rules",
+          "unrestricted"
+        ],
+        "title": "DistributionPolicyRead"
+      },
+      "DistributionRuleItem": {
+        "properties": {
+          "region_code": {
+            "type": "string",
+            "maxLength": 32,
+            "minLength": 2,
+            "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+            "title": "Region Code",
+            "examples": [
+              "eu-central"
+            ]
+          },
+          "priority": {
+            "type": "integer",
+            "maximum": 1000.0,
+            "minimum": 0.0,
+            "title": "Priority",
+            "default": 100
+          },
+          "enabled": {
+            "type": "boolean",
+            "title": "Enabled",
+            "default": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "region_code"
+        ],
+        "title": "DistributionRuleItem"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "HeartbeatAccepted": {
+        "properties": {
+          "node_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Node Id"
+          },
+          "status": {
+            "$ref": "#/components/schemas/NodeStatus"
+          },
+          "current_load_percent": {
+            "type": "integer",
+            "title": "Current Load Percent"
+          },
+          "received_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Received At"
+          },
+          "next_heartbeat_in_seconds": {
+            "type": "integer",
+            "title": "Next Heartbeat In Seconds"
+          }
+        },
+        "type": "object",
+        "required": [
+          "node_id",
+          "status",
+          "current_load_percent",
+          "received_at",
+          "next_heartbeat_in_seconds"
+        ],
+        "title": "HeartbeatAccepted"
+      },
+      "HeartbeatReport": {
+        "properties": {
+          "reported_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reported At"
+          },
+          "cpu_percent": {
+            "type": "integer",
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Cpu Percent"
+          },
+          "memory_percent": {
+            "type": "integer",
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Memory Percent"
+          },
+          "bandwidth_out_mbps": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Bandwidth Out Mbps"
+          },
+          "active_connections": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Active Connections"
+          },
+          "cache_hit_ratio": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 1.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cache Hit Ratio"
+          }
+        },
+        "type": "object",
+        "required": [
+          "cpu_percent",
+          "memory_percent",
+          "bandwidth_out_mbps",
+          "active_connections"
+        ],
+        "title": "HeartbeatReport",
+        "description": "Telemetry sample sent by an edge agent.\n\n`reported_at` is optional and defaults to server receipt time; an agent with a\nskewed clock should not be able to poison the freshness calculation, so routing\neligibility is evaluated against `received_at`, never this field."
+      },
+      "NetworkStats": {
+        "properties": {
+          "nodes_total": {
+            "type": "integer",
+            "title": "Nodes Total"
+          },
+          "nodes_by_status": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Nodes By Status"
+          },
+          "fleet_capacity_mbps": {
+            "type": "integer",
+            "title": "Fleet Capacity Mbps"
+          },
+          "fleet_average_load_percent": {
+            "type": "number",
+            "title": "Fleet Average Load Percent"
+          },
+          "stale_node_count": {
+            "type": "integer",
+            "title": "Stale Node Count",
+            "description": "Nodes whose last heartbeat is older than the staleness threshold, regardless of their stored status."
+          },
+          "assets_total": {
+            "type": "integer",
+            "title": "Assets Total"
+          },
+          "assets_published": {
+            "type": "integer",
+            "title": "Assets Published"
+          },
+          "replicas_total": {
+            "type": "integer",
+            "title": "Replicas Total"
+          },
+          "replicas_cached": {
+            "type": "integer",
+            "title": "Replicas Cached"
+          },
+          "replica_coverage_percent": {
+            "type": "number",
+            "title": "Replica Coverage Percent"
+          },
+          "purges_in_flight": {
+            "type": "integer",
+            "title": "Purges In Flight"
+          },
+          "regions": {
+            "items": {
+              "$ref": "#/components/schemas/RegionStats"
+            },
+            "type": "array",
+            "title": "Regions"
+          }
+        },
+        "type": "object",
+        "required": [
+          "nodes_total",
+          "nodes_by_status",
+          "fleet_capacity_mbps",
+          "fleet_average_load_percent",
+          "stale_node_count",
+          "assets_total",
+          "assets_published",
+          "replicas_total",
+          "replicas_cached",
+          "replica_coverage_percent",
+          "purges_in_flight",
+          "regions"
+        ],
+        "title": "NetworkStats",
+        "description": "Aggregate view of the whole control plane.\n\nDeliberately expensive: it scans the fleet and the replica table to answer a\nquestion that changes slowly. That read-often / change-rarely profile is exactly\nwhat makes it the designated caching target in Lab 4."
+      },
+      "NodeRead": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "hostname": {
+            "type": "string",
+            "title": "Hostname"
+          },
+          "public_ipv4": {
+            "type": "string",
+            "format": "ipv4",
+            "title": "Public Ipv4"
+          },
+          "region_code": {
+            "type": "string",
+            "title": "Region Code"
+          },
+          "status": {
+            "$ref": "#/components/schemas/NodeStatus"
+          },
+          "capacity_mbps": {
+            "type": "integer",
+            "title": "Capacity Mbps"
+          },
+          "agent_version": {
+            "type": "string",
+            "title": "Agent Version"
+          },
+          "last_heartbeat_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Heartbeat At"
+          },
+          "current_load_percent": {
+            "type": "integer",
+            "title": "Current Load Percent"
+          },
+          "active_connections": {
+            "type": "integer",
+            "title": "Active Connections"
+          },
+          "cache_hit_ratio": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cache Hit Ratio"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "hostname",
+          "public_ipv4",
+          "region_code",
+          "status",
+          "capacity_mbps",
+          "agent_version",
+          "last_heartbeat_at",
+          "current_load_percent",
+          "active_connections",
+          "cache_hit_ratio",
+          "created_at"
+        ],
+        "title": "NodeRead"
+      },
+      "NodeRegister": {
+        "properties": {
+          "hostname": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Hostname",
+            "examples": [
+              "edge-eu-01.cdn.net"
+            ]
+          },
+          "public_ipv4": {
+            "type": "string",
+            "format": "ipv4",
+            "title": "Public Ipv4"
+          },
+          "region_code": {
+            "type": "string",
+            "maxLength": 32,
+            "minLength": 2,
+            "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+            "title": "Region Code",
+            "examples": [
+              "eu-central"
+            ]
+          },
+          "capacity_mbps": {
+            "type": "integer",
+            "maximum": 1000000.0,
+            "exclusiveMinimum": 0.0,
+            "title": "Capacity Mbps",
+            "examples": [
+              10000
+            ]
+          },
+          "agent_version": {
+            "type": "string",
+            "maxLength": 32,
+            "minLength": 1,
+            "title": "Agent Version",
+            "examples": [
+              "1.4.2"
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "hostname",
+          "public_ipv4",
+          "region_code",
+          "capacity_mbps",
+          "agent_version"
+        ],
+        "title": "NodeRegister"
+      },
+      "NodeStatus": {
+        "type": "string",
+        "enum": [
+          "provisioning",
+          "healthy",
+          "degraded",
+          "draining",
+          "offline"
+        ],
+        "title": "NodeStatus"
+      },
+      "NodeUpdate": {
+        "properties": {
+          "status": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/NodeStatus"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "capacity_mbps": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 1000000.0,
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Capacity Mbps"
+          },
+          "agent_version": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 32,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Agent Version"
+          }
+        },
+        "type": "object",
+        "title": "NodeUpdate"
+      },
+      "Page_AssetRead_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AssetRead"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "limit": {
+            "type": "integer",
+            "title": "Limit"
+          },
+          "offset": {
+            "type": "integer",
+            "title": "Offset"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total",
+          "limit",
+          "offset"
+        ],
+        "title": "Page[AssetRead]"
+      },
+      "Page_NodeRead_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/NodeRead"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "limit": {
+            "type": "integer",
+            "title": "Limit"
+          },
+          "offset": {
+            "type": "integer",
+            "title": "Offset"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total",
+          "limit",
+          "offset"
+        ],
+        "title": "Page[NodeRead]"
+      },
+      "Page_PurgeRead_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/PurgeRead"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "limit": {
+            "type": "integer",
+            "title": "Limit"
+          },
+          "offset": {
+            "type": "integer",
+            "title": "Offset"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total",
+          "limit",
+          "offset"
+        ],
+        "title": "Page[PurgeRead]"
+      },
+      "PurgeAcknowledge": {
+        "properties": {
+          "node_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Node Id"
+          },
+          "result": {
+            "$ref": "#/components/schemas/PurgeResult",
+            "default": "purged"
+          },
+          "detail": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 255
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "required": [
+          "node_id"
+        ],
+        "title": "PurgeAcknowledge"
+      },
+      "PurgeCreate": {
+        "properties": {
+          "scope": {
+            "$ref": "#/components/schemas/PurgeScope"
+          },
+          "asset_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Asset Id"
+          },
+          "region_code": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 32,
+                "minLength": 2,
+                "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+                "examples": [
+                  "eu-central"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Region Code"
+          },
+          "path_pattern": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 512
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Path Pattern"
+          },
+          "requested_by": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Requested By",
+            "examples": [
+              "ops@cdn.net"
+            ]
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 255
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          }
+        },
+        "type": "object",
+        "required": [
+          "scope",
+          "requested_by"
+        ],
+        "title": "PurgeCreate"
+      },
+      "PurgeRead": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "scope": {
+            "$ref": "#/components/schemas/PurgeScope"
+          },
+          "asset_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Asset Id"
+          },
+          "region_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Region Id"
+          },
+          "path_pattern": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Path Pattern"
+          },
+          "requested_by": {
+            "type": "string",
+            "title": "Requested By"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "status": {
+            "$ref": "#/components/schemas/PurgeStatus"
+          },
+          "target_node_count": {
+            "type": "integer",
+            "title": "Target Node Count"
+          },
+          "acknowledged_count": {
+            "type": "integer",
+            "title": "Acknowledged Count"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "completed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completed At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "scope",
+          "asset_id",
+          "region_id",
+          "path_pattern",
+          "requested_by",
+          "reason",
+          "status",
+          "target_node_count",
+          "acknowledged_count",
+          "created_at",
+          "completed_at"
+        ],
+        "title": "PurgeRead"
+      },
+      "PurgeResult": {
+        "type": "string",
+        "enum": [
+          "purged",
+          "not_found",
+          "failed"
+        ],
+        "title": "PurgeResult"
+      },
+      "PurgeScope": {
+        "type": "string",
+        "enum": [
+          "asset",
+          "region",
+          "global"
+        ],
+        "title": "PurgeScope"
+      },
+      "PurgeStatus": {
+        "type": "string",
+        "enum": [
+          "pending",
+          "in_progress",
+          "completed",
+          "partially_failed"
+        ],
+        "title": "PurgeStatus"
+      },
+      "RegionCreate": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "maxLength": 32,
+            "minLength": 2,
+            "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+            "title": "Code",
+            "examples": [
+              "eu-central"
+            ]
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Name"
+          },
+          "continent": {
+            "type": "string",
+            "maxLength": 32,
+            "minLength": 2,
+            "title": "Continent",
+            "examples": [
+              "Europe"
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "code",
+          "name",
+          "continent"
+        ],
+        "title": "RegionCreate"
+      },
+      "RegionRead": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "continent": {
+            "type": "string",
+            "title": "Continent"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "code",
+          "name",
+          "continent"
+        ],
+        "title": "RegionRead"
+      },
+      "RegionStats": {
+        "properties": {
+          "region_code": {
+            "type": "string",
+            "title": "Region Code"
+          },
+          "continent": {
+            "type": "string",
+            "title": "Continent"
+          },
+          "node_count": {
+            "type": "integer",
+            "title": "Node Count"
+          },
+          "healthy_node_count": {
+            "type": "integer",
+            "title": "Healthy Node Count"
+          },
+          "total_capacity_mbps": {
+            "type": "integer",
+            "title": "Total Capacity Mbps"
+          },
+          "average_load_percent": {
+            "type": "number",
+            "title": "Average Load Percent"
+          }
+        },
+        "type": "object",
+        "required": [
+          "region_code",
+          "continent",
+          "node_count",
+          "healthy_node_count",
+          "total_capacity_mbps",
+          "average_load_percent"
+        ],
+        "title": "RegionStats"
+      },
+      "ReplicaRead": {
+        "properties": {
+          "node_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Node Id"
+          },
+          "asset_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Asset Id"
+          },
+          "state": {
+            "$ref": "#/components/schemas/ReplicaState"
+          },
+          "cached_version": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cached Version"
+          },
+          "bytes_cached": {
+            "type": "integer",
+            "title": "Bytes Cached"
+          },
+          "last_verified_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Verified At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "node_id",
+          "asset_id",
+          "state",
+          "cached_version",
+          "bytes_cached",
+          "last_verified_at"
+        ],
+        "title": "ReplicaRead"
+      },
+      "ReplicaReport": {
+        "properties": {
+          "state": {
+            "$ref": "#/components/schemas/ReplicaState"
+          },
+          "cached_version": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cached Version"
+          },
+          "bytes_cached": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Bytes Cached",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "required": [
+          "state"
+        ],
+        "title": "ReplicaReport",
+        "description": "An edge agent declaring what it currently holds for one asset."
+      },
+      "ReplicaState": {
+        "type": "string",
+        "enum": [
+          "pending",
+          "cached",
+          "stale",
+          "purged"
+        ],
+        "title": "ReplicaState"
+      },
+      "RouteCandidate": {
+        "properties": {
+          "node_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Node Id"
+          },
+          "hostname": {
+            "type": "string",
+            "title": "Hostname"
+          },
+          "public_ipv4": {
+            "type": "string",
+            "format": "ipv4",
+            "title": "Public Ipv4"
+          },
+          "region_code": {
+            "type": "string",
+            "title": "Region Code"
+          },
+          "capacity_mbps": {
+            "type": "integer",
+            "title": "Capacity Mbps"
+          },
+          "current_load_percent": {
+            "type": "integer",
+            "title": "Current Load Percent"
+          },
+          "cache_state": {
+            "type": "string",
+            "title": "Cache State",
+            "description": "`warm` when the node already holds the current asset version, `cold` when it would have to pull from origin first."
+          },
+          "score": {
+            "type": "number",
+            "title": "Score",
+            "description": "Lower is better. Composed of proximity, load and cache state."
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason"
+          }
+        },
+        "type": "object",
+        "required": [
+          "node_id",
+          "hostname",
+          "public_ipv4",
+          "region_code",
+          "capacity_mbps",
+          "current_load_percent",
+          "cache_state",
+          "score",
+          "reason"
+        ],
+        "title": "RouteCandidate"
+      },
+      "RouteResolution": {
+        "properties": {
+          "asset_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Asset Id"
+          },
+          "origin_path": {
+            "type": "string",
+            "title": "Origin Path"
+          },
+          "version": {
+            "type": "integer",
+            "title": "Version"
+          },
+          "content_hash": {
+            "type": "string",
+            "title": "Content Hash"
+          },
+          "cache_ttl_seconds": {
+            "type": "integer",
+            "title": "Cache Ttl Seconds"
+          },
+          "client_region": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Client Region"
+          },
+          "candidates": {
+            "items": {
+              "$ref": "#/components/schemas/RouteCandidate"
+            },
+            "type": "array",
+            "title": "Candidates"
+          }
+        },
+        "type": "object",
+        "required": [
+          "asset_id",
+          "origin_path",
+          "version",
+          "content_hash",
+          "cache_ttl_seconds",
+          "client_region",
+          "candidates"
+        ],
+        "title": "RouteResolution"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      },
+      "Problem": {
+        "title": "Problem",
+        "description": "RFC 9457 problem details.",
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "format": "uri"
+          },
+          "title": {
+            "type": "string"
+          },
+          "status": {
+            "type": "integer"
+          },
+          "detail": {
+            "type": "string"
+          },
+          "instance": {
+            "type": "string"
+          },
+          "request_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "title",
+          "status",
+          "detail"
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,72 @@
+{
+  "objects": {
+    "budget": {
+      "acl": {},
+      "created_at": "2026-10-14T15:38:15",
+      "owner": "shevchenko"
+    },
+    "contacts": {
+      "acl": {},
+      "created_at": "2026-10-14T15:38:15",
+      "owner": "shevchenko"
+    },
+    "diary": {
+      "acl": {},
+      "created_at": "2026-10-14T15:38:15",
+      "owner": "ostrovska"
+    },
+    "finance_q1": {
+      "acl": {},
+      "created_at": "2026-10-14T15:38:15",
+      "owner": "ostrovska"
+    },
+    "finance_q2": {
+      "acl": {
+        "shevchenko": [
+          "write"
+        ]
+      },
+      "created_at": "2026-10-14T15:38:15",
+      "owner": "ostrovska"
+    },
+    "lab_report": {
+      "acl": {},
+      "created_at": "2026-10-14T15:38:15",
+      "owner": "shevchenko"
+    },
+    "meeting_notes": {
+      "acl": {},
+      "created_at": "2026-10-14T15:38:18",
+      "owner": "kovalenko"
+    },
+    "passwords": {
+      "acl": {},
+      "created_at": "2026-10-14T15:38:15",
+      "owner": "ostrovska"
+    },
+    "poems": {
+      "acl": {},
+      "created_at": "2026-10-14T15:38:15",
+      "owner": "shevchenko"
+    },
+    "protocol": {
+      "acl": {},
+      "created_at": "2026-10-14T15:38:15",
+      "owner": "ostrovska"
+    },
+    "public_notes": {
+      "acl": {
+        "shevchenko": [
+          "read"
+        ]
+      },
+      "created_at": "2026-10-14T15:38:15",
+      "owner": "kovalenko"
+    },
+    "schedule": {
+      "acl": {},
+      "created_at": "2026-10-14T15:38:15",
+      "owner": "kovalenko"
+    }
+  }
+}

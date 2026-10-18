@@ -1,0 +1,40 @@
+2026-10-11 17:05:19.830 [CLIENT] TOKEN READ         E:\SECTOKEN\u_ostrovska\token.dat -> user='ostrovska' hash=0d0dd3d62dc09c55...
+2026-10-11 17:05:20.069 [CLIENT] SENT               encrypted AES-256 frame to 192.168.31.232:50607
+2026-10-11 17:05:20.123 [CLIENT] RESPONSE           status=ok reason=hash image matches the database
+2026-10-11 17:05:20.133 [CLIENT] RESULT             AUTHENTICATION GRANTED
+2026-10-11 17:05:20.368 [CLIENT] TOKEN FAIL         cannot decrypt the token file: wrong PIN or the file is damaged
+2026-10-11 17:05:20.379 [CLIENT] RESULT             AUTHENTICATION DENIED (token unavailable)
+2026-10-11 17:05:20.642 [CLIENT] TOKEN READ         E:\SECTOKEN\u_mallory\token.dat -> user='mallory' hash=ef6cc83e4729b905...
+2026-10-11 17:05:20.678 [CLIENT] SENT               encrypted AES-256 frame to 192.168.31.232:50607
+2026-10-11 17:05:20.689 [CLIENT] RESPONSE           status=fail reason=unknown identifier 'mallory'
+2026-10-11 17:05:20.698 [CLIENT] RESULT             AUTHENTICATION DENIED
+2026-10-11 17:05:21.040 [CLIENT] AUTH OK            subject 'ostrovska' authenticated, session open
+2026-10-11 17:05:21.060 [CLIENT] COMMAND            list
+2026-10-11 17:05:21.077 [CLIENT] ALLOWED            12 object(s)
+2026-10-11 17:05:21.085 [CLIENT]   |                budget           owner=shevchenko   your rights=-
+2026-10-11 17:05:21.097 [CLIENT]   |                contacts         owner=shevchenko   your rights=-
+2026-10-11 17:05:21.107 [CLIENT]   |                diary            owner=ostrovska    your rights=delete,grant,own,read,write
+2026-10-11 17:05:21.118 [CLIENT]   |                finance_q1       owner=ostrovska    your rights=delete,grant,own,read,write
+2026-10-11 17:05:21.129 [CLIENT]   |                finance_q2       owner=ostrovska    your rights=delete,grant,own,read,write
+2026-10-11 17:05:21.138 [CLIENT]   |                grades           owner=kovalenko    your rights=-
+2026-10-11 17:05:21.147 [CLIENT]   |                lab_report       owner=shevchenko   your rights=-
+2026-10-11 17:05:21.158 [CLIENT]   |                passwords        owner=ostrovska    your rights=delete,grant,own,read,write
+2026-10-11 17:05:21.166 [CLIENT]   |                poems            owner=shevchenko   your rights=-
+2026-10-11 17:05:21.176 [CLIENT]   |                protocol         owner=kovalenko    your rights=-
+2026-10-11 17:05:21.188 [CLIENT]   |                public_notes     owner=kovalenko    your rights=-
+2026-10-11 17:05:21.201 [CLIENT]   |                schedule         owner=kovalenko    your rights=-
+2026-10-11 17:05:21.214 [CLIENT] COMMAND            read finance_q1
+2026-10-11 17:05:21.238 [CLIENT] ALLOWED            right 'read' on 'finance_q1' is present (as owner)
+2026-10-11 17:05:21.250 [CLIENT]   |                Quarterly figures, draft.
+2026-10-11 17:05:21.260 [CLIENT] COMMAND            write finance_q1 written from the virtual machine
+2026-10-11 17:05:21.276 [CLIENT] ALLOWED            right 'write' on 'finance_q1' is present (as owner)
+2026-10-11 17:05:21.286 [CLIENT] COMMAND            read lab_report
+2026-10-11 17:05:21.304 [CLIENT] DENIED             subject 'ostrovska' has no right 'read' on 'lab_report'
+2026-10-11 17:05:21.313 [CLIENT] COMMAND            delete lab_report
+2026-10-11 17:05:21.328 [CLIENT] DENIED             subject 'ostrovska' has no right 'delete' on 'lab_report'
+2026-10-11 17:05:21.337 [CLIENT] COMMAND            caps
+2026-10-11 17:05:21.360 [CLIENT] ALLOWED            capability list of 'ostrovska'
+2026-10-11 17:05:21.368 [CLIENT]   |                diary            delete,grant,own,read,write
+2026-10-11 17:05:21.379 [CLIENT]   |                finance_q1       delete,grant,own,read,write
+2026-10-11 17:05:21.392 [CLIENT]   |                finance_q2       delete,grant,own,read,write
+2026-10-11 17:05:21.412 [CLIENT]   |                passwords        delete,grant,own,read,write

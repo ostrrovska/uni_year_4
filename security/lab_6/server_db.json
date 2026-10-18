@@ -1,0 +1,19 @@
+{
+  "users": {
+    "ostrovska": {
+      "salt": "0e1feb868a9193c4cbed40833b3cddbd",
+      "pwd_hash": "5526c2925fdff2ce8ee57d74475df7f4f7e7f73d4410e67efba02ae81c9ab12b",
+      "enrolled_at": "2026-10-14T15:38:14"
+    },
+    "shevchenko": {
+      "salt": "b7a611999dfcaed5587a55de56fab375",
+      "pwd_hash": "20661e4d7abe7296534a4f1144fc59d234aee5e6fb4ed62c86da72c26e5eae33",
+      "enrolled_at": "2026-10-14T15:38:14"
+    },
+    "kovalenko": {
+      "salt": "d6bdbbb4cf75c6a2e038238904276567",
+      "pwd_hash": "6efbcc1aefa1c3caa205b90a43d8772f171e12879a0614b71631b7ac62ef6f8f",
+      "enrolled_at": "2026-10-14T15:38:14"
+    }
+  }
+}

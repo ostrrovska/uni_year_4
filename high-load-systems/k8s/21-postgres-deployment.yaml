@@ -1,0 +1,88 @@
+# DevOps Lab3
+# A single-replica Deployment, not a StatefulSet: there is one database with one
+# RWO volume and no peer discovery, so the stable network identity and ordered
+# rollout a StatefulSet buys would cost complexity and buy nothing here.
+#
+# `strategy: Recreate` is the part that matters. The default RollingUpdate would
+# start the new pod before terminating the old one, and both would try to attach
+# the same ReadWriteOnce volume - the new pod would hang Pending forever.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cdn-postgres
+  namespace: cdn-control-plane
+  labels:
+    app.kubernetes.io/name: cdn-control-plane
+    app.kubernetes.io/component: database
+    app.kubernetes.io/part-of: cdn-control-plane
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: cdn-control-plane
+      app.kubernetes.io/component: database
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: cdn-control-plane
+        app.kubernetes.io/component: database
+        app.kubernetes.io/part-of: cdn-control-plane
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:16-alpine
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: postgres
+              containerPort: 5432
+          envFrom:
+            - configMapRef:
+                name: cdn-postgres-config
+          env:
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: cdn-secrets
+                  key: POSTGRES_PASSWORD
+            # The volume is mounted at /var/lib/postgresql/data, and some
+            # provisioners leave a lost+found directory there, which initdb
+            # refuses to treat as an empty data directory. A subdirectory
+            # sidesteps that entirely.
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+          # pg_isready is the same probe docker-compose.yml uses. startupProbe
+          # covers first-boot initdb, which can take far longer than a restart,
+          # so the liveness probe can stay tight without killing a cold start.
+          startupProbe:
+            exec:
+              command: ["pg_isready", "-U", "cdn", "-d", "cdn_control_plane"]
+            periodSeconds: 5
+            failureThreshold: 24
+          readinessProbe:
+            exec:
+              command: ["pg_isready", "-U", "cdn", "-d", "cdn_control_plane"]
+            periodSeconds: 5
+            timeoutSeconds: 5
+            failureThreshold: 3
+          livenessProbe:
+            exec:
+              command: ["pg_isready", "-U", "cdn", "-d", "cdn_control_plane"]
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 6
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: "1"
+              memory: 512Mi
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: cdn-postgres-data

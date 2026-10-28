@@ -1,0 +1,71 @@
+﻿$ kubectl delete pod cdn-api-bf5c997b-hpnct -n cdn-control-plane
+pod "cdn-api-bf5c997b-hpnct" deleted from cdn-control-plane namespace
+
+$ kubectl get pods -n cdn-control-plane -l app.kubernetes.io/component=api
+NAME                     READY   STATUS    RESTARTS   AGE
+cdn-api-bf5c997b-m49zn   1/1     Running   0          2m3s
+cdn-api-bf5c997b-n8nwz   1/1     Running   0          7s
+
+$ kubectl scale deployment/cdn-api --replicas=4 -n cdn-control-plane
+deployment.apps/cdn-api scaled
+
+$ from inside the cluster, through the Service:
+$   repeat 60 x: curl -s http://cdn-api/health | jq -r .instance_id   (tallied)
+    25 cdn-api-bf5c997b-9c9vt
+    15 cdn-api-bf5c997b-m49zn
+     6 cdn-api-bf5c997b-n8nwz
+    14 cdn-api-bf5c997b-tt4cr
+failed requests: 0
+$ kubectl set image deployment/cdn-api api=ghcr.io/ostrrovska/cdn-control-plane:1.1.0 -n cdn-control-plane
+deployment.apps/cdn-api image updated
+
+$ kubectl rollout status deployment/cdn-api -n cdn-control-plane --timeout=300s
+Waiting for deployment "cdn-api" rollout to finish: 1 out of 4 new replicas have been updated...
+Waiting for deployment "cdn-api" rollout to finish: 1 out of 4 new replicas have been updated...
+Waiting for deployment "cdn-api" rollout to finish: 1 out of 4 new replicas have been updated...
+Waiting for deployment "cdn-api" rollout to finish: 2 out of 4 new replicas have been updated...
+Waiting for deployment "cdn-api" rollout to finish: 2 out of 4 new replicas have been updated...
+Waiting for deployment "cdn-api" rollout to finish: 2 out of 4 new replicas have been updated...
+Waiting for deployment "cdn-api" rollout to finish: 2 out of 4 new replicas have been updated...
+Waiting for deployment "cdn-api" rollout to finish: 3 out of 4 new replicas have been updated...
+Waiting for deployment "cdn-api" rollout to finish: 3 out of 4 new replicas have been updated...
+Waiting for deployment "cdn-api" rollout to finish: 3 out of 4 new replicas have been updated...
+Waiting for deployment "cdn-api" rollout to finish: 3 out of 4 new replicas have been updated...
+Waiting for deployment "cdn-api" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "cdn-api" rollout to finish: 1 old replicas are pending termination...
+Waiting for deployment "cdn-api" rollout to finish: 1 old replicas are pending termination...
+deployment "cdn-api" successfully rolled out
+
+$ during the 1.0.0 -> 1.1.0 rollout, from inside the cluster:
+$   while ...; do curl -s http://cdn-api/health; done   (tallied by app_version)
+   112 1.0.0
+   423 1.1.0
+failed requests: 0 of 535
+$ kubectl rollout history deployment/cdn-api -n cdn-control-plane
+deployment.apps/cdn-api 
+REVISION  CHANGE-CAUSE
+8         <none>
+9         <none>
+10        <none>
+
+
+$ kubectl rollout undo deployment/cdn-api -n cdn-control-plane
+kubectl.exe : Warning: resource deployments/cdn-api was previously managed with 'kubectl apply'. Rolling back will not update the kubectl.kubernetes.io/last-appl
+ied-configuration annotation, which may cause unexpected behavior on future 'kubectl apply' operations. Consider using 'kubectl apply' with your previous configu
+ration file instead.
+At C:\uni_year_4\high-load-systems\scripts\devops_lab3_demo.ps1:133 char:18
++         $text = (& $kubectl @KubectlArgs 2>&1 | Out-String)
++                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Warning: resour...n file instead.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+deployment.apps/cdn-api rolled back
+
+$ kubectl rollout history deployment/cdn-api -n cdn-control-plane
+deployment.apps/cdn-api 
+REVISION  CHANGE-CAUSE
+8         <none>
+10        <none>
+11        <none>
+
+

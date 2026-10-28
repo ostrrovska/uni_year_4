@@ -1,0 +1,6 @@
+﻿$ C:\Users\Kateryna\AppData\Local\Programs\k8stools\helm.exe version
+version.BuildInfo{Version:"v3.19.4", GitCommit:"7cfb6e486dac026202556836bb910c37d847793e", GitTreeState:"clean", GoVersion:"go1.24.11"}
+
+Lab 3 stack : namespace cdn-control-plane, nodePort 30080
+Lab 4 chart : namespace cdn-helm, nodePort 30081
+object names: chart objects are prefixed with the release name, so they cannot clash

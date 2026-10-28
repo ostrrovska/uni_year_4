@@ -1,0 +1,24 @@
+# DevOps Lab4
+apiVersion: v2
+name: cdn-control-plane
+description: Control plane for a CDN - edge-node registry, telemetry ingest, routing and purge orchestration
+type: application
+
+# version is the chart's own number: it moves whenever the packaging changes -
+# a new value, a renamed template, a fixed selector - even if the application
+# image is untouched.
+version: 0.1.0
+
+# appVersion is the default application version the chart deploys, and it is
+# what image.tag falls back to. The two are independent on purpose: repackaging
+# 1.0.0 differently bumps version alone, while shipping 1.1.0 with identical
+# templates bumps appVersion alone.
+appVersion: "1.0.0"
+
+keywords:
+  - cdn
+  - fastapi
+  - control-plane
+home: https://github.com/ostrrovska/uni_year_4
+maintainers:
+  - name: ostrrovska

@@ -1,0 +1,80 @@
+{{- /*
+DevOps Lab4
+
+strategy: Recreate, because a RollingUpdate would start the replacement pod
+before terminating the old one and both would contend for the same
+ReadWriteOnce volume - leaving the new pod Pending indefinitely.
+*/ -}}
+{{- if .Values.postgresql.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "cdn.fullname" . }}-postgresql
+  labels:
+    {{- include "cdn.labels" (dict "ctx" $ "component" "database") | nindent 4 }}
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      {{- include "cdn.selectorLabels" (dict "ctx" $ "component" "database") | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "cdn.labels" (dict "ctx" $ "component" "database") | nindent 8 }}
+    spec:
+      containers:
+        - name: postgresql
+          image: {{ .Values.postgresql.image | quote }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: postgresql
+              containerPort: 5432
+          env:
+            - name: POSTGRES_USER
+              value: {{ .Values.postgresql.auth.username | quote }}
+            - name: POSTGRES_DB
+              value: {{ .Values.postgresql.auth.database | quote }}
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "cdn.fullname" . }}-secrets
+                  key: POSTGRES_PASSWORD
+            # A subdirectory, so a provisioner that leaves lost+found in the
+            # mount root cannot make initdb refuse the data directory.
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+          {{- $probe := list "pg_isready" "-U" .Values.postgresql.auth.username "-d" .Values.postgresql.auth.database }}
+          startupProbe:
+            exec:
+              command: {{ $probe | toJson }}
+            periodSeconds: 5
+            failureThreshold: 24
+          readinessProbe:
+            exec:
+              command: {{ $probe | toJson }}
+            periodSeconds: 5
+            timeoutSeconds: 5
+            failureThreshold: 3
+          livenessProbe:
+            exec:
+              command: {{ $probe | toJson }}
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 6
+          resources:
+            {{- toYaml .Values.postgresql.resources | nindent 12 }}
+      volumes:
+        - name: data
+          {{- if .Values.postgresql.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ include "cdn.fullname" . }}-postgresql
+          {{- else }}
+          # No persistence requested: the database lives and dies with the pod.
+          emptyDir: {}
+          {{- end }}
+{{- end }}

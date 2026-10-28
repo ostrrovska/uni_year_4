@@ -1,0 +1,26 @@
+{{- /* DevOps Lab4 */ -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "cdn.fullname" . }}-config
+  labels:
+    {{- include "cdn.labels" (dict "ctx" $ "component" "config") | nindent 4 }}
+data:
+  APP_ENV: {{ .Values.config.appEnv | quote }}
+  LOG_LEVEL: {{ .Values.config.logLevel | quote }}
+
+  DB_POOL_SIZE: {{ .Values.config.dbPoolSize | quote }}
+  DB_MAX_OVERFLOW: {{ .Values.config.dbMaxOverflow | quote }}
+  DB_POOL_TIMEOUT: {{ .Values.config.dbPoolTimeout | quote }}
+
+  HEARTBEAT_STALE_AFTER_SECONDS: {{ .Values.config.heartbeatStaleAfterSeconds | quote }}
+  HEARTBEAT_INTERVAL_SECONDS: {{ .Values.config.heartbeatIntervalSeconds | quote }}
+  NODE_OVERLOAD_THRESHOLD_PERCENT: {{ .Values.config.nodeOverloadThresholdPercent | quote }}
+
+  ROUTING_DEFAULT_CANDIDATES: {{ .Values.config.routingDefaultCandidates | quote }}
+  ROUTING_MAX_CANDIDATES: {{ .Values.config.routingMaxCandidates | quote }}
+
+  CACHE_ENABLED: {{ .Values.config.cache.enabled | quote }}
+  REDIS_URL: {{ include "cdn.redisUrl" . | quote }}
+  CACHE_ROUTE_TTL_SECONDS: {{ .Values.config.cache.routeTtlSeconds | quote }}
+  CACHE_STATS_TTL_SECONDS: {{ .Values.config.cache.statsTtlSeconds | quote }}

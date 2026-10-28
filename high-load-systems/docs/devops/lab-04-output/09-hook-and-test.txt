@@ -1,0 +1,323 @@
+﻿$ C:\Users\Kateryna\AppData\Local\Programs\k8stools\helm.exe test cdn -n cdn-helm --logs
+NAME: cdn
+LAST DEPLOYED: Thu Oct 22 09:26:05 2026
+NAMESPACE: cdn-helm
+STATUS: deployed
+REVISION: 1
+TEST SUITE:     cdn-cdn-control-plane-test-api-ready
+Last Started:   Thu Oct 22 09:26:29 2026
+Last Completed: Thu Oct 22 09:26:32 2026
+Phase:          Succeeded
+NOTES:
+cdn-control-plane 0.1.0 is installed as release "cdn"
+in namespace "cdn-helm", running application version
+1.0.0.
+
+Wait for it to come up:
+
+  kubectl rollout status deployment/cdn-cdn-control-plane-api -n cdn-helm
+
+Open it:
+
+      minikube service cdn-cdn-control-plane-api -n cdn-helm --url
+
+  or go straight to the node port:
+
+      http://$(minikube ip):30081/docs
+
+Check it end to end:
+
+  helm test cdn -n cdn-helm
+
+helm.exe : Error: unable to get pod logs for cdn-cdn-control-plane-test-api-ready: pods "cdn-cdn-control-plane-test-api
+-ready" not found
+At C:\uni_year_4\high-load-systems\scripts\devops_lab4_demo.ps1:97 char:19
++     try { return (& $Exe @NativeArgs 2>&1 | Out-String) }
++                   ~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Error: unable t...eady" not found:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+$ C:\Users\Kateryna\AppData\Local\Programs\k8stools\helm.exe upgrade cdn C:\uni_year_4\high-load-systems\chart\cdn-control-plane -f C:\uni_year_4\high-load-systems\chart\cdn-control-plane\values-dev.yaml --set image.tag=1.1.0 -n cdn-helm --wait --timeout 10m
+Release "cdn" has been upgraded. Happy Helming!
+NAME: cdn
+LAST DEPLOYED: Thu Oct 22 09:26:32 2026
+NAMESPACE: cdn-helm
+STATUS: deployed
+REVISION: 2
+NOTES:
+cdn-control-plane 0.1.0 is installed as release "cdn"
+in namespace "cdn-helm", running application version
+1.1.0.
+
+Wait for it to come up:
+
+  kubectl rollout status deployment/cdn-cdn-control-plane-api -n cdn-helm
+
+Open it:
+
+      minikube service cdn-cdn-control-plane-api -n cdn-helm --url
+
+  or go straight to the node port:
+
+      http://$(minikube ip):30081/docs
+
+Check it end to end:
+
+  helm test cdn -n cdn-helm
+
+$ C:\Users\Kateryna\AppData\Local\Programs\k8stools\helm.exe get hooks cdn -n cdn-helm
+---
+# Source: cdn-control-plane/templates/tests/test-api-ready.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: cdn-cdn-control-plane-test-api-ready
+  labels:
+    helm.sh/chart: cdn-control-plane-0.1.0
+    app.kubernetes.io/name: cdn-control-plane
+    app.kubernetes.io/instance: cdn
+    app.kubernetes.io/component: test
+    app.kubernetes.io/version: "1.0.0"
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/part-of: cdn-control-plane
+  annotations:
+    "helm.sh/hook": test
+    # Removed once it passes, so `helm uninstall` leaves an empty namespace;
+    # a failed test pod is kept, because that is when its logs matter.
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  restartPolicy: Never
+  securityContext:
+    runAsGroup: 1000
+    runAsNonRoot: true
+    runAsUser: 1000
+  containers:
+    - name: test-api-ready
+      image: "ghcr.io/ostrrovska/cdn-control-plane:1.1.0"
+      imagePullPolicy: IfNotPresent
+      command:
+        - /bin/sh
+        - -c
+        - |
+          set -eu
+          base="http://cdn-cdn-control-plane-api:80"
+
+          echo "GET $base/health"
+          curl --fail --silent --show-error "$base/health"
+          echo
+
+          echo "GET $base/health/ready"
+          curl --fail --silent --show-error "$base/health/ready"
+          echo
+
+          echo "GET $base/api/v1/stats/network"
+          curl --fail --silent --show-error "$base/api/v1/stats/network" > /dev/null
+          echo "ok"
+---
+# Source: cdn-control-plane/templates/hooks/migrate-job.yaml
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: cdn-cdn-control-plane-migrate
+  labels:
+    helm.sh/chart: cdn-control-plane-0.1.0
+    app.kubernetes.io/name: cdn-control-plane
+    app.kubernetes.io/instance: cdn
+    app.kubernetes.io/component: migrate
+    app.kubernetes.io/version: "1.0.0"
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/part-of: cdn-control-plane
+  annotations:
+    "helm.sh/hook": post-install,pre-upgrade
+    "helm.sh/hook-weight": "-5"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  backoffLimit: 6
+  template:
+    metadata:
+      labels:
+        helm.sh/chart: cdn-control-plane-0.1.0
+        app.kubernetes.io/name: cdn-control-plane
+        app.kubernetes.io/instance: cdn
+        app.kubernetes.io/component: migrate
+        app.kubernetes.io/version: "1.0.0"
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/part-of: cdn-control-plane
+    spec:
+      # OnFailure, not Never: on a first install this hook starts while
+      # PostgreSQL is still initialising, and a retry is the cheapest wait.
+      restartPolicy: OnFailure
+      securityContext:
+        runAsGroup: 1000
+        runAsNonRoot: true
+        runAsUser: 1000
+      containers:
+        - name: migrate
+          image: "ghcr.io/ostrrovska/cdn-control-plane:1.1.0"
+          imagePullPolicy: IfNotPresent
+          # alembic.ini and migrations/ ship in the image, and env.py reads
+          # DATABASE_URL through app.core.config - nothing else is needed.
+          args: ["alembic", "upgrade", "head"]
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: cdn-cdn-control-plane-secrets
+                  key: DATABASE_URL
+          resources:
+            limits:
+              cpu: 500m
+              memory: 256Mi
+            requests:
+              cpu: 50m
+              memory: 128Mi
+---
+# Source: cdn-control-plane/templates/hooks/seed-job.yaml
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: cdn-cdn-control-plane-seed
+  labels:
+    helm.sh/chart: cdn-control-plane-0.1.0
+    app.kubernetes.io/name: cdn-control-plane
+    app.kubernetes.io/instance: cdn
+    app.kubernetes.io/component: seed
+    app.kubernetes.io/version: "1.0.0"
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/part-of: cdn-control-plane
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "5"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  backoffLimit: 6
+  template:
+    metadata:
+      labels:
+        helm.sh/chart: cdn-control-plane-0.1.0
+        app.kubernetes.io/name: cdn-control-plane
+        app.kubernetes.io/instance: cdn
+        app.kubernetes.io/component: seed
+        app.kubernetes.io/version: "1.0.0"
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/part-of: cdn-control-plane
+    spec:
+      restartPolicy: OnFailure
+      securityContext:
+        runAsGroup: 1000
+        runAsNonRoot: true
+        runAsUser: 1000
+      containers:
+        - name: seed
+          image: "ghcr.io/ostrrovska/cdn-control-plane:1.1.0"
+          imagePullPolicy: IfNotPresent
+          args: ["python", "-m", "scripts.seed"]
+          envFrom:
+            - configMapRef:
+                name: cdn-cdn-control-plane-config
+            - secretRef:
+                name: cdn-cdn-control-plane-secrets
+          resources:
+            limits:
+              cpu: 500m
+              memory: 256Mi
+            requests:
+              cpu: 50m
+              memory: 128Mi
+
+$ C:\Program Files\Docker\Docker\resources\bin\kubectl.exe get events -n cdn-helm --sort-by=.lastTimestamp
+LAST SEEN   TYPE      REASON                  OBJECT                                                   MESSAGE
+70s         Normal    Provisioning            persistentvolumeclaim/cdn-cdn-control-plane-postgresql   External provisioner is provisioning volume for claim "cdn-helm/cdn-cdn-control-plane-postgresql"
+70s         Normal    Scheduled               pod/cdn-cdn-control-plane-agents-7487659f4b-pcc8l        Successfully assigned cdn-helm/cdn-cdn-control-plane-agents-7487659f4b-pcc8l to minikube
+70s         Normal    ScalingReplicaSet       deployment/cdn-cdn-control-plane-api                     Scaled up replica set cdn-cdn-control-plane-api-7b8985c6f5 from 0 to 1
+70s         Normal    SuccessfulCreate        replicaset/cdn-cdn-control-plane-api-7b8985c6f5          Created pod: cdn-cdn-control-plane-api-7b8985c6f5-f7fz8
+70s         Normal    ScalingReplicaSet       deployment/cdn-cdn-control-plane-redis                   Scaled up replica set cdn-cdn-control-plane-redis-6cb5fffdb4 from 0 to 1
+70s         Normal    SuccessfulCreate        replicaset/cdn-cdn-control-plane-agents-7487659f4b       Created pod: cdn-cdn-control-plane-agents-7487659f4b-pcc8l
+70s         Normal    SuccessfulCreate        replicaset/cdn-cdn-control-plane-redis-6cb5fffdb4        Created pod: cdn-cdn-control-plane-redis-6cb5fffdb4-pc78n
+70s         Normal    Scheduled               pod/cdn-cdn-control-plane-postgresql-7d958dc868-kdrt9    Successfully assigned cdn-helm/cdn-cdn-control-plane-postgresql-7d958dc868-kdrt9 to minikube
+70s         Normal    Scheduled               pod/cdn-cdn-control-plane-api-7b8985c6f5-f7fz8           Successfully assigned cdn-helm/cdn-cdn-control-plane-api-7b8985c6f5-f7fz8 to minikube
+70s         Normal    SuccessfulCreate        replicaset/cdn-cdn-control-plane-postgresql-7d958dc868   Created pod: cdn-cdn-control-plane-postgresql-7d958dc868-kdrt9
+70s         Normal    ExternalProvisioning    persistentvolumeclaim/cdn-cdn-control-plane-postgresql   Waiting for a volume to be created either by the external provisioner 'k8s.io/minikube-hostpath' or manually by the system administrator. If volume creation is delayed, please verify that the provisioner is running and correctly registered.
+70s         Normal    Scheduled               pod/cdn-cdn-control-plane-redis-6cb5fffdb4-pc78n         Successfully assigned cdn-helm/cdn-cdn-control-plane-redis-6cb5fffdb4-pc78n to minikube
+70s         Normal    ScalingReplicaSet       deployment/cdn-cdn-control-plane-agents                  Scaled up replica set cdn-cdn-control-plane-agents-7487659f4b from 0 to 1
+70s         Normal    ScalingReplicaSet       deployment/cdn-cdn-control-plane-postgresql              Scaled up replica set cdn-cdn-control-plane-postgresql-7d958dc868 from 0 to 1
+70s         Normal    ProvisioningSucceeded   persistentvolumeclaim/cdn-cdn-control-plane-postgresql   Successfully provisioned volume pvc-f623f665-3b3c-4731-a79d-23f946616897
+69s         Normal    Started                 pod/cdn-cdn-control-plane-redis-6cb5fffdb4-pc78n         Container started
+69s         Normal    Started                 pod/cdn-cdn-control-plane-api-7b8985c6f5-f7fz8           Container started
+69s         Normal    Created                 pod/cdn-cdn-control-plane-redis-6cb5fffdb4-pc78n         Container created
+69s         Normal    Started                 pod/cdn-cdn-control-plane-postgresql-7d958dc868-kdrt9    Container started
+69s         Normal    Created                 pod/cdn-cdn-control-plane-postgresql-7d958dc868-kdrt9    Container created
+69s         Normal    Pulled                  pod/cdn-cdn-control-plane-postgresql-7d958dc868-kdrt9    Container image "postgres:16-alpine" already present on machine and can be accessed by the pod
+69s         Normal    Pulled                  pod/cdn-cdn-control-plane-agents-7487659f4b-pcc8l        Container image "ghcr.io/ostrrovska/cdn-control-plane:1.0.0" already present on machine and can be accessed by the pod
+69s         Normal    Pulled                  pod/cdn-cdn-control-plane-api-7b8985c6f5-f7fz8           Container image "ghcr.io/ostrrovska/cdn-control-plane:1.0.0" already present on machine and can be accessed by the pod
+69s         Normal    Created                 pod/cdn-cdn-control-plane-api-7b8985c6f5-f7fz8           Container created
+69s         Normal    Pulled                  pod/cdn-cdn-control-plane-redis-6cb5fffdb4-pc78n         Container image "redis:7-alpine" already present on machine and can be accessed by the pod
+69s         Normal    Created                 pod/cdn-cdn-control-plane-agents-7487659f4b-pcc8l        Container created
+69s         Warning   Unhealthy               pod/cdn-cdn-control-plane-redis-6cb5fffdb4-pc78n         Readiness probe failed: Could not connect to Redis at 127.0.0.1:6379: Connection refused
+69s         Normal    Started                 pod/cdn-cdn-control-plane-agents-7487659f4b-pcc8l        Container started
+67s         Warning   Unhealthy               pod/cdn-cdn-control-plane-api-7b8985c6f5-f7fz8           Startup probe failed: Get "http://10.244.0.34:8000/health": dial tcp 10.244.0.34:8000: connect: connection refused
+60s         Warning   FailedCreate            job/cdn-cdn-control-plane-migrate                        Error creating: Unauthorized
+59s         Normal    SuccessfulCreate        job/cdn-cdn-control-plane-migrate                        Created pod: cdn-cdn-control-plane-migrate-xgknl
+59s         Normal    Scheduled               pod/cdn-cdn-control-plane-migrate-xgknl                  Successfully assigned cdn-helm/cdn-cdn-control-plane-migrate-xgknl to minikube
+58s         Normal    Pulled                  pod/cdn-cdn-control-plane-migrate-xgknl                  Container image "ghcr.io/ostrrovska/cdn-control-plane:1.0.0" already present on machine and can be accessed by the pod
+58s         Normal    Created                 pod/cdn-cdn-control-plane-migrate-xgknl                  Container created
+58s         Normal    Started                 pod/cdn-cdn-control-plane-migrate-xgknl                  Container started
+53s         Normal    SuccessfulCreate        job/cdn-cdn-control-plane-seed                           Created pod: cdn-cdn-control-plane-seed-8srnb
+53s         Normal    Completed               job/cdn-cdn-control-plane-migrate                        Job completed
+53s         Normal    Scheduled               pod/cdn-cdn-control-plane-seed-8srnb                     Successfully assigned cdn-helm/cdn-cdn-control-plane-seed-8srnb to minikube
+52s         Normal    Pulled                  pod/cdn-cdn-control-plane-seed-8srnb                     Container image "ghcr.io/ostrrovska/cdn-control-plane:1.0.0" already present on machine and can be accessed by the pod
+52s         Normal    Started                 pod/cdn-cdn-control-plane-seed-8srnb                     Container started
+52s         Normal    Created                 pod/cdn-cdn-control-plane-seed-8srnb                     Container created
+47s         Normal    Completed               job/cdn-cdn-control-plane-seed                           Job completed
+45s         Normal    Pulled                  pod/cdn-cdn-control-plane-test-api-ready                 Container image "ghcr.io/ostrrovska/cdn-control-plane:1.0.0" already present on machine and can be accessed by the pod
+45s         Normal    Started                 pod/cdn-cdn-control-plane-test-api-ready                 Container started
+45s         Normal    Created                 pod/cdn-cdn-control-plane-test-api-ready                 Container created
+45s         Normal    Scheduled               pod/cdn-cdn-control-plane-test-api-ready                 Successfully assigned cdn-helm/cdn-cdn-control-plane-test-api-ready to minikube
+43s         Normal    Scheduled               pod/cdn-cdn-control-plane-migrate-r7z7k                  Successfully assigned cdn-helm/cdn-cdn-control-plane-migrate-r7z7k to minikube
+43s         Normal    SuccessfulCreate        job/cdn-cdn-control-plane-migrate                        Created pod: cdn-cdn-control-plane-migrate-r7z7k
+42s         Normal    Started                 pod/cdn-cdn-control-plane-migrate-r7z7k                  Container started
+42s         Normal    Pulled                  pod/cdn-cdn-control-plane-migrate-r7z7k                  Container image "ghcr.io/ostrrovska/cdn-control-plane:1.1.0" already present on machine and can be accessed by the pod
+42s         Normal    Created                 pod/cdn-cdn-control-plane-migrate-r7z7k                  Container created
+37s         Normal    Completed               job/cdn-cdn-control-plane-migrate                        Job completed
+36s         Normal    Started                 pod/cdn-cdn-control-plane-api-54dfdcb99d-tg4v7           Container started
+36s         Normal    ScalingReplicaSet       deployment/cdn-cdn-control-plane-api                     Scaled up replica set cdn-cdn-control-plane-api-54dfdcb99d from 0 to 1
+36s         Normal    ScalingReplicaSet       deployment/cdn-cdn-control-plane-agents                  Scaled down replica set cdn-cdn-control-plane-agents-7487659f4b from 1 to 0
+36s         Normal    Pulled                  pod/cdn-cdn-control-plane-api-54dfdcb99d-tg4v7           Container image "ghcr.io/ostrrovska/cdn-control-plane:1.1.0" already present on machine and can be accessed by the pod
+36s         Normal    Created                 pod/cdn-cdn-control-plane-api-54dfdcb99d-tg4v7           Container created
+36s         Normal    SuccessfulCreate        replicaset/cdn-cdn-control-plane-api-54dfdcb99d          Created pod: cdn-cdn-control-plane-api-54dfdcb99d-tg4v7
+36s         Normal    Scheduled               pod/cdn-cdn-control-plane-api-54dfdcb99d-tg4v7           Successfully assigned cdn-helm/cdn-cdn-control-plane-api-54dfdcb99d-tg4v7 to minikube
+36s         Normal    SuccessfulDelete        replicaset/cdn-cdn-control-plane-agents-7487659f4b       Deleted pod: cdn-cdn-control-plane-agents-7487659f4b-pcc8l
+36s         Normal    Killing                 pod/cdn-cdn-control-plane-agents-7487659f4b-pcc8l        Stopping container agents
+33s         Warning   Unhealthy               pod/cdn-cdn-control-plane-api-54dfdcb99d-tg4v7           Startup probe failed: Get "http://10.244.0.40:8000/health": dial tcp 10.244.0.40:8000: connect: connection refused
+28s         Normal    Killing                 pod/cdn-cdn-control-plane-api-7b8985c6f5-f7fz8           Stopping container api
+28s         Normal    SuccessfulDelete        replicaset/cdn-cdn-control-plane-api-7b8985c6f5          Deleted pod: cdn-cdn-control-plane-api-7b8985c6f5-f7fz8
+28s         Normal    ScalingReplicaSet       deployment/cdn-cdn-control-plane-api                     Scaled down replica set cdn-cdn-control-plane-api-7b8985c6f5 from 1 to 0
+22s         Warning   Unhealthy               pod/cdn-cdn-control-plane-api-7b8985c6f5-f7fz8           Readiness probe failed: Get "http://10.244.0.34:8000/health/ready": dial tcp 10.244.0.34:8000: connect: connection refused
+7s          Normal    SuccessfulCreate        replicaset/cdn-cdn-control-plane-agents-bfcb6d5c9        Created pod: cdn-cdn-control-plane-agents-bfcb6d5c9-h7tht
+7s          Normal    Scheduled               pod/cdn-cdn-control-plane-agents-bfcb6d5c9-h7tht         Successfully assigned cdn-helm/cdn-cdn-control-plane-agents-bfcb6d5c9-h7tht to minikube
+7s          Normal    Pulled                  pod/cdn-cdn-control-plane-agents-bfcb6d5c9-h7tht         Container image "ghcr.io/ostrrovska/cdn-control-plane:1.1.0" already present on machine and can be accessed by the pod
+7s          Normal    Created                 pod/cdn-cdn-control-plane-agents-bfcb6d5c9-h7tht         Container created
+7s          Normal    Started                 pod/cdn-cdn-control-plane-agents-bfcb6d5c9-h7tht         Container started
+7s          Normal    ScalingReplicaSet       deployment/cdn-cdn-control-plane-agents                  Scaled up replica set cdn-cdn-control-plane-agents-bfcb6d5c9 from 0 to 1
+6s          Normal    Pulled                  pod/cdn-cdn-control-plane-seed-rxrnx                     Container image "ghcr.io/ostrrovska/cdn-control-plane:1.1.0" already present on machine and can be accessed by the pod
+6s          Normal    Created                 pod/cdn-cdn-control-plane-seed-rxrnx                     Container created
+6s          Normal    Started                 pod/cdn-cdn-control-plane-seed-rxrnx                     Container started
+6s          Normal    Scheduled               pod/cdn-cdn-control-plane-seed-rxrnx                     Successfully assigned cdn-helm/cdn-cdn-control-plane-seed-rxrnx to minikube
+6s          Normal    SuccessfulCreate        job/cdn-cdn-control-plane-seed                           Created pod: cdn-cdn-control-plane-seed-rxrnx
+0s          Normal    Completed               job/cdn-cdn-control-plane-seed                           Job completed
+
+events mentioning the migration hook:
+60s         Warning   FailedCreate            job/cdn-cdn-control-plane-migrate                        Error creating: Unauthorized
+59s         Normal    SuccessfulCreate        job/cdn-cdn-control-plane-migrate                        Created pod: cdn-cdn-control-plane-migrate-xgknl
+59s         Normal    Scheduled               pod/cdn-cdn-control-plane-migrate-xgknl                  Successfully assigned cdn-helm/cdn-cdn-control-plane-migrate-xgknl to minikube
+58s         Normal    Pulled                  pod/cdn-cdn-control-plane-migrate-xgknl                  Container image "ghcr.io/ostrrovska/cdn-control-plane:1.0.0" already present on machine and can be accessed by the pod
+58s         Normal    Created                 pod/cdn-cdn-control-plane-migrate-xgknl                  Container created
+58s         Normal    Started                 pod/cdn-cdn-control-plane-migrate-xgknl                  Container started
+53s         Normal    Completed               job/cdn-cdn-control-plane-migrate                        Job completed
+43s         Normal    Scheduled               pod/cdn-cdn-control-plane-migrate-r7z7k                  Successfully assigned cdn-helm/cdn-cdn-control-plane-migrate-r7z7k to minikube
+43s         Normal    SuccessfulCreate        job/cdn-cdn-control-plane-migrate                        Created pod: cdn-cdn-control-plane-migrate-r7z7k
+42s         Normal    Started                 pod/cdn-cdn-control-plane-migrate-r7z7k                  Container started
+42s         Normal    Pulled                  pod/cdn-cdn-control-plane-migrate-r7z7k                  Container image "ghcr.io/ostrrovska/cdn-control-plane:1.1.0" already present on machine and can be accessed by the pod
+42s         Normal    Created                 pod/cdn-cdn-control-plane-migrate-r7z7k                  Container created
+37s         Normal    Completed               job/cdn-cdn-control-plane-migrate                        Job completed

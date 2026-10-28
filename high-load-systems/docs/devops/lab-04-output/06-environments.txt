@@ -1,0 +1,10 @@
+﻿$ helm template cdn-dev  chart/cdn-control-plane -f values-dev.yaml   > rendered-dev.yaml
+$ helm template cdn-prod chart/cdn-control-plane -f values-prod.yaml  > rendered-prod.yaml
+
+dev  : tag 1.0.0, 1 api replica,  NodePort 30081, no Ingress, LOG_LEVEL DEBUG
+prod : tag 1.1.0, 3 api replicas, ClusterIP,      Ingress on, LOG_LEVEL WARNING
+
+value precedence (lowest to highest):
+  chart values.yaml                        -> image tag 1.0.0
+  -f values-prod.yaml                      -> image tag 1.1.0
+  -f values-prod.yaml --set image.tag=...  -> image tag 9.9.9

@@ -1,0 +1,49 @@
+{{- /*
+DevOps Lab4 - task 9, variant (b): the release test.
+
+`helm test` runs this pod against an installed release. It proves more than
+"the pods are Running": it goes through the Service, so DNS, the selector, the
+endpoint set and the readiness gate all have to be right, and /health/ready
+itself executes SELECT 1 - so a green test means the release can actually reach
+its database.
+
+The application image already ships curl (the Dockerfile installs it for its
+HEALTHCHECK), so the test needs no second image and no registry pull.
+*/ -}}
+apiVersion: v1
+kind: Pod
+metadata:
+  name: {{ include "cdn.fullname" . }}-test-api-ready
+  labels:
+    {{- include "cdn.labels" (dict "ctx" $ "component" "test") | nindent 4 }}
+  annotations:
+    "helm.sh/hook": test
+    # Removed once it passes, so `helm uninstall` leaves an empty namespace;
+    # a failed test pod is kept, because that is when its logs matter.
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  restartPolicy: Never
+  securityContext:
+    {{- toYaml .Values.podSecurityContext | nindent 4 }}
+  containers:
+    - name: test-api-ready
+      image: {{ include "cdn.image" . | quote }}
+      imagePullPolicy: {{ .Values.image.pullPolicy }}
+      command:
+        - /bin/sh
+        - -c
+        - |
+          set -eu
+          base="http://{{ include "cdn.fullname" . }}-api:{{ .Values.api.service.port }}"
+
+          echo "GET $base/health"
+          curl --fail --silent --show-error "$base/health"
+          echo
+
+          echo "GET $base/health/ready"
+          curl --fail --silent --show-error "$base/health/ready"
+          echo
+
+          echo "GET $base/api/v1/stats/network"
+          curl --fail --silent --show-error "$base/api/v1/stats/network" > /dev/null
+          echo "ok"

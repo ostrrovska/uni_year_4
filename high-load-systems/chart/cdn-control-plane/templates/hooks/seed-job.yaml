@@ -1,0 +1,42 @@
+{{- /*
+DevOps Lab4
+
+The demo fleet, matching Compose's `seed` service behind its `demo` profile.
+A post-install hook rather than a plain Job so it runs after the API exists,
+and weighted after the migration. The seed is deterministic and idempotent
+(UUIDv5 keys), so a re-run against a populated database is a no-op.
+*/ -}}
+{{- if .Values.seed.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "cdn.fullname" . }}-seed
+  labels:
+    {{- include "cdn.labels" (dict "ctx" $ "component" "seed") | nindent 4 }}
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "5"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  backoffLimit: 6
+  template:
+    metadata:
+      labels:
+        {{- include "cdn.labels" (dict "ctx" $ "component" "seed") | nindent 8 }}
+    spec:
+      restartPolicy: OnFailure
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: seed
+          image: {{ include "cdn.image" . | quote }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args: ["python", "-m", "scripts.seed"]
+          envFrom:
+            - configMapRef:
+                name: {{ include "cdn.fullname" . }}-config
+            - secretRef:
+                name: {{ include "cdn.fullname" . }}-secrets
+          resources:
+            {{- toYaml .Values.seed.resources | nindent 12 }}
+{{- end }}

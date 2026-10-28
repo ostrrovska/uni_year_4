@@ -1,0 +1,56 @@
+{{- /* DevOps Lab4 */ -}}
+{{ .Chart.Name }} {{ .Chart.Version }} is installed as release "{{ .Release.Name }}"
+in namespace "{{ .Release.Namespace }}", running application version
+{{ .Values.image.tag | default .Chart.AppVersion }}.
+
+Wait for it to come up:
+
+  kubectl rollout status deployment/{{ include "cdn.fullname" . }}-api -n {{ .Release.Namespace }}
+
+Open it:
+{{- if .Values.ingress.enabled }}
+
+  The Ingress serves host {{ .Values.ingress.host }}. Point that name at your
+  ingress controller, then browse to:
+
+      http://{{ .Values.ingress.host }}/docs
+
+  On minikube, either run "minikube tunnel" in an elevated shell, or try it
+  without touching your hosts file:
+
+      curl -H "Host: {{ .Values.ingress.host }}" http://$(minikube ip)/health
+{{- else if eq .Values.api.service.type "NodePort" }}
+
+      minikube service {{ include "cdn.fullname" . }}-api -n {{ .Release.Namespace }} --url
+{{- if .Values.api.service.nodePort }}
+
+  or go straight to the node port:
+
+      http://$(minikube ip):{{ .Values.api.service.nodePort }}/docs
+{{- else }}
+
+  The node port was allocated by Kubernetes, so read it off the Service first:
+
+      kubectl get svc {{ include "cdn.fullname" . }}-api -n {{ .Release.Namespace }} -o jsonpath="{.spec.ports[0].nodePort}"
+{{- end }}
+{{- else }}
+
+  The Service is ClusterIP, so forward a local port to it:
+
+      kubectl port-forward svc/{{ include "cdn.fullname" . }}-api 8181:{{ .Values.api.service.port }} -n {{ .Release.Namespace }}
+      curl http://127.0.0.1:8181/health
+{{- end }}
+
+Check it end to end:
+
+  helm test {{ .Release.Name }} -n {{ .Release.Namespace }}
+
+{{- if not .Values.config.cache.enabled }}
+
+Note: the distributed cache is disabled, so every read goes to PostgreSQL.
+{{- end }}
+{{- if and .Values.postgresql.enabled (not .Values.postgresql.persistence.enabled) }}
+
+Warning: PostgreSQL is running on an emptyDir. Its data is lost when the pod
+is replaced. Set postgresql.persistence.enabled=true for anything but a demo.
+{{- end }}

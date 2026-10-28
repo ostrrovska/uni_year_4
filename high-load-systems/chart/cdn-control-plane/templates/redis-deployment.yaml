@@ -1,0 +1,55 @@
+{{- /*
+DevOps Lab4
+
+No PVC and no persistence flags: a cache that survives a restart full of stale
+entries is worse than a cold one, and the client is fail-open anyway.
+*/ -}}
+{{- if .Values.redis.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "cdn.fullname" . }}-redis
+  labels:
+    {{- include "cdn.labels" (dict "ctx" $ "component" "cache") | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "cdn.selectorLabels" (dict "ctx" $ "component" "cache") | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "cdn.labels" (dict "ctx" $ "component" "cache") | nindent 8 }}
+    spec:
+      containers:
+        - name: redis
+          image: {{ .Values.redis.image | quote }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args:
+            - redis-server
+            - --save
+            - ""
+            - --appendonly
+            - "no"
+            - --maxmemory
+            - {{ .Values.redis.maxmemory | quote }}
+            - --maxmemory-policy
+            - {{ .Values.redis.maxmemoryPolicy | quote }}
+          ports:
+            - name: redis
+              containerPort: 6379
+          readinessProbe:
+            exec:
+              command: ["redis-cli", "ping"]
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+          livenessProbe:
+            exec:
+              command: ["redis-cli", "ping"]
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 5
+          resources:
+            {{- toYaml .Values.redis.resources | nindent 12 }}
+{{- end }}

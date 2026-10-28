@@ -1,0 +1,21 @@
+# DevOps Lab3
+# ClusterIP and no NodePort: Lab 3's encapsulation criterion applies to the
+# cache exactly as it did under Compose, where redis publishes nothing.
+apiVersion: v1
+kind: Service
+metadata:
+  name: cdn-redis
+  namespace: cdn-control-plane
+  labels:
+    app.kubernetes.io/name: cdn-control-plane
+    app.kubernetes.io/component: cache
+    app.kubernetes.io/part-of: cdn-control-plane
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: cdn-control-plane
+    app.kubernetes.io/component: cache
+  ports:
+    - name: redis
+      port: 6379
+      targetPort: redis

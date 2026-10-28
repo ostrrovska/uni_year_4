@@ -1,0 +1,171 @@
+# DevOps Lab4
+# Defaults describe a development install: one small API replica set, the cache
+# on, the Ingress off, and the database running inside the chart. values-dev.yaml
+# and values-prod.yaml layer on top of this file; nothing here is a production
+# setting by accident.
+
+nameOverride: ""
+fullnameOverride: ""
+
+image:
+  repository: ghcr.io/ostrrovska/cdn-control-plane
+  # Empty means "use Chart.appVersion". Set explicitly to pin a release, which
+  # is what `--set image.tag=1.1.0` does during the upgrade demonstration.
+  tag: ""
+  # IfNotPresent, because the lab tags are side-loaded with `minikube image load`
+  # and are not pullable from ghcr.io.
+  pullPolicy: IfNotPresent
+
+# Application settings. Rendered into one ConfigMap and read by pydantic-settings
+# as UPPER_SNAKE environment variables; see app/core/config.py.
+config:
+  appEnv: development
+  logLevel: INFO
+
+  # (dbPoolSize + dbMaxOverflow) x api.replicaCount is the connection ceiling
+  # against PostgreSQL's max_connections. At these defaults that is 20 per pod.
+  dbPoolSize: 10
+  dbMaxOverflow: 10
+  dbPoolTimeout: 10
+
+  heartbeatStaleAfterSeconds: 120
+  heartbeatIntervalSeconds: 10
+  nodeOverloadThresholdPercent: 85
+
+  routingDefaultCandidates: 3
+  routingMaxCandidates: 10
+
+  cache:
+    # Independent of redis.enabled: a provisioned Redis can still be bypassed,
+    # which is how the Lab 4 cache-off control run was measured.
+    enabled: true
+    # Equal to heartbeatIntervalSeconds on purpose - a cached route embeds
+    # heartbeat-derived eligibility, so its staleness must not outlive one
+    # telemetry cycle.
+    routeTtlSeconds: 10
+    statsTtlSeconds: 30
+
+api:
+  replicaCount: 2
+  service:
+    type: NodePort
+    port: 80
+    # Only consulted when service.type is NodePort. Empty means "let Kubernetes
+    # allocate one", which is the only safe default: a fixed nodePort is
+    # cluster-wide, so two releases of this chart with the same value would
+    # collide and the second install would fail.
+    nodePort: ""
+  # maxUnavailable: 0 is what makes a zero-downtime upgrade a guarantee rather
+  # than a probability - a new pod must pass readiness before an old one goes.
+  rollingUpdate:
+    maxUnavailable: 0
+    maxSurge: 1
+  # Delays SIGTERM so the pod keeps serving while its removal from the Service
+  # endpoints propagates to every node. Without it a rolling update drops the
+  # odd request even with maxUnavailable: 0.
+  preStopSleepSeconds: 5
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: "1"
+      memory: 384Mi
+
+# The edge-agent simulator. One replica is a correctness constraint, not a
+# resource decision: it rewrites the same heartbeat rows on a timer.
+agents:
+  enabled: true
+  watchIntervalSeconds: 10
+  resources:
+    requests:
+      cpu: 50m
+      memory: 96Mi
+    limits:
+      cpu: 500m
+      memory: 256Mi
+
+# `alembic upgrade head`, as a post-install/pre-upgrade hook so it runs exactly
+# once per release: post-install on the very first one, because a pre-install
+# hook would run before PostgreSQL itself exists, and pre-upgrade on every one
+# after it, strictly before the new replicas roll out.
+migrate:
+  enabled: true
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 256Mi
+
+# The deterministic demo fleet. Off by default - an empty cluster is the honest
+# default and the seed is a demo convenience.
+seed:
+  enabled: false
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 256Mi
+
+postgresql:
+  enabled: true
+  image: postgres:16-alpine
+  auth:
+    username: cdn
+    database: cdn_control_plane
+    # Lab credential. A real deployment would set this from a secret store, or
+    # point externalDatabase.url at a managed instance and disable this block.
+    password: cdn
+  persistence:
+    enabled: true
+    size: 1Gi
+    # Empty means the cluster's default StorageClass.
+    storageClass: ""
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: "1"
+      memory: 512Mi
+
+# Used only when postgresql.enabled is false.
+externalDatabase:
+  url: ""
+
+redis:
+  enabled: true
+  image: redis:7-alpine
+  maxmemory: 192mb
+  # Recency-skewed workload: a release makes one path hot for minutes and then
+  # it cools, so LFU would keep long-dead popular paths resident.
+  maxmemoryPolicy: allkeys-lru
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 500m
+      memory: 256Mi
+
+externalRedis:
+  url: ""
+
+ingress:
+  enabled: false
+  className: nginx
+  host: cdn.local
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-next-upstream: "error timeout non_idempotent http_502 http_503 http_504"
+    nginx.ingress.kubernetes.io/proxy-next-upstream-tries: "3"
+
+# Applied to every pod this chart owns. The image already creates and switches
+# to the unprivileged `app` user (uid 1000).
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  runAsGroup: 1000

@@ -1,0 +1,46 @@
+# DevOps Lab3
+# The non-secret half of what docker-compose.yml carries in its `x-api-environment`
+# anchor, shared by the api, agents, migrate and seed workloads. Compose has to
+# repeat that anchor in every override file because anchors do not cross files;
+# one ConfigMap removes the duplication outright.
+#
+# Everything here is read by pydantic-settings as UPPER_SNAKE environment
+# variables (app/core/config.py). Unknown keys are ignored by `extra="ignore"`,
+# so adding a key cannot break a running pod.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cdn-app-config
+  namespace: cdn-control-plane
+  labels:
+    app.kubernetes.io/name: cdn-control-plane
+    app.kubernetes.io/component: config
+    app.kubernetes.io/part-of: cdn-control-plane
+data:
+  APP_ENV: "development"
+  LOG_LEVEL: "INFO"
+
+  # (DB_POOL_SIZE + DB_MAX_OVERFLOW) x replicas is the real connection ceiling:
+  # 20 per pod against PostgreSQL's default max_connections of 100, so the api
+  # Deployment must stay at or below 4 replicas without a pooler in front.
+  DB_POOL_SIZE: "10"
+  DB_MAX_OVERFLOW: "10"
+  DB_POOL_TIMEOUT: "10"
+
+  # 120s rather than the production-realistic 30s, matching docker-compose.yml:
+  # a live demo should not have its seeded fleet age out of the routing pool
+  # between two curl commands.
+  HEARTBEAT_STALE_AFTER_SECONDS: "120"
+  HEARTBEAT_INTERVAL_SECONDS: "10"
+  NODE_OVERLOAD_THRESHOLD_PERCENT: "85"
+
+  ROUTING_DEFAULT_CANDIDATES: "3"
+  ROUTING_MAX_CANDIDATES: "10"
+
+  # The Lab 4 cache, on here because the cluster provisions Redis. The client is
+  # fail-open behind a circuit breaker, so a dead Redis degrades to BYPASS rather
+  # than taking the API down - which is why no workload waits on it to start.
+  CACHE_ENABLED: "true"
+  REDIS_URL: "redis://cdn-redis:6379/0"
+  CACHE_ROUTE_TTL_SECONDS: "10"
+  CACHE_STATS_TTL_SECONDS: "30"

@@ -1,0 +1,16 @@
+# DevOps Lab3
+# Kept apart from cdn-app-config because these two keys configure the database
+# container itself, not the application. The application never reads them - it
+# only ever sees the assembled DATABASE_URL from the Secret.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cdn-postgres-config
+  namespace: cdn-control-plane
+  labels:
+    app.kubernetes.io/name: cdn-control-plane
+    app.kubernetes.io/component: database
+    app.kubernetes.io/part-of: cdn-control-plane
+data:
+  POSTGRES_USER: "cdn"
+  POSTGRES_DB: "cdn_control_plane"

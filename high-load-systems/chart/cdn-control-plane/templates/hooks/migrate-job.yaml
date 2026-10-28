@@ -1,0 +1,76 @@
+{{- /*
+DevOps Lab4 - task 9, variant (b): the release hook.
+
+docker-compose.yml runs `alembic upgrade head` as a one-shot service rather than
+from the API's startup path, because with N replicas every one of them would
+otherwise race to apply the same migration to the same database. Compose can
+express "before the API starts" with depends_on; a plain Kubernetes Job cannot,
+and the manifests in k8s/ lean on the readiness probe to paper over the gap.
+
+A hook closes it properly: Helm runs this Job to completion as its own phase,
+rather than applying it alongside everything else and hoping.
+
+post-install, NOT pre-install - and that distinction is the whole trick. A
+pre-install hook runs before any of the release's own objects exist, so on a
+first install it would be dialling a PostgreSQL Service that Helm has not
+created yet; it would retry until its backoff ran out and deadlock the install.
+Running it post-install means the database is already up. This is safe only
+because readiness does not depend on the schema: /health/ready executes
+SELECT 1, so the api pods go Ready as soon as PostgreSQL answers, `--wait`
+is satisfied, and this hook then applies the schema. Had readiness queried a
+real table, install would deadlock the other way round.
+
+pre-upgrade is the half the assignment asks for, and the half that matters in
+production: on every subsequent release the schema is applied strictly before
+the new pods roll out, so no replica ever runs against a schema older than its
+code.
+
+hook-weight -5: lower weights run first, so this stays ahead of the seed hook
+in the shared post-install phase.
+
+hook-delete-policy before-hook-creation,hook-succeeded - and the omission
+matters as much as the inclusion. Without hook-succeeded the Job is orphaned on
+`helm uninstall` and the namespace is not actually empty afterwards. With it, a
+hook that worked leaves nothing behind. `hook-failed` is deliberately absent, so
+a hook that *failed* is kept - which is exactly when `kubectl logs` is worth
+having.
+*/ -}}
+{{- if .Values.migrate.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "cdn.fullname" . }}-migrate
+  labels:
+    {{- include "cdn.labels" (dict "ctx" $ "component" "migrate") | nindent 4 }}
+  annotations:
+    "helm.sh/hook": post-install,pre-upgrade
+    "helm.sh/hook-weight": "-5"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  backoffLimit: 6
+  template:
+    metadata:
+      labels:
+        {{- include "cdn.labels" (dict "ctx" $ "component" "migrate") | nindent 8 }}
+    spec:
+      # OnFailure, not Never: on a first install this hook starts while
+      # PostgreSQL is still initialising, and a retry is the cheapest wait.
+      restartPolicy: OnFailure
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: migrate
+          image: {{ include "cdn.image" . | quote }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          # alembic.ini and migrations/ ship in the image, and env.py reads
+          # DATABASE_URL through app.core.config - nothing else is needed.
+          args: ["alembic", "upgrade", "head"]
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "cdn.fullname" . }}-secrets
+                  key: DATABASE_URL
+          resources:
+            {{- toYaml .Values.migrate.resources | nindent 12 }}
+{{- end }}

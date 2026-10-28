@@ -1,0 +1,51 @@
+# DevOps Lab4
+# Development overlay: the smallest useful install. One replica (no redundancy
+# to pay for on a laptop), a NodePort instead of an Ingress so no controller is
+# required, the demo fleet seeded, and debug-level logging.
+#
+#   helm install cdn-dev ./chart/cdn-control-plane \
+#       -n cdn-dev --create-namespace -f ./chart/cdn-control-plane/values-dev.yaml
+
+image:
+  tag: "1.0.0"
+
+config:
+  appEnv: development
+  logLevel: DEBUG
+
+api:
+  replicaCount: 1
+  service:
+    type: NodePort
+    # 30081, not 30080: the hand-written manifests in k8s/ already own 30080,
+    # and the point of Lab 4 is to be able to run the chart alongside them and
+    # compare the two.
+    nodePort: 30081
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 256Mi
+
+seed:
+  enabled: true
+
+postgresql:
+  persistence:
+    # 1Gi is already generous for a seeded demo fleet.
+    size: 1Gi
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 384Mi
+
+redis:
+  maxmemory: 64mb
+
+ingress:
+  enabled: false

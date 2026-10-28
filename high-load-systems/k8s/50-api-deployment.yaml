@@ -1,0 +1,118 @@
+# DevOps Lab3
+# The compute tier. Under Compose this had to be three separately named services
+# (api1, api2, api3) because nginx OSS resolves an upstream hostname once at
+# startup and never again. Kubernetes removes that constraint - kube-proxy keeps
+# the Service's endpoint set current as pods come and go - so the whole pool
+# collapses into one Deployment whose replica count is a single number.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cdn-api
+  namespace: cdn-control-plane
+  labels:
+    app.kubernetes.io/name: cdn-control-plane
+    app.kubernetes.io/component: api
+    app.kubernetes.io/part-of: cdn-control-plane
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      # maxUnavailable: 0 is what makes "the application stayed available during
+      # the update" true rather than merely likely: a new pod must pass its
+      # readiness probe before an old one is allowed to go away.
+      maxUnavailable: 0
+      maxSurge: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: cdn-control-plane
+      app.kubernetes.io/component: api
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: cdn-control-plane
+        app.kubernetes.io/component: api
+        app.kubernetes.io/part-of: cdn-control-plane
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+      containers:
+        - name: api
+          image: ghcr.io/ostrrovska/cdn-control-plane:1.0.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8000
+          # maxUnavailable: 0 guarantees that enough pods are *Ready*; it does
+          # not stop traffic reaching one that is shutting down. Removing a pod
+          # from the Service endpoints and sending it SIGTERM happen in
+          # parallel, and kube-proxy on every node learns about the removal a
+          # moment later - so for a short window requests are still routed to a
+          # process that has already closed its listener. A measured rollout
+          # without this hook lost 2 of 557 requests in exactly that window.
+          #
+          # preStop delays SIGTERM, not the shutdown: the pod keeps serving
+          # while the endpoint removal propagates, and only then does uvicorn
+          # begin its graceful shutdown. 5s is comfortably more than
+          # propagation takes on a single-node cluster and stays well inside
+          # the 30s default termination grace period.
+          lifecycle:
+            preStop:
+              exec:
+                command: ["sleep", "5"]
+          envFrom:
+            - configMapRef:
+                name: cdn-app-config
+            - secretRef:
+                name: cdn-secrets
+          # INSTANCE_ID is deliberately left unset: app/core/instance.py falls
+          # back to the hostname, which here is the pod name. That makes
+          # `curl /health` self-identifying, and a loop over it is the direct
+          # evidence of how traffic spreads across replicas.
+          # Liveness checks the process and nothing else. Pointing it at
+          # /health/ready instead would restart every replica the moment the
+          # database blipped, converting a recoverable dependency failure into
+          # a fleet-wide outage.
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          # Readiness is the endpoint HAProxy polls under Compose, and these
+          # numbers reproduce its `inter 2s fall 2 rise 2` exactly: a replica
+          # that cannot reach PostgreSQL leaves the Service in about 4s and
+          # rejoins on its own.
+          #
+          # failureThreshold is 2 and not 1 on the strength of a measurement:
+          # loadbalancer/nginx/pools/3.conf records a run where one-strike
+          # ejection dropped throughput from 190 to 110 req/s, because a
+          # momentarily saturated instance is not a dead one and a single
+          # unlucky probe must not be allowed to say otherwise.
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: http
+            periodSeconds: 2
+            timeoutSeconds: 2
+            failureThreshold: 2
+            successThreshold: 2
+          # The schema is applied by the cdn-migrate Job, which may still be
+          # running when these pods start. startupProbe gives the first boot a
+          # generous window without loosening the steady-state probes above.
+          startupProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 3
+            failureThreshold: 30
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: "1"
+              memory: 384Mi

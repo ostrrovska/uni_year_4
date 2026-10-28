@@ -1,0 +1,510 @@
+﻿$ kubectl set image deployment/cdn-api api=ghcr.io/ostrrovska/cdn-control-plane:9.9.9-does-not-exist -n cdn-control-plane
+deployment.apps/cdn-api image updated
+
+$ kubectl get pods -n cdn-control-plane -l app.kubernetes.io/component=api
+NAME                       READY   STATUS         RESTARTS   AGE
+cdn-api-575484d897-4tzcq   0/1     Completed      0          2m42s
+cdn-api-65bc558786-hc5jk   0/1     ErrImagePull   0          2s
+cdn-api-bf5c997b-497sx     1/1     Running        0          22s
+cdn-api-bf5c997b-9p9hk     1/1     Running        0          40s
+cdn-api-bf5c997b-l97sp     1/1     Running        0          31s
+cdn-api-bf5c997b-sggjc     1/1     Running        0          15s
+
+$ kubectl describe pod cdn-api-65bc558786-hc5jk -n cdn-control-plane
+Name:             cdn-api-65bc558786-hc5jk
+Namespace:        cdn-control-plane
+Priority:         0
+Service Account:  default
+Node:             minikube/192.168.49.2
+Start Time:       Thu, 22 Oct 2026 11:35:07 +0300
+Labels:           app.kubernetes.io/component=api
+                  app.kubernetes.io/name=cdn-control-plane
+                  app.kubernetes.io/part-of=cdn-control-plane
+                  pod-template-hash=65bc558786
+Annotations:      <none>
+Status:           Pending
+IP:               10.244.0.157
+IPs:
+  IP:           10.244.0.157
+Controlled By:  ReplicaSet/cdn-api-65bc558786
+Containers:
+  api:
+    Container ID:   
+    Image:          ghcr.io/ostrrovska/cdn-control-plane:9.9.9-does-not-exist
+    Image ID:       
+    Port:           8000/TCP (http)
+    Host Port:      0/TCP (http)
+    State:          Waiting
+      Reason:       ErrImagePull
+    Ready:          False
+    Restart Count:  0
+    Limits:
+      cpu:     1
+      memory:  384Mi
+    Requests:
+      cpu:      100m
+      memory:   128Mi
+    Liveness:   http-get http://:http/health delay=0s timeout=3s period=10s #success=1 #failure=3
+    Readiness:  http-get http://:http/health/ready delay=0s timeout=2s period=2s #success=2 #failure=2
+    Startup:    http-get http://:http/health delay=0s timeout=1s period=3s #success=1 #failure=30
+    Environment Variables from:
+      cdn-app-config  ConfigMap  Optional: false
+      cdn-secrets     Secret     Optional: false
+    Environment:      <none>
+    Mounts:
+      /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-5bkzt (ro)
+Conditions:
+  Type                        Status
+  PodReadyToStartContainers   True 
+  Initialized                 True 
+  Ready                       False 
+  ContainersReady             False 
+  PodScheduled                True 
+Volumes:
+  kube-api-access-5bkzt:
+    Type:                    Projected (a volume that contains injected data from multiple sources)
+    TokenExpirationSeconds:  3607
+    ConfigMapName:           kube-root-ca.crt
+    Optional:                false
+    DownwardAPI:             true
+QoS Class:                   Burstable
+Node-Selectors:              <none>
+Tolerations:                 node.kubernetes.io/not-ready:NoExecute op=Exists for 300s
+                             node.kubernetes.io/unreachable:NoExecute op=Exists for 300s
+Events:
+  Type     Reason     Age   From               Message
+  ----     ------     ----  ----               -------
+  Normal   Scheduled  4s    default-scheduler  Successfully assigned cdn-control-plane/cdn-api-65bc558786-hc5jk to minikube
+  Normal   Pulling    4s    kubelet            spec.containers{api}: Pulling image "ghcr.io/ostrrovska/cdn-control-plane:9.9.9-does-not-exist"
+  Warning  Failed     3s    kubelet            spec.containers{api}: Failed to pull image "ghcr.io/ostrrovska/cdn-control-plane:9.9.9-does-not-exist": rpc error: code = NotFound desc = failed to pull and unpack image "ghcr.io/ostrrovska/cdn-control-plane:9.9.9-does-not-exist": failed to resolve reference "ghcr.io/ostrrovska/cdn-control-plane:9.9.9-does-not-exist": ghcr.io/ostrrovska/cdn-control-plane:9.9.9-does-not-exist: not found
+  Warning  Failed     3s    kubelet            spec.containers{api}: Error: ErrImagePull
+  Normal   BackOff    2s    kubelet            spec.containers{api}: Back-off pulling image "ghcr.io/ostrrovska/cdn-control-plane:9.9.9-does-not-exist"
+  Warning  Failed     2s    kubelet            spec.containers{api}: Error: ImagePullBackOff
+
+$ kubectl get events -n cdn-control-plane --sort-by=.lastTimestamp
+LAST SEEN   TYPE      REASON                  OBJECT                                    MESSAGE
+93m         Normal    Scheduled               pod/cdn-redis-7d6ff79598-7kqhw            Successfully assigned cdn-control-plane/cdn-redis-7d6ff79598-7kqhw to minikube
+93m         Normal    SuccessfulCreate        job/cdn-seed                              Created pod: cdn-seed-h9kmg
+93m         Normal    Scheduled               pod/cdn-migrate-sl4qh                     Successfully assigned cdn-control-plane/cdn-migrate-sl4qh to minikube
+93m         Normal    SuccessfulCreate        job/cdn-migrate                           Created pod: cdn-migrate-sl4qh
+93m         Normal    SuccessfulCreate        replicaset/cdn-agents-cf447c9f7           Created pod: cdn-agents-cf447c9f7-2sw9r
+93m         Normal    ScalingReplicaSet       deployment/cdn-agents                     Scaled up replica set cdn-agents-cf447c9f7 from 0 to 1
+93m         Normal    ScalingReplicaSet       deployment/cdn-api                        Scaled up replica set cdn-api-bf5c997b from 0 to 2
+93m         Normal    Pulled                  pod/cdn-agents-cf447c9f7-2sw9r            Container image "ghcr.io/ostrrovska/cdn-control-plane:1.0.0" already present on machine and can be accessed by the pod
+93m         Normal    Scheduled               pod/cdn-postgres-55b89fb78d-57f9w         Successfully assigned cdn-control-plane/cdn-postgres-55b89fb78d-57f9w to minikube
+93m         Normal    Created                 pod/cdn-api-bf5c997b-sx5nc                Container created
+93m         Normal    SuccessfulCreate        replicaset/cdn-api-bf5c997b               Created pod: cdn-api-bf5c997b-qjxkk
+93m         Normal    SuccessfulCreate        replicaset/cdn-api-bf5c997b               Created pod: cdn-api-bf5c997b-sx5nc
+93m         Normal    Started                 pod/cdn-redis-7d6ff79598-7kqhw            Container started
+93m         Normal    ScalingReplicaSet       deployment/cdn-postgres                   Scaled up replica set cdn-postgres-55b89fb78d from 0 to 1
+93m         Normal    ProvisioningSucceeded   persistentvolumeclaim/cdn-postgres-data   Successfully provisioned volume pvc-08551767-5682-4ac7-a210-950031d73c5d
+93m         Normal    Provisioning            persistentvolumeclaim/cdn-postgres-data   External provisioner is provisioning volume for claim "cdn-control-plane/cdn-postgres-data"
+93m         Normal    ExternalProvisioning    persistentvolumeclaim/cdn-postgres-data   Waiting for a volume to be created either by the external provisioner 'k8s.io/minikube-hostpath' or manually by the system administrator. If volume creation is delayed, please verify that the provisioner is running and correctly registered.
+93m         Normal    SuccessfulCreate        replicaset/cdn-postgres-55b89fb78d        Created pod: cdn-postgres-55b89fb78d-57f9w
+93m         Normal    SuccessfulCreate        replicaset/cdn-redis-7d6ff79598           Created pod: cdn-redis-7d6ff79598-7kqhw
+93m         Normal    Scheduled               pod/cdn-seed-h9kmg                        Successfully assigned cdn-control-plane/cdn-seed-h9kmg to minikube
+93m         Normal    Scheduled               pod/cdn-api-bf5c997b-sx5nc                Successfully assigned cdn-control-plane/cdn-api-bf5c997b-sx5nc to minikube
+93m         Normal    ScalingReplicaSet       deployment/cdn-redis                      Scaled up replica set cdn-redis-7d6ff79598 from 0 to 1
+93m         Normal    Created                 pod/cdn-api-bf5c997b-qjxkk                Container created
+93m         Normal    Scheduled               pod/cdn-api-bf5c997b-qjxkk                Successfully assigned cdn-control-plane/cdn-api-bf5c997b-qjxkk to minikube
+93m         Normal    Scheduled               pod/cdn-agents-cf447c9f7-2sw9r            Successfully assigned cdn-control-plane/cdn-agents-cf447c9f7-2sw9r to minikube
+93m         Normal    Pulled                  pod/cdn-redis-7d6ff79598-7kqhw            Container image "redis:7-alpine" already present on machine and can be accessed by the pod
+93m         Normal    Pulled                  pod/cdn-api-bf5c997b-qjxkk                Container image "ghcr.io/ostrrovska/cdn-control-plane:1.0.0" already present on machine and can be accessed by the pod
+93m         Normal    Started                 pod/cdn-agents-cf447c9f7-2sw9r            Container started
+93m         Normal    Pulled                  pod/cdn-postgres-55b89fb78d-57f9w         Container image "postgres:16-alpine" already present on machine and can be accessed by the pod
+93m         Normal    Started                 pod/cdn-postgres-55b89fb78d-57f9w         Container started
+93m         Normal    Created                 pod/cdn-redis-7d6ff79598-7kqhw            Container created
+93m         Normal    Started                 pod/cdn-api-bf5c997b-sx5nc                Container started
+93m         Normal    Pulled                  pod/cdn-api-bf5c997b-sx5nc                Container image "ghcr.io/ostrrovska/cdn-control-plane:1.0.0" already present on machine and can be accessed by the pod
+93m         Normal    Started                 pod/cdn-api-bf5c997b-qjxkk                Container started
+93m         Normal    Created                 pod/cdn-agents-cf447c9f7-2sw9r            Container created
+93m         Normal    Created                 pod/cdn-postgres-55b89fb78d-57f9w         Container created
+93m         Warning   Unhealthy               pod/cdn-api-bf5c997b-qjxkk                Startup probe failed: Get "http://10.244.0.109:8000/health": dial tcp 10.244.0.109:8000: connect: connection refused
+93m         Warning   Unhealthy               pod/cdn-api-bf5c997b-sx5nc                Startup probe failed: Get "http://10.244.0.108:8000/health": dial tcp 10.244.0.108:8000: connect: connection refused
+93m         Normal    Created                 pod/cdn-migrate-sl4qh                     Container created
+93m         Normal    Started                 pod/cdn-migrate-sl4qh                     Container started
+93m         Normal    Pulled                  pod/cdn-migrate-sl4qh                     Container image "ghcr.io/ostrrovska/cdn-control-plane:1.0.0" already present on machine and can be accessed by the pod
+93m         Warning   BackOff                 pod/cdn-seed-h9kmg                        Back-off restarting failed container seed in pod cdn-seed-h9kmg_cdn-control-plane(000498f9-ab87-4cbc-a896-3e73843399cb)
+93m         Normal    Completed               job/cdn-migrate                           Job completed
+93m         Normal    Started                 pod/cdn-seed-h9kmg                        Container started
+93m         Normal    Created                 pod/cdn-seed-h9kmg                        Container created
+93m         Normal    Pulled                  pod/cdn-seed-h9kmg                        Container image "ghcr.io/ostrrovska/cdn-control-plane:1.0.0" already present on machine and can be accessed by the pod
+93m         Normal    Sync                    ingress/cdn-api                           Scheduled for sync
+93m         Normal    Completed               job/cdn-seed                              Job completed
+93m         Normal    SuccessfulCreate        replicaset/cdn-api-bf5c997b               Created pod: cdn-api-bf5c997b-h6z2t
+93m         Normal    Killing                 pod/cdn-api-bf5c997b-qjxkk                Stopping container api
+93m         Normal    Created                 pod/cdn-api-bf5c997b-h6z2t                Container created
+93m         Normal    Pulled                  pod/cdn-api-bf5c997b-h6z2t                Container image "ghcr.io/ostrrovska/cdn-control-plane:1.0.0" already present on machine and can be accessed by the pod
+93m         Normal    Scheduled               pod/cdn-api-bf5c997b-h6z2t                Successfully assigned cdn-control-plane/cdn-api-bf5c997b-h6z2t to minikube
+93m         Normal    Started                 pod/cdn-api-bf5c997b-h6z2t                Container started
+93m         Normal    Scheduled               pod/cdn-api-bf5c997b-dvw68                Successfully assigned cdn-control-plane/cdn-api-bf5c997b-dvw68 to minikube
+93m         Normal    Scheduled               pod/cdn-api-bf5c997b-2bd9v                Successfully assigned cdn-control-plane/cdn-api-bf5c997b-2bd9v to minikube
+93m         Normal    SuccessfulCreate        replicaset/cdn-api-bf5c997b               Created pod: cdn-api-bf5c997b-2bd9v
+93m         Normal    SuccessfulCreate        replicaset/cdn-api-bf5c997b               Created pod: cdn-api-bf5c997b-dvw68
+93m         Normal    Started                 pod/cdn-api-bf5c997b-dvw68                Container started
+93m         Normal    Created                 pod/cdn-api-bf5c997b-dvw68                Container created
+93m         Normal    Started                 pod/cdn-api-bf5c997b-2bd9v                Container started
+93m         Normal    Created                 pod/cdn-api-bf5c997b-2bd9v                Container created
+93m         Normal    Pulled                  pod/cdn-api-bf5c997b-2bd9v                Container image "ghcr.io/ostrrovska/cdn-control-plane:1.0.0" already present on machine and can be accessed by the pod
+93m         Normal    Pulled                  pod/cdn-api-bf5c997b-dvw68                Container image "ghcr.io/ostrrovska/cdn-control-plane:1.0.0" already present on machine and can be accessed by the pod
+92m         Normal    Pulled                  pod/cdn-probe-spread                      Container image "ghcr.io/ostrrovska/cdn-control-plane:1.0.0" already present on machine and can be accessed by the pod
+92m         Normal    Started                 pod/cdn-probe-spread                      Container started
+92m         Normal    Scheduled               pod/cdn-probe-spread                      Successfully assigned cdn-control-plane/cdn-probe-spread to minikube
+92m         Normal    Created                 pod/cdn-probe-spread                      Container created
+92m         Normal    Created                 pod/cdn-probe-rollout                     Container created
+92m         Normal    Scheduled               pod/cdn-probe-rollout                     Successfully assigned cdn-control-plane/cdn-probe-rollout to minikube
+92m         Normal    Started                 pod/cdn-probe-rollout                     Container started
+92m         Normal    Pulled                  pod/cdn-probe-rollout                     Container image "ghcr.io/ostrrovska/cdn-control-plane:1.0.0" already present on machine and can be accessed by the pod
+92m         Normal    SuccessfulCreate        replicaset/cdn-api-575484d897             Created pod: cdn-api-575484d897-6wg4l
+92m         Normal    Scheduled               pod/cdn-api-575484d897-6wg4l              Successfully assigned cdn-control-plane/cdn-api-575484d897-6wg4l to minikube
+92m         Normal    Started                 pod/cdn-api-575484d897-6wg4l              Container started
+92m         Normal    Created                 pod/cdn-api-575484d897-6wg4l              Container created
+92m         Normal    Pulled                  pod/cdn-api-575484d897-6wg4l              Container image "ghcr.io/ostrrovska/cdn-control-plane:1.1.0" already present on machine and can be accessed by the pod
+92m         Normal    Killing                 pod/cdn-api-bf5c997b-2bd9v                Stopping container api
+92m         Normal    Scheduled               pod/cdn-api-575484d897-mgf58              Successfully assigned cdn-control-plane/cdn-api-575484d897-mgf58 to minikube
+92m         Normal    SuccessfulDelete        replicaset/cdn-api-bf5c997b               Deleted pod: cdn-api-bf5c997b-2bd9v
+92m         Normal    SuccessfulCreate        replicaset/cdn-api-575484d897             Created pod: cdn-api-575484d897-mgf58
+92m         Normal    Started                 pod/cdn-api-575484d897-mgf58              Container started
+92m         Normal    Pulled                  pod/cdn-api-575484d897-mgf58              Container image "ghcr.io/ostrrovska/cdn-control-plane:1.1.0" already present on machine and can be accessed by the pod
+92m         Normal    Created                 pod/cdn-api-575484d897-mgf58              Container created
+92m         Normal    SuccessfulCreate        replicaset/cdn-api-575484d897             Created pod: cdn-api-575484d897-zwj24
+92m         Normal    Killing                 pod/cdn-api-bf5c997b-dvw68                Stopping container api
+92m         Normal    SuccessfulDelete        replicaset/cdn-api-bf5c997b               Deleted pod: cdn-api-bf5c997b-dvw68
+92m         Normal    Scheduled               pod/cdn-api-575484d897-zwj24              Successfully assigned cdn-control-plane/cdn-api-575484d897-zwj24 to minikube
+92m         Normal    Started                 pod/cdn-api-575484d897-zwj24              Container started
+92m         Normal    Pulled                  pod/cdn-api-575484d897-zwj24              Container image "ghcr.io/ostrrovska/cdn-control-plane:1.1.0" already present on machine and can be accessed by the pod
+92m         Normal    Created                 pod/cdn-api-575484d897-zwj24              Container created
+92m         Warning   Unhealthy               pod/cdn-api-bf5c997b-2bd9v                Readiness probe failed: Get "http://10.244.0.113:8000/health/ready": context deadline exceeded (Client.Timeout exceeded while awaiting headers)
+92m         Normal    SuccessfulDelete        replicaset/cdn-api-bf5c997b               Deleted pod: cdn-api-bf5c997b-h6z2t
+92m         Normal    Scheduled               pod/cdn-api-575484d897-mf49g              Successfully assigned cdn-control-plane/cdn-api-575484d897-mf49g to minikube
+92m         Normal    SuccessfulCreate        replicaset/cdn-api-575484d897             Created pod: cdn-api-575484d897-mf49g
+92m         Normal    Killing                 pod/cdn-api-bf5c997b-h6z2t                Stopping container api
+92m         Normal    Pulled                  pod/cdn-api-575484d897-mf49g              Container image "ghcr.io/ostrrovska/cdn-control-plane:1.1.0" already present on machine and can be accessed by the pod
+92m         Normal    Started                 pod/cdn-api-575484d897-mf49g              Container started
+92m         Normal    Created                 pod/cdn-api-575484d897-mf49g              Container created
+92m         Warning   Unhealthy               pod/cdn-api-bf5c997b-h6z2t                Readiness probe failed: Get "http://10.244.0.112:8000/health/ready": dial tcp 10.244.0.112:8000: connect: connection refused
+92m         Normal    Killing                 pod/cdn-api-bf5c997b-sx5nc                Stopping container api
+92m         Normal    SuccessfulDelete        replicaset/cdn-api-bf5c997b               Deleted pod: cdn-api-bf5c997b-sx5nc
+89m         Normal    SuccessfulCreate        replicaset/cdn-api-bf5c997b               Created pod: cdn-api-bf5c997b-7r8lm
+89m         Normal    Started                 pod/cdn-api-bf5c997b-7r8lm                Container started
+89m         Normal    Scheduled               pod/cdn-api-bf5c997b-7r8lm                Successfully assigned cdn-control-plane/cdn-api-bf5c997b-7r8lm to minikube
+89m         Normal    Pulled                  pod/cdn-api-bf5c997b-7r8lm                Container image "ghcr.io/ostrrovska/cdn-control-plane:1.0.0" already present on machine and can be accessed by the pod
+89m         Normal    Created                 pod/cdn-api-bf5c997b-7r8lm                Container created
+89m         Normal    Started                 pod/cdn-api-bf5c997b-6l9qj                Container started
+89m         Normal    Created                 pod/cdn-api-bf5c997b-6l9qj                Container created
+89m         Normal    SuccessfulCreate        replicaset/cdn-api-bf5c997b               Created pod: cdn-api-bf5c997b-6l9qj
+89m         Normal    Scheduled               pod/cdn-api-bf5c997b-6l9qj                Successfully assigned cdn-control-plane/cdn-api-bf5c997b-6l9qj to minikube
+89m         Normal    SuccessfulDelete        replicaset/cdn-api-575484d897             Deleted pod: cdn-api-575484d897-6wg4l
+89m         Normal    Pulled                  pod/cdn-api-bf5c997b-6l9qj                Container image "ghcr.io/ostrrovska/cdn-control-plane:1.0.0" already present on machine and can be accessed by the pod
+89m         Normal    Killing                 pod/cdn-api-575484d897-6wg4l              Stopping container api
+89m         Normal    Scheduled               pod/cdn-api-bf5c997b-p7klj                Successfully assigned cdn-control-plane/cdn-api-bf5c997b-p7klj to minikube
+89m         Normal    SuccessfulCreate        replicaset/cdn-api-bf5c997b               Created pod: cdn-api-bf5c997b-p7klj
+89m         Normal    Killing                 pod/cdn-api-575484d897-mf49g              Stopping container api
+89m         Normal    Started                 pod/cdn-api-bf5c997b-p7klj                Container started
+89m         Normal    Created                 pod/cdn-api-bf5c997b-p7klj                Container created
+89m         Normal    SuccessfulDelete        replicaset/cdn-api-575484d897             Deleted pod: cdn-api-575484d897-mf49g
+89m         Normal    Pulled                  pod/cdn-api-bf5c997b-p7klj                Container image "ghcr.io/ostrrovska/cdn-control-plane:1.0.0" already present on machine and can be accessed by the pod
+89m         Normal    Pulled                  pod/cdn-api-bf5c997b-2fl7r                Container image "ghcr.io/ostrrovska/cdn-control-plane:1.0.0" already present on machine and can be accessed by the pod
+89m         Normal    Scheduled               pod/cdn-api-bf5c997b-2fl7r                Successfully assigned cdn-control-plane/cdn-api-bf5c997b-2fl7r to minikube
+89m         Normal    Killing                 pod/cdn-api-575484d897-mgf58              Stopping container api
+89m         Normal    Started                 pod/cdn-api-bf5c997b-2fl7r                Container started
+89m         Normal    SuccessfulCreate        replicaset/cdn-api-bf5c997b               Created pod: cdn-api-bf5c997b-2fl7r
+89m         Normal    SuccessfulDelete        replicaset/cdn-api-575484d897             Deleted pod: cdn-api-575484d897-mgf58
+89m         Normal    Created                 pod/cdn-api-bf5c997b-2fl7r                Container created
+89m         Normal    Killing                 pod/cdn-api-575484d897-zwj24              Stopping container api
+89m         Normal    SuccessfulDelete        replicaset/cdn-api-575484d897             Deleted pod: cdn-api-575484d897-zwj24
+88m         Normal    Scheduled               pod/cdn-api-65bc558786-csbkb              Successfully assigned cdn-control-plane/cdn-api-65bc558786-csbkb to minikube
+88m         Normal    SuccessfulCreate        replicaset/cdn-api-65bc558786             Created pod: cdn-api-65bc558786-csbkb
+88m         Warning   Failed                  pod/cdn-api-65bc558786-csbkb              Failed to pull image "ghcr.io/ostrrovska/cdn-control-plane:9.9.9-does-not-exist": rpc error: code = NotFound desc = failed to pull and unpack image "ghcr.io/ostrrovska/cdn-control-plane:9.9.9-does-not-exist": failed to resolve reference "ghcr.io/ostrrovska/cdn-control-plane:9.9.9-does-not-exist": ghcr.io/ostrrovska/cdn-control-plane:9.9.9-does-not-exist: not found
+88m         Normal    Pulling                 pod/cdn-api-65bc558786-csbkb              Pulling image "ghcr.io/ostrrovska/cdn-control-plane:9.9.9-does-not-exist"
+88m         Warning   Failed                  pod/cdn-api-65bc558786-csbkb              Error: ErrImagePull
+88m         Warning   Failed                  pod/cdn-api-65bc558786-csbkb              Error: ImagePullBackOff
+88m         Normal    BackOff                 pod/cdn-api-65bc558786-csbkb              Back-off pulling image "ghcr.io/ostrrovska/cdn-control-plane:9.9.9-does-not-exist"
+88m         Normal    SuccessfulDelete        replicaset/cdn-api-65bc558786             Deleted pod: cdn-api-65bc558786-csbkb
+88m         Normal    Scheduled               pod/cdn-probe-final                       Successfully assigned cdn-control-plane/cdn-probe-final to minikube
+88m         Normal    Started                 pod/cdn-probe-final                       Container started
+88m         Normal    Created                 pod/cdn-probe-final                       Container created
+88m         Normal    Pulled                  pod/cdn-probe-final                       Container image "ghcr.io/ostrrovska/cdn-control-plane:1.0.0" already present on machine and can be accessed by the pod
+88m         Normal    Killing                 pod/cdn-api-bf5c997b-p7klj                Stopping container api
+88m         Normal    Killing                 pod/cdn-api-bf5c997b-6l9qj                Stopping container api
+88m         Normal    SuccessfulDelete        replicaset/cdn-api-bf5c997b               Deleted pod: cdn-api-bf5c997b-6l9qj
+88m         Normal    SuccessfulDelete        replicaset/cdn-api-bf5c997b               Deleted pod: cdn-api-bf5c997b-p7klj
+8m8s        Normal    SuccessfulCreate        job/cdn-migrate                           Created pod: cdn-migrate-nwh5b
+8m8s        Normal    Scheduled               pod/cdn-migrate-nwh5b                     Successfully assigned cdn-control-plane/cdn-migrate-nwh5b to minikube
+8m8s        Normal    SuccessfulCreate        job/cdn-seed                              Created pod: cdn-seed-9qkhv
+8m8s        Normal    Scheduled               pod/cdn-seed-9qkhv                        Successfully assigned cdn-control-plane/cdn-seed-9qkhv to minikube
+8m7s        Normal    Started                 pod/cdn-seed-9qkhv                        Container started
+8m7s        Normal    Created                 pod/cdn-seed-9qkhv                        Container created
+8m7s        Normal    Pulled                  pod/cdn-seed-9qkhv                        Container image "ghcr.io/ostrrovska/cdn-control-plane:1.0.0" already present on machine and can be accessed by the pod
+8m7s        Normal    Started                 pod/cdn-migrate-nwh5b                     Container started
+8m7s        Normal    Created                 pod/cdn-migrate-nwh5b                     Container created
+8m7s        Normal    Pulled                  pod/cdn-migrate-nwh5b                     Container image "ghcr.io/ostrrovska/cdn-control-plane:1.0.0" already present on machine and can be accessed by the pod
+7m58s       Normal    Completed               job/cdn-migrate                           Job completed
+7m58s       Normal    Completed               job/cdn-seed                              Job completed
+7m50s       Normal    Scheduled               pod/cdn-api-bf5c997b-9tw46                Successfully assigned cdn-control-plane/cdn-api-bf5c997b-9tw46 to minikube
+7m50s       Normal    SuccessfulCreate        replicaset/cdn-api-bf5c997b               Created pod: cdn-api-bf5c997b-9tw46
+7m50s       Normal    Killing                 pod/cdn-api-bf5c997b-2fl7r                Stopping container api
+7m49s       Normal    Started                 pod/cdn-api-bf5c997b-9tw46                Container started
+7m49s       Normal    Created                 pod/cdn-api-bf5c997b-9tw46                Container created
+7m49s       Normal    Pulled                  pod/cdn-api-bf5c997b-9tw46                Container image "ghcr.io/ostrrovska/cdn-control-plane:1.0.0" already present on machine and can be accessed by the pod
+7m46s       Warning   Unhealthy               pod/cdn-api-bf5c997b-9tw46                Startup probe failed: Get "http://10.244.0.129:8000/health": dial tcp 10.244.0.129:8000: connect: connection refused
+7m43s       Warning   Unhealthy               pod/cdn-api-bf5c997b-2fl7r                Readiness probe failed: Get "http://10.244.0.124:8000/health/ready": dial tcp 10.244.0.124:8000: connect: connection refused
+7m39s       Normal    Scheduled               pod/cdn-api-bf5c997b-th82g                Successfully assigned cdn-control-plane/cdn-api-bf5c997b-th82g to minikube
+7m39s       Normal    ScalingReplicaSet       deployment/cdn-api                        Scaled up replica set cdn-api-bf5c997b from 2 to 4
+7m39s       Normal    SuccessfulCreate        replicaset/cdn-api-bf5c997b               Created pod: cdn-api-bf5c997b-th82g
+7m39s       Normal    SuccessfulCreate        replicaset/cdn-api-bf5c997b               Created pod: cdn-api-bf5c997b-828js
+7m39s       Normal    Pulled                  pod/cdn-api-bf5c997b-828js                Container image "ghcr.io/ostrrovska/cdn-control-plane:1.0.0" already present on machine and can be accessed by the pod
+7m39s       Normal    Created                 pod/cdn-api-bf5c997b-828js                Container created
+7m39s       Normal    Scheduled               pod/cdn-api-bf5c997b-828js                Successfully assigned cdn-control-plane/cdn-api-bf5c997b-828js to minikube
+7m39s       Normal    Created                 pod/cdn-api-bf5c997b-th82g                Container created
+7m39s       Normal    Pulled                  pod/cdn-api-bf5c997b-th82g                Container image "ghcr.io/ostrrovska/cdn-control-plane:1.0.0" already present on machine and can be accessed by the pod
+7m38s       Normal    Started                 pod/cdn-api-bf5c997b-th82g                Container started
+7m38s       Normal    Started                 pod/cdn-api-bf5c997b-828js                Container started
+7m36s       Warning   Unhealthy               pod/cdn-api-bf5c997b-th82g                Startup probe failed: Get "http://10.244.0.131:8000/health": dial tcp 10.244.0.131:8000: connect: connection refused
+7m36s       Warning   Unhealthy               pod/cdn-api-bf5c997b-828js                Startup probe failed: Get "http://10.244.0.130:8000/health": dial tcp 10.244.0.130:8000: connect: connection refused
+7m31s       Normal    Scheduled               pod/cdn-probe-spread                      Successfully assigned cdn-control-plane/cdn-probe-spread to minikube
+7m30s       Normal    Started                 pod/cdn-probe-spread                      Container started
+7m30s       Normal    Created                 pod/cdn-probe-spread                      Container created
+7m30s       Normal    Pulled                  pod/cdn-probe-spread                      Container image "ghcr.io/ostrrovska/cdn-control-plane:1.0.0" already present on machine and can be accessed by the pod
+7m24s       Normal    Scheduled               pod/cdn-probe-rollout                     Successfully assigned cdn-control-plane/cdn-probe-rollout to minikube
+7m24s       Normal    Pulled                  pod/cdn-probe-rollout                     Container image "ghcr.io/ostrrovska/cdn-control-plane:1.0.0" already present on machine and can be accessed by the pod
+7m23s       Normal    Created                 pod/cdn-probe-rollout                     Container created
+7m23s       Normal    Started                 pod/cdn-probe-rollout                     Container started
+7m18s       Normal    SuccessfulCreate        replicaset/cdn-api-575484d897             Created pod: cdn-api-575484d897-dc9l7
+7m18s       Normal    ScalingReplicaSet       deployment/cdn-api                        Scaled up replica set cdn-api-575484d897 from 0 to 1
+7m18s       Normal    Scheduled               pod/cdn-api-575484d897-dc9l7              Successfully assigned cdn-control-plane/cdn-api-575484d897-dc9l7 to minikube
+7m17s       Normal    Created                 pod/cdn-api-575484d897-dc9l7              Container created
+7m17s       Normal    Pulled                  pod/cdn-api-575484d897-dc9l7              Container image "ghcr.io/ostrrovska/cdn-control-plane:1.1.0" already present on machine and can be accessed by the pod
+7m17s       Normal    Started                 pod/cdn-api-575484d897-dc9l7              Container started
+7m12s       Warning   Unhealthy               pod/cdn-api-575484d897-dc9l7              Startup probe failed: Get "http://10.244.0.134:8000/health": dial tcp 10.244.0.134:8000: connect: connection refused
+7m7s        Normal    Killing                 pod/cdn-api-bf5c997b-th82g                Stopping container api
+7m7s        Normal    ScalingReplicaSet       deployment/cdn-api                        Scaled up replica set cdn-api-575484d897 from 1 to 2
+7m7s        Normal    SuccessfulDelete        replicaset/cdn-api-bf5c997b               Deleted pod: cdn-api-bf5c997b-th82g
+7m7s        Normal    SuccessfulCreate        replicaset/cdn-api-575484d897             Created pod: cdn-api-575484d897-jncrw
+7m7s        Normal    ScalingReplicaSet       deployment/cdn-api                        Scaled down replica set cdn-api-bf5c997b from 4 to 3
+7m7s        Normal    Scheduled               pod/cdn-api-575484d897-jncrw              Successfully assigned cdn-control-plane/cdn-api-575484d897-jncrw to minikube
+7m6s        Normal    Started                 pod/cdn-api-575484d897-jncrw              Container started
+7m6s        Normal    Pulled                  pod/cdn-api-575484d897-jncrw              Container image "ghcr.io/ostrrovska/cdn-control-plane:1.1.0" already present on machine and can be accessed by the pod
+7m6s        Normal    Created                 pod/cdn-api-575484d897-jncrw              Container created
+7m5s        Warning   Unhealthy               pod/cdn-api-575484d897-jncrw              Startup probe failed: Get "http://10.244.0.135:8000/health": dial tcp 10.244.0.135:8000: connect: connection refused
+6m59s       Warning   Unhealthy               pod/cdn-api-bf5c997b-th82g                Readiness probe failed: Get "http://10.244.0.131:8000/health/ready": context deadline exceeded (Client.Timeout exceeded while awaiting headers)
+6m59s       Normal    ScalingReplicaSet       deployment/cdn-api                        Scaled up replica set cdn-api-575484d897 from 2 to 3
+6m59s       Normal    Scheduled               pod/cdn-api-575484d897-gvq5s              Successfully assigned cdn-control-plane/cdn-api-575484d897-gvq5s to minikube
+6m59s       Normal    Pulled                  pod/cdn-api-575484d897-gvq5s              Container image "ghcr.io/ostrrovska/cdn-control-plane:1.1.0" already present on machine and can be accessed by the pod
+6m59s       Normal    SuccessfulCreate        replicaset/cdn-api-575484d897             Created pod: cdn-api-575484d897-gvq5s
+6m59s       Normal    Killing                 pod/cdn-api-bf5c997b-828js                Stopping container api
+6m59s       Normal    Created                 pod/cdn-api-575484d897-gvq5s              Container created
+6m59s       Normal    SuccessfulDelete        replicaset/cdn-api-bf5c997b               Deleted pod: cdn-api-bf5c997b-828js
+6m59s       Normal    ScalingReplicaSet       deployment/cdn-api                        Scaled down replica set cdn-api-bf5c997b from 3 to 2
+6m58s       Normal    Started                 pod/cdn-api-575484d897-gvq5s              Container started
+6m56s       Warning   Unhealthy               pod/cdn-api-575484d897-gvq5s              Startup probe failed: Get "http://10.244.0.136:8000/health": dial tcp 10.244.0.136:8000: connect: connection refused
+6m54s       Warning   Unhealthy               pod/cdn-api-bf5c997b-828js                Readiness probe failed: Get "http://10.244.0.130:8000/health/ready": dial tcp 10.244.0.130:8000: connect: connection refused
+6m51s       Normal    SuccessfulCreate        replicaset/cdn-api-575484d897             Created pod: cdn-api-575484d897-c6hvh
+6m51s       Normal    Scheduled               pod/cdn-api-575484d897-c6hvh              Successfully assigned cdn-control-plane/cdn-api-575484d897-c6hvh to minikube
+6m51s       Normal    ScalingReplicaSet       deployment/cdn-api                        Scaled down replica set cdn-api-bf5c997b from 2 to 1
+6m51s       Normal    ScalingReplicaSet       deployment/cdn-api                        Scaled up replica set cdn-api-575484d897 from 3 to 4
+6m51s       Normal    Killing                 pod/cdn-api-bf5c997b-9tw46                Stopping container api
+6m51s       Normal    SuccessfulDelete        replicaset/cdn-api-bf5c997b               Deleted pod: cdn-api-bf5c997b-9tw46
+6m50s       Normal    Created                 pod/cdn-api-575484d897-c6hvh              Container created
+6m50s       Normal    Pulled                  pod/cdn-api-575484d897-c6hvh              Container image "ghcr.io/ostrrovska/cdn-control-plane:1.1.0" already present on machine and can be accessed by the pod
+6m50s       Normal    Started                 pod/cdn-api-575484d897-c6hvh              Container started
+6m47s       Warning   Unhealthy               pod/cdn-api-575484d897-c6hvh              Startup probe failed: Get "http://10.244.0.137:8000/health": dial tcp 10.244.0.137:8000: connect: connection refused
+6m42s       Normal    SuccessfulDelete        replicaset/cdn-api-bf5c997b               Deleted pod: cdn-api-bf5c997b-7r8lm
+6m42s       Normal    ScalingReplicaSet       deployment/cdn-api                        Scaled down replica set cdn-api-bf5c997b from 1 to 0
+6m42s       Normal    Killing                 pod/cdn-api-bf5c997b-7r8lm                Stopping container api
+6m35s       Warning   Unhealthy               pod/cdn-api-bf5c997b-7r8lm                Readiness probe failed: Get "http://10.244.0.121:8000/health/ready": dial tcp 10.244.0.121:8000: connect: connection refused
+5m19s       Normal    Scheduled               pod/cdn-api-bf5c997b-hpnct                Successfully assigned cdn-control-plane/cdn-api-bf5c997b-hpnct to minikube
+5m19s       Normal    SuccessfulCreate        replicaset/cdn-api-bf5c997b               Created pod: cdn-api-bf5c997b-hpnct
+5m18s       Normal    Started                 pod/cdn-api-bf5c997b-hpnct                Container started
+5m18s       Normal    Created                 pod/cdn-api-bf5c997b-hpnct                Container created
+5m18s       Normal    Pulled                  pod/cdn-api-bf5c997b-hpnct                Container image "ghcr.io/ostrrovska/cdn-control-plane:1.0.0" already present on machine and can be accessed by the pod
+5m16s       Warning   Unhealthy               pod/cdn-api-bf5c997b-hpnct                Startup probe failed: Get "http://10.244.0.138:8000/health": dial tcp 10.244.0.138:8000: connect: connection refused
+5m11s       Normal    SuccessfulDelete        replicaset/cdn-api-575484d897             Deleted pod: cdn-api-575484d897-c6hvh
+5m10s       Normal    Pulled                  pod/cdn-api-bf5c997b-m49zn                Container image "ghcr.io/ostrrovska/cdn-control-plane:1.0.0" already present on machine and can be accessed by the pod
+5m10s       Normal    Created                 pod/cdn-api-bf5c997b-m49zn                Container created
+5m10s       Normal    SuccessfulCreate        replicaset/cdn-api-bf5c997b               Created pod: cdn-api-bf5c997b-m49zn
+5m10s       Normal    Started                 pod/cdn-api-bf5c997b-m49zn                Container started
+5m10s       Normal    Killing                 pod/cdn-api-575484d897-c6hvh              Stopping container api
+5m10s       Normal    Scheduled               pod/cdn-api-bf5c997b-m49zn                Successfully assigned cdn-control-plane/cdn-api-bf5c997b-m49zn to minikube
+5m8s        Warning   Unhealthy               pod/cdn-api-bf5c997b-m49zn                Startup probe failed: Get "http://10.244.0.139:8000/health": dial tcp 10.244.0.139:8000: connect: connection refused
+5m3s        Normal    SuccessfulCreate        replicaset/cdn-api-bf5c997b               Created pod: cdn-api-bf5c997b-2ntvc
+5m3s        Normal    Scheduled               pod/cdn-api-bf5c997b-2ntvc                Successfully assigned cdn-control-plane/cdn-api-bf5c997b-2ntvc to minikube
+5m3s        Normal    Killing                 pod/cdn-api-575484d897-jncrw              Stopping container api
+5m3s        Normal    SuccessfulDelete        replicaset/cdn-api-575484d897             Deleted pod: cdn-api-575484d897-jncrw
+5m2s        Normal    Created                 pod/cdn-api-bf5c997b-2ntvc                Container created
+5m2s        Normal    Started                 pod/cdn-api-bf5c997b-2ntvc                Container started
+5m2s        Normal    Pulled                  pod/cdn-api-bf5c997b-2ntvc                Container image "ghcr.io/ostrrovska/cdn-control-plane:1.0.0" already present on machine and can be accessed by the pod
+5m          Warning   Unhealthy               pod/cdn-api-bf5c997b-2ntvc                Startup probe failed: Get "http://10.244.0.140:8000/health": dial tcp 10.244.0.140:8000: connect: connection refused
+4m57s       Warning   Unhealthy               pod/cdn-api-575484d897-jncrw              Readiness probe failed: Get "http://10.244.0.135:8000/health/ready": dial tcp 10.244.0.135:8000: connect: connection refused
+4m54s       Normal    Started                 pod/cdn-api-bf5c997b-j7t9k                Container started
+4m54s       Normal    Pulled                  pod/cdn-api-bf5c997b-j7t9k                Container image "ghcr.io/ostrrovska/cdn-control-plane:1.0.0" already present on machine and can be accessed by the pod
+4m54s       Normal    Scheduled               pod/cdn-api-bf5c997b-j7t9k                Successfully assigned cdn-control-plane/cdn-api-bf5c997b-j7t9k to minikube
+4m54s       Normal    Created                 pod/cdn-api-bf5c997b-j7t9k                Container created
+4m54s       Normal    SuccessfulCreate        replicaset/cdn-api-bf5c997b               Created pod: cdn-api-bf5c997b-j7t9k
+4m54s       Normal    Killing                 pod/cdn-api-575484d897-dc9l7              Stopping container api
+4m54s       Normal    SuccessfulDelete        replicaset/cdn-api-575484d897             Deleted pod: cdn-api-575484d897-dc9l7
+4m51s       Warning   Unhealthy               pod/cdn-api-bf5c997b-j7t9k                Startup probe failed: Get "http://10.244.0.141:8000/health": dial tcp 10.244.0.141:8000: connect: connection refused
+4m46s       Normal    Killing                 pod/cdn-api-575484d897-gvq5s              Stopping container api
+4m46s       Normal    SuccessfulDelete        replicaset/cdn-api-575484d897             Deleted pod: cdn-api-575484d897-gvq5s
+4m44s       Normal    SuccessfulCreate        replicaset/cdn-api-65bc558786             Created pod: cdn-api-65bc558786-qqclw
+4m44s       Normal    Scheduled               pod/cdn-api-65bc558786-qqclw              Successfully assigned cdn-control-plane/cdn-api-65bc558786-qqclw to minikube
+4m43s       Normal    Pulling                 pod/cdn-api-65bc558786-qqclw              Pulling image "ghcr.io/ostrrovska/cdn-control-plane:9.9.9-does-not-exist"
+4m42s       Warning   Failed                  pod/cdn-api-65bc558786-qqclw              Failed to pull image "ghcr.io/ostrrovska/cdn-control-plane:9.9.9-does-not-exist": rpc error: code = NotFound desc = failed to pull and unpack image "ghcr.io/ostrrovska/cdn-control-plane:9.9.9-does-not-exist": failed to resolve reference "ghcr.io/ostrrovska/cdn-control-plane:9.9.9-does-not-exist": ghcr.io/ostrrovska/cdn-control-plane:9.9.9-does-not-exist: not found
+4m42s       Warning   Failed                  pod/cdn-api-65bc558786-qqclw              Error: ErrImagePull
+4m41s       Warning   Failed                  pod/cdn-api-65bc558786-qqclw              Error: ImagePullBackOff
+4m41s       Normal    BackOff                 pod/cdn-api-65bc558786-qqclw              Back-off pulling image "ghcr.io/ostrrovska/cdn-control-plane:9.9.9-does-not-exist"
+4m40s       Warning   Unhealthy               pod/cdn-api-575484d897-gvq5s              Readiness probe failed: Get "http://10.244.0.136:8000/health/ready": dial tcp 10.244.0.136:8000: connect: connection refused
+4m39s       Normal    SuccessfulDelete        replicaset/cdn-api-65bc558786             Deleted pod: cdn-api-65bc558786-qqclw
+4m38s       Normal    Scheduled               pod/cdn-probe-final                       Successfully assigned cdn-control-plane/cdn-probe-final to minikube
+4m37s       Normal    Created                 pod/cdn-probe-final                       Container created
+4m37s       Normal    Pulled                  pod/cdn-probe-final                       Container image "ghcr.io/ostrrovska/cdn-control-plane:1.0.0" already present on machine and can be accessed by the pod
+4m37s       Normal    Started                 pod/cdn-probe-final                       Container started
+4m33s       Normal    SuccessfulDelete        replicaset/cdn-api-bf5c997b               Deleted pod: cdn-api-bf5c997b-2ntvc
+4m33s       Normal    Killing                 pod/cdn-api-bf5c997b-2ntvc                Stopping container api
+4m33s       Normal    Killing                 pod/cdn-api-bf5c997b-j7t9k                Stopping container api
+4m33s       Normal    SuccessfulDelete        replicaset/cdn-api-bf5c997b               Deleted pod: cdn-api-bf5c997b-j7t9k
+4m28s       Warning   Unhealthy               pod/cdn-api-bf5c997b-2ntvc                Readiness probe failed: Get "http://10.244.0.140:8000/health/ready": dial tcp 10.244.0.140:8000: connect: connection refused
+4m27s       Warning   Unhealthy               pod/cdn-api-bf5c997b-j7t9k                Readiness probe failed: Get "http://10.244.0.141:8000/health/ready": dial tcp 10.244.0.141:8000: connect: connection refused
+3m15s       Normal    Started                 pod/cdn-api-bf5c997b-n8nwz                Container started
+3m15s       Normal    Pulled                  pod/cdn-api-bf5c997b-n8nwz                Container image "ghcr.io/ostrrovska/cdn-control-plane:1.0.0" already present on machine and can be accessed by the pod
+3m15s       Normal    Created                 pod/cdn-api-bf5c997b-n8nwz                Container created
+3m14s       Normal    Killing                 pod/cdn-api-bf5c997b-hpnct                Stopping container api
+3m14s       Normal    Scheduled               pod/cdn-api-bf5c997b-n8nwz                Successfully assigned cdn-control-plane/cdn-api-bf5c997b-n8nwz to minikube
+3m14s       Normal    SuccessfulCreate        replicaset/cdn-api-bf5c997b               Created pod: cdn-api-bf5c997b-n8nwz
+3m12s       Warning   Unhealthy               pod/cdn-api-bf5c997b-n8nwz                Startup probe failed: Get "http://10.244.0.144:8000/health": dial tcp 10.244.0.144:8000: connect: connection refused
+3m5s        Normal    Scheduled               pod/cdn-api-bf5c997b-tt4cr                Successfully assigned cdn-control-plane/cdn-api-bf5c997b-tt4cr to minikube
+3m5s        Normal    SuccessfulCreate        replicaset/cdn-api-bf5c997b               Created pod: cdn-api-bf5c997b-tt4cr
+3m5s        Normal    ScalingReplicaSet       deployment/cdn-api                        (combined from similar events): Scaled up replica set cdn-api-bf5c997b from 2 to 4
+3m5s        Normal    Scheduled               pod/cdn-api-bf5c997b-9c9vt                Successfully assigned cdn-control-plane/cdn-api-bf5c997b-9c9vt to minikube
+3m4s        Normal    Started                 pod/cdn-api-bf5c997b-9c9vt                Container started
+3m4s        Normal    Created                 pod/cdn-api-bf5c997b-9c9vt                Container created
+3m4s        Normal    Pulled                  pod/cdn-api-bf5c997b-9c9vt                Container image "ghcr.io/ostrrovska/cdn-control-plane:1.0.0" already present on machine and can be accessed by the pod
+3m4s        Normal    Pulled                  pod/cdn-api-bf5c997b-tt4cr                Container image "ghcr.io/ostrrovska/cdn-control-plane:1.0.0" already present on machine and can be accessed by the pod
+3m4s        Normal    Created                 pod/cdn-api-bf5c997b-tt4cr                Container created
+3m4s        Normal    Started                 pod/cdn-api-bf5c997b-tt4cr                Container started
+3m1s        Warning   Unhealthy               pod/cdn-api-bf5c997b-tt4cr                Startup probe failed: Get "http://10.244.0.145:8000/health": dial tcp 10.244.0.145:8000: connect: connection refused
+3m1s        Warning   Unhealthy               pod/cdn-api-bf5c997b-9c9vt                Startup probe failed: Get "http://10.244.0.146:8000/health": dial tcp 10.244.0.146:8000: connect: connection refused
+2m56s       Normal    Scheduled               pod/cdn-probe-spread                      Successfully assigned cdn-control-plane/cdn-probe-spread to minikube
+2m55s       Normal    Started                 pod/cdn-probe-spread                      Container started
+2m55s       Normal    Created                 pod/cdn-probe-spread                      Container created
+2m55s       Normal    Pulled                  pod/cdn-probe-spread                      Container image "ghcr.io/ostrrovska/cdn-control-plane:1.0.0" already present on machine and can be accessed by the pod
+2m49s       Normal    Scheduled               pod/cdn-probe-rollout                     Successfully assigned cdn-control-plane/cdn-probe-rollout to minikube
+2m48s       Normal    Pulled                  pod/cdn-probe-rollout                     Container image "ghcr.io/ostrrovska/cdn-control-plane:1.0.0" already present on machine and can be accessed by the pod
+2m48s       Normal    Started                 pod/cdn-probe-rollout                     Container started
+2m48s       Normal    Created                 pod/cdn-probe-rollout                     Container created
+2m45s       Normal    Scheduled               pod/cdn-api-575484d897-4tzcq              Successfully assigned cdn-control-plane/cdn-api-575484d897-4tzcq to minikube
+2m45s       Normal    SuccessfulCreate        replicaset/cdn-api-575484d897             Created pod: cdn-api-575484d897-4tzcq
+2m44s       Normal    Pulled                  pod/cdn-api-575484d897-4tzcq              Container image "ghcr.io/ostrrovska/cdn-control-plane:1.1.0" already present on machine and can be accessed by the pod
+2m44s       Normal    Created                 pod/cdn-api-575484d897-4tzcq              Container created
+2m44s       Normal    Started                 pod/cdn-api-575484d897-4tzcq              Container started
+2m41s       Warning   Unhealthy               pod/cdn-api-575484d897-4tzcq              Startup probe failed: Get "http://10.244.0.149:8000/health": dial tcp 10.244.0.149:8000: connect: connection refused
+2m36s       Normal    Pulled                  pod/cdn-api-575484d897-kw987              Container image "ghcr.io/ostrrovska/cdn-control-plane:1.1.0" already present on machine and can be accessed by the pod
+2m36s       Normal    Scheduled               pod/cdn-api-575484d897-kw987              Successfully assigned cdn-control-plane/cdn-api-575484d897-kw987 to minikube
+2m36s       Normal    SuccessfulDelete        replicaset/cdn-api-bf5c997b               Deleted pod: cdn-api-bf5c997b-n8nwz
+2m36s       Normal    Killing                 pod/cdn-api-bf5c997b-n8nwz                Stopping container api
+2m36s       Normal    SuccessfulCreate        replicaset/cdn-api-575484d897             Created pod: cdn-api-575484d897-kw987
+2m35s       Normal    Created                 pod/cdn-api-575484d897-kw987              Container created
+2m35s       Normal    Started                 pod/cdn-api-575484d897-kw987              Container started
+2m33s       Warning   Unhealthy               pod/cdn-api-575484d897-kw987              Startup probe failed: Get "http://10.244.0.150:8000/health": dial tcp 10.244.0.150:8000: connect: connection refused
+2m31s       Warning   Unhealthy               pod/cdn-api-bf5c997b-n8nwz                Readiness probe failed: Get "http://10.244.0.144:8000/health/ready": dial tcp 10.244.0.144:8000: connect: connection refused
+2m28s       Normal    Killing                 pod/cdn-api-bf5c997b-tt4cr                Stopping container api
+2m28s       Normal    Scheduled               pod/cdn-api-575484d897-fm529              Successfully assigned cdn-control-plane/cdn-api-575484d897-fm529 to minikube
+2m28s       Normal    SuccessfulDelete        replicaset/cdn-api-bf5c997b               Deleted pod: cdn-api-bf5c997b-tt4cr
+2m28s       Normal    SuccessfulCreate        replicaset/cdn-api-575484d897             Created pod: cdn-api-575484d897-fm529
+2m27s       Normal    Created                 pod/cdn-api-575484d897-fm529              Container created
+2m27s       Normal    Started                 pod/cdn-api-575484d897-fm529              Container started
+2m27s       Normal    Pulled                  pod/cdn-api-575484d897-fm529              Container image "ghcr.io/ostrrovska/cdn-control-plane:1.1.0" already present on machine and can be accessed by the pod
+2m24s       Warning   Unhealthy               pod/cdn-api-575484d897-fm529              Startup probe failed: Get "http://10.244.0.151:8000/health": dial tcp 10.244.0.151:8000: connect: connection refused
+2m22s       Warning   Unhealthy               pod/cdn-api-bf5c997b-tt4cr                Readiness probe failed: Get "http://10.244.0.145:8000/health/ready": dial tcp 10.244.0.145:8000: connect: connection refused
+2m19s       Normal    SuccessfulDelete        replicaset/cdn-api-bf5c997b               Deleted pod: cdn-api-bf5c997b-9c9vt
+2m19s       Normal    Killing                 pod/cdn-api-bf5c997b-9c9vt                Stopping container api
+2m19s       Normal    Scheduled               pod/cdn-api-575484d897-c4d27              Successfully assigned cdn-control-plane/cdn-api-575484d897-c4d27 to minikube
+2m19s       Normal    SuccessfulCreate        replicaset/cdn-api-575484d897             Created pod: cdn-api-575484d897-c4d27
+2m18s       Normal    Created                 pod/cdn-api-575484d897-c4d27              Container created
+2m18s       Normal    Started                 pod/cdn-api-575484d897-c4d27              Container started
+2m18s       Normal    Pulled                  pod/cdn-api-575484d897-c4d27              Container image "ghcr.io/ostrrovska/cdn-control-plane:1.1.0" already present on machine and can be accessed by the pod
+2m17s       Warning   Unhealthy               pod/cdn-api-575484d897-c4d27              Startup probe failed: Get "http://10.244.0.152:8000/health": dial tcp 10.244.0.152:8000: connect: connection refused
+2m15s       Warning   Unhealthy               pod/cdn-api-bf5c997b-9c9vt                Readiness probe failed: Get "http://10.244.0.146:8000/health/ready": dial tcp 10.244.0.146:8000: connect: connection refused
+2m12s       Normal    Killing                 pod/cdn-api-bf5c997b-m49zn                Stopping container api
+2m12s       Normal    SuccessfulDelete        replicaset/cdn-api-bf5c997b               (combined from similar events): Deleted pod: cdn-api-bf5c997b-m49zn
+43s         Normal    Scheduled               pod/cdn-api-bf5c997b-9p9hk                Successfully assigned cdn-control-plane/cdn-api-bf5c997b-9p9hk to minikube
+43s         Normal    SuccessfulCreate        replicaset/cdn-api-bf5c997b               (combined from similar events): Created pod: cdn-api-bf5c997b-9p9hk
+42s         Normal    Pulled                  pod/cdn-api-bf5c997b-9p9hk                Container image "ghcr.io/ostrrovska/cdn-control-plane:1.0.0" already present on machine and can be accessed by the pod
+42s         Normal    Created                 pod/cdn-api-bf5c997b-9p9hk                Container created
+42s         Normal    Started                 pod/cdn-api-bf5c997b-9p9hk                Container started
+39s         Warning   Unhealthy               pod/cdn-api-bf5c997b-9p9hk                Startup probe failed: Get "http://10.244.0.153:8000/health": dial tcp 10.244.0.153:8000: connect: connection refused
+34s         Normal    Scheduled               pod/cdn-api-bf5c997b-l97sp                Successfully assigned cdn-control-plane/cdn-api-bf5c997b-l97sp to minikube
+34s         Normal    SuccessfulDelete        replicaset/cdn-api-575484d897             Deleted pod: cdn-api-575484d897-fm529
+34s         Normal    Killing                 pod/cdn-api-575484d897-fm529              Stopping container api
+33s         Normal    Pulled                  pod/cdn-api-bf5c997b-l97sp                Container image "ghcr.io/ostrrovska/cdn-control-plane:1.0.0" already present on machine and can be accessed by the pod
+33s         Normal    Created                 pod/cdn-api-bf5c997b-l97sp                Container created
+33s         Normal    Started                 pod/cdn-api-bf5c997b-l97sp                Container started
+31s         Warning   Unhealthy               pod/cdn-api-bf5c997b-l97sp                Startup probe failed: Get "http://10.244.0.154:8000/health": dial tcp 10.244.0.154:8000: connect: connection refused
+29s         Warning   Unhealthy               pod/cdn-api-575484d897-fm529              Readiness probe failed: Get "http://10.244.0.151:8000/health/ready": dial tcp 10.244.0.151:8000: connect: connection refused
+25s         Normal    Scheduled               pod/cdn-api-bf5c997b-497sx                Successfully assigned cdn-control-plane/cdn-api-bf5c997b-497sx to minikube
+25s         Normal    Pulled                  pod/cdn-api-bf5c997b-497sx                Container image "ghcr.io/ostrrovska/cdn-control-plane:1.0.0" already present on machine and can be accessed by the pod
+25s         Normal    Created                 pod/cdn-api-bf5c997b-497sx                Container created
+25s         Normal    SuccessfulDelete        replicaset/cdn-api-575484d897             Deleted pod: cdn-api-575484d897-kw987
+25s         Normal    Killing                 pod/cdn-api-575484d897-kw987              Stopping container api
+24s         Normal    Started                 pod/cdn-api-bf5c997b-497sx                Container started
+23s         Warning   Unhealthy               pod/cdn-api-bf5c997b-497sx                Startup probe failed: Get "http://10.244.0.155:8000/health": dial tcp 10.244.0.155:8000: connect: connection refused
+21s         Warning   Unhealthy               pod/cdn-api-575484d897-kw987              Readiness probe failed: Get "http://10.244.0.150:8000/health/ready": dial tcp 10.244.0.150:8000: connect: connection refused
+18s         Normal    SuccessfulDelete        replicaset/cdn-api-575484d897             Deleted pod: cdn-api-575484d897-c4d27
+18s         Normal    Scheduled               pod/cdn-api-bf5c997b-sggjc                Successfully assigned cdn-control-plane/cdn-api-bf5c997b-sggjc to minikube
+18s         Normal    Killing                 pod/cdn-api-575484d897-c4d27              Stopping container api
+17s         Normal    Started                 pod/cdn-api-bf5c997b-sggjc                Container started
+17s         Normal    Created                 pod/cdn-api-bf5c997b-sggjc                Container created
+17s         Normal    Pulled                  pod/cdn-api-bf5c997b-sggjc                Container image "ghcr.io/ostrrovska/cdn-control-plane:1.0.0" already present on machine and can be accessed by the pod
+14s         Warning   Unhealthy               pod/cdn-api-bf5c997b-sggjc                Startup probe failed: Get "http://10.244.0.156:8000/health": dial tcp 10.244.0.156:8000: connect: connection refused
+9s          Normal    SuccessfulDelete        replicaset/cdn-api-575484d897             Deleted pod: cdn-api-575484d897-4tzcq
+9s          Normal    Killing                 pod/cdn-api-575484d897-4tzcq              Stopping container api
+5s          Normal    SuccessfulCreate        replicaset/cdn-api-65bc558786             Created pod: cdn-api-65bc558786-hc5jk
+5s          Normal    Pulling                 pod/cdn-api-65bc558786-hc5jk              Pulling image "ghcr.io/ostrrovska/cdn-control-plane:9.9.9-does-not-exist"
+5s          Normal    Scheduled               pod/cdn-api-65bc558786-hc5jk              Successfully assigned cdn-control-plane/cdn-api-65bc558786-hc5jk to minikube
+4s          Warning   Failed                  pod/cdn-api-65bc558786-hc5jk              Failed to pull image "ghcr.io/ostrrovska/cdn-control-plane:9.9.9-does-not-exist": rpc error: code = NotFound desc = failed to pull and unpack image "ghcr.io/ostrrovska/cdn-control-plane:9.9.9-does-not-exist": failed to resolve reference "ghcr.io/ostrrovska/cdn-control-plane:9.9.9-does-not-exist": ghcr.io/ostrrovska/cdn-control-plane:9.9.9-does-not-exist: not found
+4s          Warning   Failed                  pod/cdn-api-65bc558786-hc5jk              Error: ErrImagePull
+3s          Normal    BackOff                 pod/cdn-api-65bc558786-hc5jk              Back-off pulling image "ghcr.io/ostrrovska/cdn-control-plane:9.9.9-does-not-exist"
+3s          Warning   Failed                  pod/cdn-api-65bc558786-hc5jk              Error: ImagePullBackOff
+3s          Warning   Unhealthy               pod/cdn-api-575484d897-4tzcq              Readiness probe failed: Get "http://10.244.0.149:8000/health/ready": dial tcp 10.244.0.149:8000: connect: connection refused
+
+$ kubectl logs cdn-api-bf5c997b-497sx -n cdn-control-plane --tail=15
+{"ts": "2026-10-22T08:34:52.375423+00:00", "level": "INFO", "logger": "app.access", "event": "request.completed", "instance_id": "cdn-api-bf5c997b-497sx", "request_id": "5e5ef8bc2f1f4dae83113ecae86f5d0f", "method": "GET", "path": "/health", "status": 200, "duration_ms": 3.77}
+{"ts": "2026-10-22T08:34:52.419462+00:00", "level": "INFO", "logger": "app.access", "event": "request.completed", "instance_id": "cdn-api-bf5c997b-497sx", "request_id": "5c62de0bb951487cb375bd6b2bf5d44f", "method": "GET", "path": "/health/ready", "status": 200, "duration_ms": 39.99}
+{"ts": "2026-10-22T08:34:54.389453+00:00", "level": "INFO", "logger": "app.access", "event": "request.completed", "instance_id": "cdn-api-bf5c997b-497sx", "request_id": "d8e59215ee394a9198cbb5c3016963a1", "method": "GET", "path": "/health/ready", "status": 200, "duration_ms": 8.26}
+{"ts": "2026-10-22T08:34:56.346286+00:00", "level": "INFO", "logger": "app.access", "event": "request.completed", "instance_id": "cdn-api-bf5c997b-497sx", "request_id": "155d087d004e4c3eab416d9d622e14ba", "method": "GET", "path": "/health", "status": 200, "duration_ms": 0.62}
+{"ts": "2026-10-22T08:34:56.387405+00:00", "level": "INFO", "logger": "app.access", "event": "request.completed", "instance_id": "cdn-api-bf5c997b-497sx", "request_id": "e3a3083e931c4f6da0ed346d6dd3885c", "method": "GET", "path": "/health/ready", "status": 200, "duration_ms": 6.36}
+{"ts": "2026-10-22T08:34:58.422111+00:00", "level": "INFO", "logger": "app.access", "event": "request.completed", "instance_id": "cdn-api-bf5c997b-497sx", "request_id": "270f56bbefbc49f8b350f924464d7740", "method": "GET", "path": "/health/ready", "status": 200, "duration_ms": 40.4}
+{"ts": "2026-10-22T08:35:00.423161+00:00", "level": "INFO", "logger": "app.access", "event": "request.completed", "instance_id": "cdn-api-bf5c997b-497sx", "request_id": "f03f1e367a2840e79ca4d384e6d601c4", "method": "GET", "path": "/health/ready", "status": 200, "duration_ms": 43.77}
+{"ts": "2026-10-22T08:35:02.389261+00:00", "level": "INFO", "logger": "app.access", "event": "request.completed", "instance_id": "cdn-api-bf5c997b-497sx", "request_id": "a5f9b2e600f849dc91b7c76339cbf01e", "method": "GET", "path": "/health/ready", "status": 200, "duration_ms": 7.4}
+{"ts": "2026-10-22T08:35:04.386203+00:00", "level": "INFO", "logger": "app.access", "event": "request.completed", "instance_id": "cdn-api-bf5c997b-497sx", "request_id": "c15c0fd1d84c4741a9d8d33953d24f46", "method": "GET", "path": "/health/ready", "status": 200, "duration_ms": 5.26}
+{"ts": "2026-10-22T08:35:06.345940+00:00", "level": "INFO", "logger": "app.access", "event": "request.completed", "instance_id": "cdn-api-bf5c997b-497sx", "request_id": "cdbc0dc8eb1d4ccf8880697b8ca7585a", "method": "GET", "path": "/health", "status": 200, "duration_ms": 0.58}
+{"ts": "2026-10-22T08:35:06.384352+00:00", "level": "INFO", "logger": "app.access", "event": "request.completed", "instance_id": "cdn-api-bf5c997b-497sx", "request_id": "6ae73a8362cd4b8b8c1d3f22eeec8053", "method": "GET", "path": "/health/ready", "status": 200, "duration_ms": 4.39}
+{"ts": "2026-10-22T08:35:08.384226+00:00", "level": "INFO", "logger": "app.access", "event": "request.completed", "instance_id": "cdn-api-bf5c997b-497sx", "request_id": "bc1752ea4d5c43ab963c19c54da75fb2", "method": "GET", "path": "/health/ready", "status": 200, "duration_ms": 4.4}
+{"ts": "2026-10-22T08:35:10.388130+00:00", "level": "INFO", "logger": "app.access", "event": "request.completed", "instance_id": "cdn-api-bf5c997b-497sx", "request_id": "45573d51b0594abda8a75dff21a78bad", "method": "GET", "path": "/health/ready", "status": 200, "duration_ms": 5.43}
+{"ts": "2026-10-22T08:35:12.386421+00:00", "level": "INFO", "logger": "app.access", "event": "request.completed", "instance_id": "cdn-api-bf5c997b-497sx", "request_id": "de0fc9c0934d4b67b99a626028c8efe6", "method": "GET", "path": "/health/ready", "status": 200, "duration_ms": 5.02}
+{"ts": "2026-10-22T08:35:14.385392+00:00", "level": "INFO", "logger": "app.access", "event": "request.completed", "instance_id": "cdn-api-bf5c997b-497sx", "request_id": "580a99163d9a4dc19e4d03ebc5c92c9a", "method": "GET", "path": "/health/ready", "status": 200, "duration_ms": 4.97}
+
+$ kubectl exec cdn-api-bf5c997b-497sx -n cdn-control-plane -- sh -c id -u && pwd && ls app
+1000
+/srv/app
+__init__.py
+__pycache__
+api
+core
+db
+main.py
+models
+schemas
+services
+
+$ kubectl set image deployment/cdn-api api=ghcr.io/ostrrovska/cdn-control-plane:1.0.0 -n cdn-control-plane
+deployment.apps/cdn-api image updated
+
+$ kubectl get pods -n cdn-control-plane -l app.kubernetes.io/component=api
+NAME                       READY   STATUS        RESTARTS   AGE
+cdn-api-65bc558786-hc5jk   0/1     Terminating   0          12s
+cdn-api-bf5c997b-497sx     1/1     Running       0          32s
+cdn-api-bf5c997b-9p9hk     1/1     Running       0          50s
+cdn-api-bf5c997b-l97sp     1/1     Running       0          41s
+cdn-api-bf5c997b-sggjc     1/1     Running       0          25s
+

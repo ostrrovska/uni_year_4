@@ -1,0 +1,22 @@
+# DevOps Lab3
+# The stateful component of the stack: the Compose equivalent is the named
+# `pgdata` volume. Without it a rescheduled database pod would come back empty
+# and every demo would start from a blank fleet.
+#
+# ReadWriteOnce because exactly one PostgreSQL process may own a data directory;
+# it is also all minikube's default hostpath provisioner offers.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: cdn-postgres-data
+  namespace: cdn-control-plane
+  labels:
+    app.kubernetes.io/name: cdn-control-plane
+    app.kubernetes.io/component: database
+    app.kubernetes.io/part-of: cdn-control-plane
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi

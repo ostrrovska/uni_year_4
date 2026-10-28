@@ -1,0 +1,160 @@
+﻿$ kubectl apply -f C:\uni_year_4\high-load-systems\k8s
+namespace/cdn-control-plane unchanged
+configmap/cdn-app-config unchanged
+configmap/cdn-postgres-config unchanged
+secret/cdn-secrets configured
+persistentvolumeclaim/cdn-postgres-data unchanged
+deployment.apps/cdn-postgres unchanged
+service/cdn-postgres unchanged
+deployment.apps/cdn-redis unchanged
+service/cdn-redis unchanged
+job.batch/cdn-migrate unchanged
+deployment.apps/cdn-api unchanged
+service/cdn-api unchanged
+ingress.networking.k8s.io/cdn-api unchanged
+deployment.apps/cdn-agents unchanged
+job.batch/cdn-seed unchanged
+
+$ kubectl wait --for=condition=complete job/cdn-migrate -n cdn-control-plane --timeout=300s
+job.batch/cdn-migrate condition met
+
+$ kubectl get all,pvc,configmap,secret,ingress -n cdn-control-plane
+NAME                                READY   STATUS      RESTARTS   AGE
+pod/cdn-agents-cf447c9f7-2sw9r      1/1     Running     0          90m
+pod/cdn-api-bf5c997b-hpnct          1/1     Running     0          117s
+pod/cdn-api-bf5c997b-m49zn          1/1     Running     0          108s
+pod/cdn-migrate-nwh5b               0/1     Completed   0          4m47s
+pod/cdn-postgres-55b89fb78d-57f9w   1/1     Running     0          90m
+pod/cdn-redis-7d6ff79598-7kqhw      1/1     Running     0          90m
+pod/cdn-seed-9qkhv                  0/1     Completed   0          4m46s
+
+NAME                   TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)        AGE
+service/cdn-api        NodePort    10.110.143.217   <none>        80:30080/TCP   90m
+service/cdn-postgres   ClusterIP   10.109.222.6     <none>        5432/TCP       90m
+service/cdn-redis      ClusterIP   10.99.248.9      <none>        6379/TCP       90m
+
+NAME                           READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/cdn-agents     1/1     1            1           90m
+deployment.apps/cdn-api        2/2     2            2           90m
+deployment.apps/cdn-postgres   1/1     1            1           90m
+deployment.apps/cdn-redis      1/1     1            1           90m
+
+NAME                                      DESIRED   CURRENT   READY   AGE
+replicaset.apps/cdn-agents-cf447c9f7      1         1         1       90m
+replicaset.apps/cdn-api-575484d897        0         0         0       89m
+replicaset.apps/cdn-api-65bc558786        0         0         0       85m
+replicaset.apps/cdn-api-bf5c997b          2         2         2       90m
+replicaset.apps/cdn-postgres-55b89fb78d   1         1         1       90m
+replicaset.apps/cdn-redis-7d6ff79598      1         1         1       90m
+
+NAME                    STATUS     COMPLETIONS   DURATION   AGE
+job.batch/cdn-migrate   Complete   1/1           11s        4m47s
+job.batch/cdn-seed      Complete   1/1           10s        4m46s
+
+NAME                                      STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   VOLUMEATTRIBUTESCLASS   AGE
+persistentvolumeclaim/cdn-postgres-data   Bound    pvc-08551767-5682-4ac7-a210-950031d73c5d   1Gi        RWO            standard       <unset>                 90m
+
+NAME                            DATA   AGE
+configmap/cdn-app-config        14     90m
+configmap/cdn-postgres-config   2      90m
+configmap/kube-root-ca.crt      1      90m
+
+NAME                 TYPE     DATA   AGE
+secret/cdn-secrets   Opaque   2      90m
+
+NAME                                CLASS   HOSTS       ADDRESS        PORTS   AGE
+ingress.networking.k8s.io/cdn-api   nginx   cdn.local   192.168.49.2   80      90m
+
+$ kubectl get pods -n cdn-control-plane -o wide
+NAME                            READY   STATUS      RESTARTS   AGE     IP             NODE       NOMINATED NODE   READINESS GATES
+cdn-agents-cf447c9f7-2sw9r      1/1     Running     0          90m     10.244.0.110   minikube   <none>           <none>
+cdn-api-bf5c997b-hpnct          1/1     Running     0          117s    10.244.0.138   minikube   <none>           <none>
+cdn-api-bf5c997b-m49zn          1/1     Running     0          108s    10.244.0.139   minikube   <none>           <none>
+cdn-migrate-nwh5b               0/1     Completed   0          4m47s   10.244.0.127   minikube   <none>           <none>
+cdn-postgres-55b89fb78d-57f9w   1/1     Running     0          90m     10.244.0.105   minikube   <none>           <none>
+cdn-redis-7d6ff79598-7kqhw      1/1     Running     0          90m     10.244.0.106   minikube   <none>           <none>
+cdn-seed-9qkhv                  0/1     Completed   0          4m46s   10.244.0.128   minikube   <none>           <none>
+
+$ kubectl get rs -n cdn-control-plane
+NAME                      DESIRED   CURRENT   READY   AGE
+cdn-agents-cf447c9f7      1         1         1       90m
+cdn-api-575484d897        0         0         0       89m
+cdn-api-65bc558786        0         0         0       85m
+cdn-api-bf5c997b          2         2         2       90m
+cdn-postgres-55b89fb78d   1         1         1       90m
+cdn-redis-7d6ff79598      1         1         1       90m
+
+$ curl http://127.0.0.1:8181/health
+{"status":"ok","instance_id":"cdn-api-bf5c997b-hpnct","app_version":"1.0.0"}
+$ curl http://127.0.0.1:8181/health/ready
+{"status":"ready","instance_id":"cdn-api-bf5c997b-hpnct"}
+$ curl http://127.0.0.1:8181/api/v1/stats/network
+{"nodes_total":12,"nodes_by_status":{"draining":1,"degraded":1,"healthy":10},"fleet_capacity_mbps":375000,"fleet_average_load_percent":39.92,"stale_node_count":0,"assets_total":8,"assets_published":8,"replicas_total":73,"replicas_cached":73,"replica_coverage_percent":100.0,"purges_in_flight":0,"regions":[{"region_code":"ap-southeast","continent":"Asia","node_count":2,"healthy_node_count":2,"total_capacity_mbps":40000,"average_load_percent":62.0},{"region_code":"eu-central","continent":"Europe","node_count":3,"healthy_node_count":2,"total_capacity_mbps":90000,"average_load_percent":56.67},{"region_code":"eu-west","continent":"Europe","node_count":2,"healthy_node_count":2,"total_capacity_mbps":50000,"average_load_percent":23.0},{"region_code":"sa-east","continent":"South America","node_count":1,"healthy_node_count":1,"total_capacity_mbps":15000,"average_load_percent":8.0},{"region_code":"us-east","continent":"North America","node_count":2,"healthy_node_count":2,"total_capacity_mbps":120000,"average_load_percent":56.0},{"region_code":"us-west","continent":"North America","node_count":2,"healthy_node_count":1,"total_capacity_mbps":60000,"average_load_percent":9.5}]}
+NodePort endpoint: 192.168.49.2:30080
+$ kubectl exec cdn-api-bf5c997b-hpnct -n cdn-control-plane -- env
+PATH=/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+HOSTNAME=cdn-api-bf5c997b-hpnct
+GPG_KEY=7169605F62C751356D054A26A821E680E5FA6305
+PYTHON_VERSION=3.13.16
+PYTHON_SHA256=f4b1bfb3c79b5bb11b8d228a12504163b4c0dab4d679828d8f5f26b6cb6ab35d
+PYTHONDONTWRITEBYTECODE=1
+PYTHONUNBUFFERED=1
+PIP_NO_CACHE_DIR=1
+APP_VERSION=1.0.0
+DB_POOL_TIMEOUT=10
+NODE_OVERLOAD_THRESHOLD_PERCENT=85
+DATABASE_URL=postgresql+asyncpg://cdn:cdn@cdn-postgres:5432/cdn_control_plane
+LOG_LEVEL=INFO
+CACHE_STATS_TTL_SECONDS=30
+DB_MAX_OVERFLOW=10
+CACHE_ROUTE_TTL_SECONDS=10
+POSTGRES_PASSWORD=cdn
+ROUTING_MAX_CANDIDATES=10
+APP_ENV=development
+HEARTBEAT_INTERVAL_SECONDS=10
+HEARTBEAT_STALE_AFTER_SECONDS=120
+REDIS_URL=redis://cdn-redis:6379/0
+ROUTING_DEFAULT_CANDIDATES=3
+DB_POOL_SIZE=10
+CACHE_ENABLED=true
+CDN_POSTGRES_PORT_5432_TCP_ADDR=10.109.222.6
+CDN_REDIS_PORT_6379_TCP_PROTO=tcp
+KUBERNETES_PORT_443_TCP=tcp://10.96.0.1:443
+CDN_API_PORT_80_TCP_PROTO=tcp
+KUBERNETES_SERVICE_PORT=443
+CDN_API_PORT_80_TCP_ADDR=10.110.143.217
+CDN_POSTGRES_SERVICE_HOST=10.109.222.6
+CDN_POSTGRES_PORT=tcp://10.109.222.6:5432
+CDN_REDIS_PORT_6379_TCP_PORT=6379
+CDN_REDIS_SERVICE_PORT_REDIS=6379
+CDN_API_SERVICE_PORT=80
+CDN_API_PORT=tcp://10.110.143.217:80
+CDN_POSTGRES_SERVICE_PORT=5432
+CDN_POSTGRES_PORT_5432_TCP_PROTO=tcp
+CDN_REDIS_SERVICE_HOST=10.99.248.9
+CDN_REDIS_SERVICE_PORT=6379
+KUBERNETES_PORT_443_TCP_PROTO=tcp
+KUBERNETES_PORT_443_TCP_ADDR=10.96.0.1
+CDN_API_SERVICE_HOST=10.110.143.217
+CDN_API_PORT_80_TCP_PORT=80
+CDN_POSTGRES_PORT_5432_TCP_PORT=5432
+CDN_REDIS_PORT_6379_TCP=tcp://10.99.248.9:6379
+CDN_API_PORT_80_TCP=tcp://10.110.143.217:80
+KUBERNETES_SERVICE_HOST=10.96.0.1
+KUBERNETES_SERVICE_PORT_HTTPS=443
+KUBERNETES_PORT=tcp://10.96.0.1:443
+KUBERNETES_PORT_443_TCP_PORT=443
+CDN_REDIS_PORT=tcp://10.99.248.9:6379
+CDN_POSTGRES_SERVICE_PORT_POSTGRES=5432
+CDN_POSTGRES_PORT_5432_TCP=tcp://10.109.222.6:5432
+CDN_REDIS_PORT_6379_TCP_ADDR=10.99.248.9
+CDN_API_SERVICE_PORT_HTTP=80
+HOME=/home/app
+
+(filtered to the ConfigMap and Secret keys)
+APP_ENV=development
+CACHE_ENABLED=true
+DATABASE_URL=postgresql+asyncpg://cdn:cdn@cdn-postgres:5432/cdn_control_plane
+HEARTBEAT_INTERVAL_SECONDS=10
+LOG_LEVEL=INFO
+REDIS_URL=redis://cdn-redis:6379/0

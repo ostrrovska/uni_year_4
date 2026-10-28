@@ -1,0 +1,29 @@
+# DevOps Lab3
+# The stable address in front of the replica set, and the direct replacement for
+# the nginx/HAProxy pair: kube-proxy load-balances across whichever pods are
+# currently Ready, and readiness is driven by the same /health/ready endpoint
+# HAProxy polls.
+#
+# NodePort rather than ClusterIP so the assignment's "reachable from the host"
+# requirement is met without an Ingress controller being involved; 30080 is well
+# clear of the Compose stack's 8080/8090/8404. The Ingress in 52-api-ingress.yaml
+# is the nicer entry point, and both are offered because the task allows either.
+apiVersion: v1
+kind: Service
+metadata:
+  name: cdn-api
+  namespace: cdn-control-plane
+  labels:
+    app.kubernetes.io/name: cdn-control-plane
+    app.kubernetes.io/component: api
+    app.kubernetes.io/part-of: cdn-control-plane
+spec:
+  type: NodePort
+  selector:
+    app.kubernetes.io/name: cdn-control-plane
+    app.kubernetes.io/component: api
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+      nodePort: 30080

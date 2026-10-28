@@ -1,0 +1,9 @@
+﻿$ C:\Program Files\Docker\Docker\resources\bin\kubectl.exe rollout status deployment/cdn-cdn-control-plane-api -n cdn-helm --timeout=300s
+deployment "cdn-cdn-control-plane-api" successfully rolled out
+
+$ C:\Program Files\Docker\Docker\resources\bin\kubectl.exe rollout status deployment/cdn-cdn-control-plane-api -n cdn-helm --timeout=300s
+deployment "cdn-cdn-control-plane-api" successfully rolled out
+
+$ C:\Program Files\Docker\Docker\resources\bin\kubectl.exe rollout status deployment/cdn-cdn-control-plane-api -n cdn-helm --timeout=300s
+deployment "cdn-cdn-control-plane-api" successfully rolled out
+

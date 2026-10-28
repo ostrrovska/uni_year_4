@@ -1,0 +1,605 @@
+﻿---
+# Source: cdn-control-plane/templates/secret.yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: cdn-prod-cdn-control-plane-secrets
+  labels:
+    helm.sh/chart: cdn-control-plane-0.1.0
+    app.kubernetes.io/name: cdn-control-plane
+    app.kubernetes.io/instance: cdn-prod
+    app.kubernetes.io/component: config
+    app.kubernetes.io/version: "1.0.0"
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/part-of: cdn-control-plane
+type: Opaque
+stringData:
+  DATABASE_URL: "postgresql+asyncpg://cdn:cdn@cdn-prod-cdn-control-plane-postgresql:5432/cdn_control_plane"
+  POSTGRES_PASSWORD: "cdn"
+---
+# Source: cdn-control-plane/templates/configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cdn-prod-cdn-control-plane-config
+  labels:
+    helm.sh/chart: cdn-control-plane-0.1.0
+    app.kubernetes.io/name: cdn-control-plane
+    app.kubernetes.io/instance: cdn-prod
+    app.kubernetes.io/component: config
+    app.kubernetes.io/version: "1.0.0"
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/part-of: cdn-control-plane
+data:
+  APP_ENV: "production"
+  LOG_LEVEL: "WARNING"
+
+  DB_POOL_SIZE: "10"
+  DB_MAX_OVERFLOW: "10"
+  DB_POOL_TIMEOUT: "10"
+
+  HEARTBEAT_STALE_AFTER_SECONDS: "120"
+  HEARTBEAT_INTERVAL_SECONDS: "10"
+  NODE_OVERLOAD_THRESHOLD_PERCENT: "85"
+
+  ROUTING_DEFAULT_CANDIDATES: "3"
+  ROUTING_MAX_CANDIDATES: "10"
+
+  CACHE_ENABLED: "true"
+  REDIS_URL: "redis://cdn-prod-cdn-control-plane-redis:6379/0"
+  CACHE_ROUTE_TTL_SECONDS: "10"
+  CACHE_STATS_TTL_SECONDS: "30"
+---
+# Source: cdn-control-plane/templates/postgresql-pvc.yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: cdn-prod-cdn-control-plane-postgresql
+  labels:
+    helm.sh/chart: cdn-control-plane-0.1.0
+    app.kubernetes.io/name: cdn-control-plane
+    app.kubernetes.io/instance: cdn-prod
+    app.kubernetes.io/component: database
+    app.kubernetes.io/version: "1.0.0"
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/part-of: cdn-control-plane
+  annotations:
+    # Survive `helm uninstall` so a reinstall keeps its data. Deleting it is a
+    # deliberate act: kubectl delete pvc.
+    helm.sh/resource-policy: keep
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: "10Gi"
+---
+# Source: cdn-control-plane/templates/api-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: cdn-prod-cdn-control-plane-api
+  labels:
+    helm.sh/chart: cdn-control-plane-0.1.0
+    app.kubernetes.io/name: cdn-control-plane
+    app.kubernetes.io/instance: cdn-prod
+    app.kubernetes.io/component: api
+    app.kubernetes.io/version: "1.0.0"
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/part-of: cdn-control-plane
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: cdn-control-plane
+    app.kubernetes.io/instance: cdn-prod
+    app.kubernetes.io/component: api
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+---
+# Source: cdn-control-plane/templates/postgresql-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: cdn-prod-cdn-control-plane-postgresql
+  labels:
+    helm.sh/chart: cdn-control-plane-0.1.0
+    app.kubernetes.io/name: cdn-control-plane
+    app.kubernetes.io/instance: cdn-prod
+    app.kubernetes.io/component: database
+    app.kubernetes.io/version: "1.0.0"
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/part-of: cdn-control-plane
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: cdn-control-plane
+    app.kubernetes.io/instance: cdn-prod
+    app.kubernetes.io/component: database
+  ports:
+    - name: postgresql
+      port: 5432
+      targetPort: postgresql
+---
+# Source: cdn-control-plane/templates/redis-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: cdn-prod-cdn-control-plane-redis
+  labels:
+    helm.sh/chart: cdn-control-plane-0.1.0
+    app.kubernetes.io/name: cdn-control-plane
+    app.kubernetes.io/instance: cdn-prod
+    app.kubernetes.io/component: cache
+    app.kubernetes.io/version: "1.0.0"
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/part-of: cdn-control-plane
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: cdn-control-plane
+    app.kubernetes.io/instance: cdn-prod
+    app.kubernetes.io/component: cache
+  ports:
+    - name: redis
+      port: 6379
+      targetPort: redis
+---
+# Source: cdn-control-plane/templates/agents-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cdn-prod-cdn-control-plane-agents
+  labels:
+    helm.sh/chart: cdn-control-plane-0.1.0
+    app.kubernetes.io/name: cdn-control-plane
+    app.kubernetes.io/instance: cdn-prod
+    app.kubernetes.io/component: agents
+    app.kubernetes.io/version: "1.0.0"
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/part-of: cdn-control-plane
+spec:
+  # One replica is a correctness constraint: the worker rewrites the same
+  # heartbeat rows on a timer, so a second copy adds contention and no coverage.
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: cdn-control-plane
+      app.kubernetes.io/instance: cdn-prod
+      app.kubernetes.io/component: agents
+  template:
+    metadata:
+      labels:
+        helm.sh/chart: cdn-control-plane-0.1.0
+        app.kubernetes.io/name: cdn-control-plane
+        app.kubernetes.io/instance: cdn-prod
+        app.kubernetes.io/component: agents
+        app.kubernetes.io/version: "1.0.0"
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/part-of: cdn-control-plane
+      annotations:
+        checksum/config: 38a875c92b2f6cb89522fa3a26e8c7a6dc5b8f24e3bde87fd5adcda249932ca0
+    spec:
+      securityContext:
+        runAsGroup: 1000
+        runAsNonRoot: true
+        runAsUser: 1000
+      containers:
+        - name: agents
+          image: "ghcr.io/ostrrovska/cdn-control-plane:1.1.0"
+          imagePullPolicy: IfNotPresent
+          args:
+            - python
+            - -m
+            - scripts.refresh_fleet
+            - --watch
+            - "10"
+          envFrom:
+            - configMapRef:
+                name: cdn-prod-cdn-control-plane-config
+            - secretRef:
+                name: cdn-prod-cdn-control-plane-secrets
+          resources:
+            limits:
+              cpu: "1"
+              memory: 384Mi
+            requests:
+              cpu: 100m
+              memory: 128Mi
+---
+# Source: cdn-control-plane/templates/api-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cdn-prod-cdn-control-plane-api
+  labels:
+    helm.sh/chart: cdn-control-plane-0.1.0
+    app.kubernetes.io/name: cdn-control-plane
+    app.kubernetes.io/instance: cdn-prod
+    app.kubernetes.io/component: api
+    app.kubernetes.io/version: "1.0.0"
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/part-of: cdn-control-plane
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: cdn-control-plane
+      app.kubernetes.io/instance: cdn-prod
+      app.kubernetes.io/component: api
+  template:
+    metadata:
+      labels:
+        helm.sh/chart: cdn-control-plane-0.1.0
+        app.kubernetes.io/name: cdn-control-plane
+        app.kubernetes.io/instance: cdn-prod
+        app.kubernetes.io/component: api
+        app.kubernetes.io/version: "1.0.0"
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/part-of: cdn-control-plane
+      annotations:
+        # Roll the pods when configuration changes but the image does not.
+        # Without this, an upgrade that only edits the ConfigMap would leave
+        # every replica running on the old values indefinitely.
+        checksum/config: 38a875c92b2f6cb89522fa3a26e8c7a6dc5b8f24e3bde87fd5adcda249932ca0
+        checksum/secret: 6414eef9df0394f50935075e7280467b820c555e29225f01a3dbd96bc5f37665
+    spec:
+      securityContext:
+        runAsGroup: 1000
+        runAsNonRoot: true
+        runAsUser: 1000
+      containers:
+        - name: api
+          image: "ghcr.io/ostrrovska/cdn-control-plane:1.1.0"
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8000
+          # See k8s/50-api-deployment.yaml: endpoint removal and SIGTERM race,
+          # and without this a rolling update drops a request or two. The sleep
+          # delays SIGTERM while the removal propagates; it does not extend the
+          # shutdown itself.
+          lifecycle:
+            preStop:
+              exec:
+                command: ["sleep", "5"]
+          envFrom:
+            - configMapRef:
+                name: cdn-prod-cdn-control-plane-config
+            - secretRef:
+                name: cdn-prod-cdn-control-plane-secrets
+          # INSTANCE_ID stays unset so the app falls back to the hostname, which
+          # here is the pod name - making /health self-identifying.
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          # Reproduces the HAProxy check: inter 2s, fall 2, rise 2.
+          # failureThreshold is 2 rather than 1 on the strength of a measured
+          # run - one-strike ejection cost 190 to 110 req/s, because a
+          # momentarily saturated instance is not a dead one.
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: http
+            periodSeconds: 2
+            timeoutSeconds: 2
+            failureThreshold: 2
+            successThreshold: 2
+          # The schema is applied by the migrate hook, so first boot gets a
+          # generous window without loosening the steady-state probes above.
+          startupProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 3
+            failureThreshold: 30
+          resources:
+            limits:
+              cpu: "2"
+              memory: 768Mi
+            requests:
+              cpu: 250m
+              memory: 256Mi
+---
+# Source: cdn-control-plane/templates/postgresql-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cdn-prod-cdn-control-plane-postgresql
+  labels:
+    helm.sh/chart: cdn-control-plane-0.1.0
+    app.kubernetes.io/name: cdn-control-plane
+    app.kubernetes.io/instance: cdn-prod
+    app.kubernetes.io/component: database
+    app.kubernetes.io/version: "1.0.0"
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/part-of: cdn-control-plane
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: cdn-control-plane
+      app.kubernetes.io/instance: cdn-prod
+      app.kubernetes.io/component: database
+  template:
+    metadata:
+      labels:
+        helm.sh/chart: cdn-control-plane-0.1.0
+        app.kubernetes.io/name: cdn-control-plane
+        app.kubernetes.io/instance: cdn-prod
+        app.kubernetes.io/component: database
+        app.kubernetes.io/version: "1.0.0"
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/part-of: cdn-control-plane
+    spec:
+      containers:
+        - name: postgresql
+          image: "postgres:16-alpine"
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: postgresql
+              containerPort: 5432
+          env:
+            - name: POSTGRES_USER
+              value: "cdn"
+            - name: POSTGRES_DB
+              value: "cdn_control_plane"
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: cdn-prod-cdn-control-plane-secrets
+                  key: POSTGRES_PASSWORD
+            # A subdirectory, so a provisioner that leaves lost+found in the
+            # mount root cannot make initdb refuse the data directory.
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+          startupProbe:
+            exec:
+              command: ["pg_isready","-U","cdn","-d","cdn_control_plane"]
+            periodSeconds: 5
+            failureThreshold: 24
+          readinessProbe:
+            exec:
+              command: ["pg_isready","-U","cdn","-d","cdn_control_plane"]
+            periodSeconds: 5
+            timeoutSeconds: 5
+            failureThreshold: 3
+          livenessProbe:
+            exec:
+              command: ["pg_isready","-U","cdn","-d","cdn_control_plane"]
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 6
+          resources:
+            limits:
+              cpu: "2"
+              memory: 2Gi
+            requests:
+              cpu: 500m
+              memory: 512Mi
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: cdn-prod-cdn-control-plane-postgresql
+---
+# Source: cdn-control-plane/templates/redis-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cdn-prod-cdn-control-plane-redis
+  labels:
+    helm.sh/chart: cdn-control-plane-0.1.0
+    app.kubernetes.io/name: cdn-control-plane
+    app.kubernetes.io/instance: cdn-prod
+    app.kubernetes.io/component: cache
+    app.kubernetes.io/version: "1.0.0"
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/part-of: cdn-control-plane
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: cdn-control-plane
+      app.kubernetes.io/instance: cdn-prod
+      app.kubernetes.io/component: cache
+  template:
+    metadata:
+      labels:
+        helm.sh/chart: cdn-control-plane-0.1.0
+        app.kubernetes.io/name: cdn-control-plane
+        app.kubernetes.io/instance: cdn-prod
+        app.kubernetes.io/component: cache
+        app.kubernetes.io/version: "1.0.0"
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/part-of: cdn-control-plane
+    spec:
+      containers:
+        - name: redis
+          image: "redis:7-alpine"
+          imagePullPolicy: IfNotPresent
+          args:
+            - redis-server
+            - --save
+            - ""
+            - --appendonly
+            - "no"
+            - --maxmemory
+            - "512mb"
+            - --maxmemory-policy
+            - "allkeys-lru"
+          ports:
+            - name: redis
+              containerPort: 6379
+          readinessProbe:
+            exec:
+              command: ["redis-cli", "ping"]
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+          livenessProbe:
+            exec:
+              command: ["redis-cli", "ping"]
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 5
+          resources:
+            limits:
+              cpu: "1"
+              memory: 640Mi
+            requests:
+              cpu: 100m
+              memory: 128Mi
+---
+# Source: cdn-control-plane/templates/ingress.yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: cdn-prod-cdn-control-plane-api
+  labels:
+    helm.sh/chart: cdn-control-plane-0.1.0
+    app.kubernetes.io/name: cdn-control-plane
+    app.kubernetes.io/instance: cdn-prod
+    app.kubernetes.io/component: api
+    app.kubernetes.io/version: "1.0.0"
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/part-of: cdn-control-plane
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-next-upstream: error timeout non_idempotent http_502
+      http_503 http_504
+    nginx.ingress.kubernetes.io/proxy-next-upstream-tries: "3"
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: "cdn.example.com"
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: cdn-prod-cdn-control-plane-api
+                port:
+                  name: http
+---
+# Source: cdn-control-plane/templates/tests/test-api-ready.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: cdn-prod-cdn-control-plane-test-api-ready
+  labels:
+    helm.sh/chart: cdn-control-plane-0.1.0
+    app.kubernetes.io/name: cdn-control-plane
+    app.kubernetes.io/instance: cdn-prod
+    app.kubernetes.io/component: test
+    app.kubernetes.io/version: "1.0.0"
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/part-of: cdn-control-plane
+  annotations:
+    "helm.sh/hook": test
+    # Removed once it passes, so `helm uninstall` leaves an empty namespace;
+    # a failed test pod is kept, because that is when its logs matter.
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  restartPolicy: Never
+  securityContext:
+    runAsGroup: 1000
+    runAsNonRoot: true
+    runAsUser: 1000
+  containers:
+    - name: test-api-ready
+      image: "ghcr.io/ostrrovska/cdn-control-plane:1.1.0"
+      imagePullPolicy: IfNotPresent
+      command:
+        - /bin/sh
+        - -c
+        - |
+          set -eu
+          base="http://cdn-prod-cdn-control-plane-api:80"
+
+          echo "GET $base/health"
+          curl --fail --silent --show-error "$base/health"
+          echo
+
+          echo "GET $base/health/ready"
+          curl --fail --silent --show-error "$base/health/ready"
+          echo
+
+          echo "GET $base/api/v1/stats/network"
+          curl --fail --silent --show-error "$base/api/v1/stats/network" > /dev/null
+          echo "ok"
+---
+# Source: cdn-control-plane/templates/hooks/migrate-job.yaml
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: cdn-prod-cdn-control-plane-migrate
+  labels:
+    helm.sh/chart: cdn-control-plane-0.1.0
+    app.kubernetes.io/name: cdn-control-plane
+    app.kubernetes.io/instance: cdn-prod
+    app.kubernetes.io/component: migrate
+    app.kubernetes.io/version: "1.0.0"
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/part-of: cdn-control-plane
+  annotations:
+    "helm.sh/hook": post-install,pre-upgrade
+    "helm.sh/hook-weight": "-5"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  backoffLimit: 6
+  template:
+    metadata:
+      labels:
+        helm.sh/chart: cdn-control-plane-0.1.0
+        app.kubernetes.io/name: cdn-control-plane
+        app.kubernetes.io/instance: cdn-prod
+        app.kubernetes.io/component: migrate
+        app.kubernetes.io/version: "1.0.0"
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/part-of: cdn-control-plane
+    spec:
+      # OnFailure, not Never: on a first install this hook starts while
+      # PostgreSQL is still initialising, and a retry is the cheapest wait.
+      restartPolicy: OnFailure
+      securityContext:
+        runAsGroup: 1000
+        runAsNonRoot: true
+        runAsUser: 1000
+      containers:
+        - name: migrate
+          image: "ghcr.io/ostrrovska/cdn-control-plane:1.1.0"
+          imagePullPolicy: IfNotPresent
+          # alembic.ini and migrations/ ship in the image, and env.py reads
+          # DATABASE_URL through app.core.config - nothing else is needed.
+          args: ["alembic", "upgrade", "head"]
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: cdn-prod-cdn-control-plane-secrets
+                  key: DATABASE_URL
+          resources:
+            limits:
+              cpu: 500m
+              memory: 256Mi
+            requests:
+              cpu: 50m
+              memory: 128Mi
+

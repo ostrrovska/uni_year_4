@@ -1,0 +1,50 @@
+{{- /*
+DevOps Lab4
+
+No probes: this container serves no HTTP, and in --watch mode it already
+swallows database outages and retries, so restarting it would interrupt a
+condition it is designed to ride out.
+*/ -}}
+{{- if .Values.agents.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "cdn.fullname" . }}-agents
+  labels:
+    {{- include "cdn.labels" (dict "ctx" $ "component" "agents") | nindent 4 }}
+spec:
+  # One replica is a correctness constraint: the worker rewrites the same
+  # heartbeat rows on a timer, so a second copy adds contention and no coverage.
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      {{- include "cdn.selectorLabels" (dict "ctx" $ "component" "agents") | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "cdn.labels" (dict "ctx" $ "component" "agents") | nindent 8 }}
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+    spec:
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: agents
+          image: {{ include "cdn.image" . | quote }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args:
+            - python
+            - -m
+            - scripts.refresh_fleet
+            - --watch
+            - {{ .Values.agents.watchIntervalSeconds | quote }}
+          envFrom:
+            - configMapRef:
+                name: {{ include "cdn.fullname" . }}-config
+            - secretRef:
+                name: {{ include "cdn.fullname" . }}-secrets
+          resources:
+            {{- toYaml .Values.agents.resources | nindent 12 }}
+{{- end }}

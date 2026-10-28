@@ -1,0 +1,17 @@
+{{- /* DevOps Lab4 */ -}}
+{{- if .Values.postgresql.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "cdn.fullname" . }}-postgresql
+  labels:
+    {{- include "cdn.labels" (dict "ctx" $ "component" "database") | nindent 4 }}
+spec:
+  type: ClusterIP
+  selector:
+    {{- include "cdn.selectorLabels" (dict "ctx" $ "component" "database") | nindent 4 }}
+  ports:
+    - name: postgresql
+      port: 5432
+      targetPort: postgresql
+{{- end }}

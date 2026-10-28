@@ -1,0 +1,133 @@
+﻿$ C:\Users\Kateryna\AppData\Local\Programs\k8stools\helm.exe lint C:\uni_year_4\high-load-systems\chart\cdn-control-plane -f C:\uni_year_4\high-load-systems\chart\cdn-control-plane\values-dev.yaml
+==> Linting C:\uni_year_4\high-load-systems\chart\cdn-control-plane
+[INFO] Chart.yaml: icon is recommended
+
+1 chart(s) linted, 0 chart(s) failed
+
+
+object kinds in k8s/  : 
+ConfigMap, ConfigMap, Deployment, Deployment, Deployment, Deployment, Ingress, Job, Job, Namespace, PersistentVolumeClaim, Secret, Service, Service, Service
+object kinds from chart: 
+ConfigMap, Deployment, Deployment, Deployment, Deployment, Job, Job, PersistentVolumeClaim, Pod, Secret, Service, Service, Service
+$ C:\Users\Kateryna\AppData\Local\Programs\k8stools\helm.exe install cdn C:\uni_year_4\high-load-systems\chart\cdn-control-plane -f C:\uni_year_4\high-load-systems\chart\cdn-control-plane\values-dev.yaml -n cdn-helm --create-namespace --wait --timeout 10m
+NAME: cdn
+LAST DEPLOYED: Thu Oct 22 09:26:05 2026
+NAMESPACE: cdn-helm
+STATUS: deployed
+REVISION: 1
+NOTES:
+cdn-control-plane 0.1.0 is installed as release "cdn"
+in namespace "cdn-helm", running application version
+1.0.0.
+
+Wait for it to come up:
+
+  kubectl rollout status deployment/cdn-cdn-control-plane-api -n cdn-helm
+
+Open it:
+
+      minikube service cdn-cdn-control-plane-api -n cdn-helm --url
+
+  or go straight to the node port:
+
+      http://$(minikube ip):30081/docs
+
+Check it end to end:
+
+  helm test cdn -n cdn-helm
+
+$ C:\Users\Kateryna\AppData\Local\Programs\k8stools\helm.exe list -n cdn-helm
+NAME	NAMESPACE	REVISION	UPDATED                               	STATUS  	CHART                  	APP VERSION
+cdn 	cdn-helm 	1       	2026-10-22 09:26:05.4200137 +0300 EEST	deployed	cdn-control-plane-0.1.0	1.0.0      
+
+$ C:\Users\Kateryna\AppData\Local\Programs\k8stools\helm.exe status cdn -n cdn-helm
+NAME: cdn
+LAST DEPLOYED: Thu Oct 22 09:26:05 2026
+NAMESPACE: cdn-helm
+STATUS: deployed
+REVISION: 1
+NOTES:
+cdn-control-plane 0.1.0 is installed as release "cdn"
+in namespace "cdn-helm", running application version
+1.0.0.
+
+Wait for it to come up:
+
+  kubectl rollout status deployment/cdn-cdn-control-plane-api -n cdn-helm
+
+Open it:
+
+      minikube service cdn-cdn-control-plane-api -n cdn-helm --url
+
+  or go straight to the node port:
+
+      http://$(minikube ip):30081/docs
+
+Check it end to end:
+
+  helm test cdn -n cdn-helm
+
+$ C:\Users\Kateryna\AppData\Local\Programs\k8stools\helm.exe get values cdn -n cdn-helm
+USER-SUPPLIED VALUES:
+api:
+  replicaCount: 1
+  resources:
+    limits:
+      cpu: 500m
+      memory: 256Mi
+    requests:
+      cpu: 50m
+      memory: 128Mi
+  service:
+    nodePort: 30081
+    type: NodePort
+config:
+  appEnv: development
+  logLevel: DEBUG
+image:
+  tag: 1.0.0
+ingress:
+  enabled: false
+postgresql:
+  persistence:
+    size: 1Gi
+  resources:
+    limits:
+      cpu: 500m
+      memory: 384Mi
+    requests:
+      cpu: 50m
+      memory: 128Mi
+redis:
+  maxmemory: 64mb
+seed:
+  enabled: true
+
+$ C:\Program Files\Docker\Docker\resources\bin\kubectl.exe get all -n cdn-helm
+NAME                                                    READY   STATUS    RESTARTS   AGE
+pod/cdn-cdn-control-plane-agents-7487659f4b-pcc8l       1/1     Running   0          24s
+pod/cdn-cdn-control-plane-api-7b8985c6f5-f7fz8          1/1     Running   0          24s
+pod/cdn-cdn-control-plane-postgresql-7d958dc868-kdrt9   1/1     Running   0          24s
+pod/cdn-cdn-control-plane-redis-6cb5fffdb4-pc78n        1/1     Running   0          24s
+
+NAME                                       TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)        AGE
+service/cdn-cdn-control-plane-api          NodePort    10.98.240.172    <none>        80:30081/TCP   24s
+service/cdn-cdn-control-plane-postgresql   ClusterIP   10.106.169.195   <none>        5432/TCP       24s
+service/cdn-cdn-control-plane-redis        ClusterIP   10.102.4.9       <none>        6379/TCP       24s
+
+NAME                                               READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/cdn-cdn-control-plane-agents       1/1     1            1           24s
+deployment.apps/cdn-cdn-control-plane-api          1/1     1            1           24s
+deployment.apps/cdn-cdn-control-plane-postgresql   1/1     1            1           24s
+deployment.apps/cdn-cdn-control-plane-redis        1/1     1            1           24s
+
+NAME                                                          DESIRED   CURRENT   READY   AGE
+replicaset.apps/cdn-cdn-control-plane-agents-7487659f4b       1         1         1       24s
+replicaset.apps/cdn-cdn-control-plane-api-7b8985c6f5          1         1         1       24s
+replicaset.apps/cdn-cdn-control-plane-postgresql-7d958dc868   1         1         1       24s
+replicaset.apps/cdn-cdn-control-plane-redis-6cb5fffdb4        1         1         1       24s
+
+$ C:\Program Files\Docker\Docker\resources\bin\kubectl.exe get secret -n cdn-helm -l owner=helm
+NAME                        TYPE                 DATA   AGE
+sh.helm.release.v1.cdn.v1   helm.sh/release.v1   1      24s
+

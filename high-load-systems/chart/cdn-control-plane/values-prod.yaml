@@ -1,0 +1,71 @@
+# DevOps Lab4
+# Production overlay. Differs from development in the four dimensions the task
+# asks for - replica count, resources, image tag and Ingress - plus the two that
+# follow from them: quieter logging and a larger volume.
+#
+#   helm install cdn-prod ./chart/cdn-control-plane \
+#       -n cdn-prod --create-namespace -f ./chart/cdn-control-plane/values-prod.yaml
+#
+# Note the replica ceiling: (dbPoolSize + dbMaxOverflow) x replicaCount is
+# 20 x 3 = 60 connections against PostgreSQL's default max_connections of 100.
+# Going past 4 replicas needs a pooler in front, not a bigger number here.
+
+image:
+  tag: "1.1.0"
+
+config:
+  appEnv: production
+  logLevel: WARNING
+
+api:
+  replicaCount: 3
+  service:
+    # ClusterIP, not NodePort: in production the Ingress is the only entry
+    # point, and a NodePort would be a second, unguarded one.
+    type: ClusterIP
+  resources:
+    requests:
+      cpu: 250m
+      memory: 256Mi
+    limits:
+      cpu: "2"
+      memory: 768Mi
+
+agents:
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: "1"
+      memory: 384Mi
+
+# Never seed a production database with demo data.
+seed:
+  enabled: false
+
+postgresql:
+  persistence:
+    size: 10Gi
+  resources:
+    requests:
+      cpu: 500m
+      memory: 512Mi
+    limits:
+      cpu: "2"
+      memory: 2Gi
+
+redis:
+  maxmemory: 512mb
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: "1"
+      memory: 640Mi
+
+ingress:
+  enabled: true
+  className: nginx
+  host: cdn.example.com

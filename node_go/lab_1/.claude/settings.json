@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir -p /c/cyber-implant-cloud/.claude && cat /c/cyber-implant-cloud/.claude/settings.json 2>/dev/null || echo \"NO_FILE\")",
+      "Bash(python -m venv .venv)",
+      "Bash(.venv/Scripts/python -m pip install --upgrade pip -q)",
+      "Bash(.venv/Scripts/python -m pip install -r requirements-dev.txt -q)",
+      "Bash(.venv/Scripts/python -m pip list)",
+      "Bash(.venv/Scripts/python -m pip install fastapi pre-commit -q)",
+      "Bash(.venv/Scripts/python -m pip install -e . -q)",
+      "Bash(.venv/Scripts/ruff check *)",
+      "Bash(.venv/Scripts/ruff format *)",
+      "Bash(.venv/Scripts/python -m pytest -q)",
+      "Bash(.venv/Scripts/alembic init *)",
+      "Bash(.venv/Scripts/python -m pip show alembic asyncpg fastapi pre-commit)",
+      "Bash(.venv/Scripts/python -m alembic init -t async migrations)",
+      "Bash(docker --version)",
+      "Bash(.venv/Scripts/python -m alembic revision -m \"create implants firmware_versions and ota_update_jobs tables\")",
+      "Bash(.venv/Scripts/python -m pre_commit install)",
+      "Bash(.venv/Scripts/python -m pre_commit run --all-files)"
+    ],
+    "additionalDirectories": [
+      "C:\\cyber-implant-cloud"
+    ]
+  }
+}

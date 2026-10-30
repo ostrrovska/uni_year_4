@@ -1,0 +1,9 @@
+{
+  "name": "node-service-lab2",
+  "version": "1.0.0",
+  "description": "HTTP service used to study the Node.js event loop under I/O and CPU load",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  }
+}

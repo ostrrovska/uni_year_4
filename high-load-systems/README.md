@@ -328,13 +328,92 @@ very little about the code that ships.
 
 ---
 
+<!-- Lab2 -->
+## Lab 2 — Stateless architecture
+
+The application tier is stateless by design, so this lab is an audit and a proof rather
+than a refactor: there were no in-memory collections, singletons, local locks or file
+sessions to remove.
+
+### State audit
+
+| Category | What belongs here | Where it lives |
+|---|---|---|
+| **Ephemeral / Local Safe** | Request id, response timing, access logs, the SQLAlchemy connection pool, logging config | Per-request `Request` object (dies with the request) or per-process, never shared, never business data |
+| **Shared / Externalized** | All business state: nodes, heartbeats, assets, replicas, distribution policy, purges and their acknowledgements | PostgreSQL — the single system of record every instance reads and writes |
+| **Critical Stateful Dependencies** (must be removed) | In-memory collections, singletons with business data, local caches, application-level locks, local counters, file sessions | **None.** See the enforced rules in [docs/architecture.md](docs/architecture.md#statelessness-rules) |
+
+**In-memory dependencies removed: none.** The design never introduced them. `@lru_cache`
+is used only over immutable configuration (`get_settings`, `get_instance_id`); node
+staleness is a SQL predicate, not an in-process reaper; the read-path cache is a
+`NullCache` behind the `CacheBackend` seam, so no instance holds cached data locally.
+
+### Stateless request flow (asset update)
+
+`POST /assets/{id}/versions` carries no state between requests:
+
+1. **Input** — `asset_id` in the path, new `content_hash` / `size_bytes` / `requested_by`
+   in the body. No server-side session or context token.
+2. **Read context** — the current asset and its replicas are read from PostgreSQL.
+3. **Atomic change** — version bump, replica invalidation and the purge campaign are
+   committed in one database transaction.
+4. **No residual mutation** — after the response, nothing about the asset remains in the
+   process; the next request re-reads it from the database, on any instance.
+
+### Run two instances
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.lab2.yml up -d postgres migrate api1 api2
+docker compose -f docker-compose.yml -f docker-compose.lab2.yml ps
+```
+
+`api1` → `http://localhost:8001` (`X-Instance-ID: cdn-api-1`), `api2` →
+`http://localhost:8002` (`X-Instance-ID: cdn-api-2`). Both are built from the same image;
+the base `docker-compose.yml` is unchanged.
+
+### Cross-instance consistency
+
+Scripted: `./scripts/lab2_consistency.ps1`. By hand (`-i` shows `X-Instance-ID`):
+
+```bash
+# POST -> Instance 1 (create), capture the returned id
+curl -i -X POST http://localhost:8001/api/v1/assets \
+  -H "Content-Type: application/json" \
+  -d '{"origin_path":"/static/x.js","content_hash":"'$(printf 'a%.0s' {1..64})'","size_bytes":512000,"content_type":"application/javascript"}'
+
+# GET -> Instance 2: sees version 1 written by Instance 1
+curl -i http://localhost:8002/api/v1/assets/<id>
+
+# UPDATE -> Instance 2: publish version 2
+curl -i -X POST http://localhost:8002/api/v1/assets/<id>/versions \
+  -H "Content-Type: application/json" \
+  -d '{"content_hash":"'$(printf 'b%.0s' {1..64})'","size_bytes":521400,"requested_by":"lab2"}'
+
+# GET -> Instance 1: sees version 2 written by Instance 2
+curl -i http://localhost:8001/api/v1/assets/<id>
+```
+
+No sticky sessions: `X-Instance-ID` alternates while the data stays consistent.
+
+### Resilience (instance loss)
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.lab2.yml kill api1
+curl -i http://localhost:8002/api/v1/assets/<id>   # survivor still returns version 2
+```
+
+Killing an instance loses nothing: the business state is in PostgreSQL, and the surviving
+instance keeps serving every request.
+
+---
+
 ## Roadmap — and what Lab 1 already built for it
 
 Lab 1 was designed so the next four labs are additions and configuration, not rewrites.
 
 | Lab | Needs | Already in place |
 |---|---|---|
-| **2** — Stateless | State audit, ≥2 instances, `X-Instance-ID`, kill-an-instance test | Statelessness rules documented and enforced (the audit should find nothing to remove); `X-Instance-ID` on every response; staleness in SQL rather than a local reaper; `api` has no `container_name`, so `--scale` works; one-shot `migrate` service means N replicas never race on DDL |
+| **2** — Stateless | State audit, ≥2 instances, `X-Instance-ID`, kill-an-instance test | **Done — see Lab 2 section above.** Statelessness rules documented and enforced (audit found nothing to remove); `X-Instance-ID` on every response; staleness in SQL rather than a local reaper; `api` has no `container_name`, so `--scale` works; one-shot `migrate` service means N replicas never race on DDL |
 | **3** — Load balancing | nginx upstream pool, health checks, algorithm comparison, node-failure demo | API already containerized with its own `HEALTHCHECK`; `/health` and `/health/ready` already distinguish liveness from readiness and `503` is verified real; port 8080 reserved; deterministic seed makes 1 vs 2 vs 3 instance runs comparable |
 | **4** — Distributed caching | Cache-aside, key scheme, TTL, invalidation, `X-Cache`, Redis-down fallback | `CacheBackend` protocol + `NullCache` + `cache_key()` already implementing `cdn:v1:<entity>:<identity>:<params_hash>`; `X-Cache` header already emitted; per-asset `cache_ttl_seconds` column; mutations already funnel through services where invalidation hooks belong; two targets already identified and justified |
 | **5** — Load testing | k6 scenarios A/B/C, percentiles, saturation point, scaling and caching comparisons | Scenario A = `/routing/resolve`, B = `/nodes/{id}/heartbeat`, C = publish → purge → ack; idempotent UUIDv5 seed so scripts can hardcode ids and every run starts identical; structured JSON logs carrying `instance_id` and `duration_ms`; pool knobs exposed as env vars so "pool exhaustion" is a testable hypothesis |

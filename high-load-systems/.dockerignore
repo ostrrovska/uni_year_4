@@ -1,0 +1,32 @@
+# Build context trimming. The runtime image is assembled by docker/Dockerfile,
+# which COPYs only requirements.txt, alembic.ini, migrations/, app/ and scripts/.
+# Everything below is never needed inside the image, so keeping it out of the
+# build context speeds up `docker compose build` and keeps local secrets
+# (config/.env) off the Docker daemon entirely.
+
+# Python virtualenv and bytecode
+.venv/
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Tooling caches
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Version control
+.git/
+.gitignore
+
+# Local secrets and env (config/.env.example stays in the repo for reference,
+# but neither is copied into the image; nothing here affects runtime config,
+# which is injected via docker-compose environment).
+config/.env
+
+# Not part of the runtime image
+tests/
+docs/
+scripts/smoke.ps1
+.pre-commit-config.yaml
+*.md

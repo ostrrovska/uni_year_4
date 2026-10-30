@@ -76,8 +76,10 @@ a control plane tractable — it handles one small request per download, not the
 
 ## C4 Level 2 — Containers
 
-Solid fills are implemented in Lab 1. Dashed borders are designed for but deferred to a
-named later lab.
+<!-- Lab2 -->
+Solid fills are implemented. The stateless tier now runs as two instances (Lab 2); the
+load balancer in front of them is Lab 3. Dashed borders are designed for but deferred to
+a named later lab.
 
 ```mermaid
 flowchart TB
@@ -92,8 +94,8 @@ flowchart TB
 
     subgraph tier["Stateless application tier"]
         direction LR
-        api1["<b>API instance</b><br/><i>[Container: FastAPI / uvicorn]</i><br/>Python 3.13, async<br/>port 8000"]
-        api2["<b>API instance</b><br/><i>[Container: FastAPI / uvicorn]</i><br/>identical image<br/><b>— scaled in Lab 2</b>"]
+        api1["<b>API instance 1</b><br/><i>[Container: FastAPI / uvicorn]</i><br/>Python 3.13, async<br/>cdn-api-1 · host :8001"]
+        api2["<b>API instance 2</b><br/><i>[Container: FastAPI / uvicorn]</i><br/>identical image<br/>cdn-api-2 · host :8002"]
     end
 
     db[("<b>PostgreSQL 16</b><br/><i>[Container: database]</i><br/>System of record<br/>8 tables, named volume")]
@@ -191,7 +193,8 @@ every endpoint.
 ## Statelessness rules — the Lab 2 audit, decided up front
 
 The application holds **no business state in process memory**. The codebase obeys these
-rules, so the Lab 2 state audit should find nothing left to remove:
+rules, so the Lab 2 state audit found nothing to remove — confirmed empirically by running
+two instances and passing the cross-instance consistency check (see README, Lab 2):
 
 | Rule | Why |
 |---|---|

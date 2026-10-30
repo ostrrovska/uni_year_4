@@ -1,0 +1,55 @@
+# Lab2 — stateless multi-instance override.
+#
+# Two interchangeable API instances from the same image, on distinct host ports, so a
+# request can be aimed at a specific instance to prove cross-instance consistency.
+# The base docker-compose.yml is left untouched. Anchors do not cross compose files, so
+# the environment below mirrors the base x-api-environment — keep them in sync.
+#
+# Run:
+#   docker compose -f docker-compose.yml -f docker-compose.lab2.yml up -d postgres migrate api1 api2
+# Instance 1 -> http://localhost:8001  (X-Instance-ID: cdn-api-1)
+# Instance 2 -> http://localhost:8002  (X-Instance-ID: cdn-api-2)
+
+name: cdn-control-plane
+
+x-lab2-api-environment: &lab2-api-environment
+  APP_ENV: development
+  LOG_LEVEL: INFO
+  DATABASE_URL: postgresql+asyncpg://cdn:cdn@postgres:5432/cdn_control_plane
+  DB_POOL_SIZE: 10
+  DB_MAX_OVERFLOW: 10
+  DB_POOL_TIMEOUT: 10
+  HEARTBEAT_STALE_AFTER_SECONDS: 120
+  HEARTBEAT_INTERVAL_SECONDS: 10
+  NODE_OVERLOAD_THRESHOLD_PERCENT: 85
+
+services:
+  api1:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    restart: unless-stopped
+    environment:
+      <<: *lab2-api-environment
+      INSTANCE_ID: cdn-api-1
+    ports:
+      - "8001:8000"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    networks: [cdn_net]
+
+  api2:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    restart: unless-stopped
+    environment:
+      <<: *lab2-api-environment
+      INSTANCE_ID: cdn-api-2
+    ports:
+      - "8002:8000"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    networks: [cdn_net]

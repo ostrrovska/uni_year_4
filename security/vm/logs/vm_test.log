@@ -1,0 +1,49 @@
+2026-10-14 15:06:02.758 [ENROLL] DB WRITE           user='ostrovska' salt=ce2e77919aa330b0... hash=98eb8388200fc39d...
+2026-10-14 15:06:02.767 [ENROLL] TOKEN WRITE        C:\Users\Kateryna\BPD_SHARE\SECTOKEN\u_ostrovska\token.dat (256 bytes, AES-256 + SHA-256 tag)
+2026-10-14 15:06:03.020 [ENROLL] DB WRITE           user='shevchenko' salt=360722b468baf8af... hash=7aa9311d9ee6fb30...
+2026-10-14 15:06:03.024 [ENROLL] TOKEN WRITE        C:\Users\Kateryna\BPD_SHARE\SECTOKEN\u_shevchenko\token.dat (256 bytes, AES-256 + SHA-256 tag)
+2026-10-14 15:06:03.355 [ENROLL] DB WRITE           user='kovalenko' salt=d2771456acb71032... hash=d539dd0a7d1e525b...
+2026-10-14 15:06:03.359 [ENROLL] TOKEN WRITE        C:\Users\Kateryna\BPD_SHARE\SECTOKEN\u_kovalenko\token.dat (256 bytes, AES-256 + SHA-256 tag)
+2026-10-14 15:06:03.656 [ENROLL] DB SKIPPED         user='mallory' is not registered on the server
+2026-10-14 15:06:03.661 [ENROLL] TOKEN WRITE        C:\Users\Kateryna\BPD_SHARE\SECTOKEN\u_mallory\token.dat (240 bytes, AES-256 + SHA-256 tag)
+2026-10-14 15:06:03.870 [SEED] OBJECT             'finance_q1' created, owner 'ostrovska'
+2026-10-14 15:06:03.875 [SEED] OBJECT             'finance_q2' created, owner 'ostrovska'
+2026-10-14 15:06:03.881 [SEED] OBJECT             'passwords' created, owner 'ostrovska'
+2026-10-14 15:06:03.888 [SEED] OBJECT             'diary' created, owner 'ostrovska'
+2026-10-14 15:06:03.892 [SEED] OBJECT             'lab_report' created, owner 'shevchenko'
+2026-10-14 15:06:03.897 [SEED] OBJECT             'poems' created, owner 'shevchenko'
+2026-10-14 15:06:03.901 [SEED] OBJECT             'budget' created, owner 'shevchenko'
+2026-10-14 15:06:03.905 [SEED] OBJECT             'contacts' created, owner 'shevchenko'
+2026-10-14 15:06:03.910 [SEED] OBJECT             'schedule' created, owner 'kovalenko'
+2026-10-14 15:06:03.914 [SEED] OBJECT             'grades' created, owner 'kovalenko'
+2026-10-14 15:06:03.920 [SEED] OBJECT             'protocol' created, owner 'kovalenko'
+2026-10-14 15:06:03.925 [SEED] OBJECT             'public_notes' created, owner 'kovalenko'
+2026-10-14 15:06:03.926 [SEED] READY              12 objects, access matrix in C:\uni_year_4\security\lab_7\acl.json
+2026-10-14 15:06:05.750 [SERVER] START              listening on 0.0.0.0:5607, users in database: ['kovalenko', 'ostrovska', 'shevchenko']
+2026-10-14 15:06:05.768 [SERVER] START              0.0.0.0:5707, subjects=['kovalenko', 'ostrovska', 'shevchenko'], objects=12
+2026-10-14 15:08:26.507 [SERVER] REQUEST            peer=10.205.250.21:51489 user='ostrovska' hash=98eb8388200fc39d...
+2026-10-14 15:08:26.510 [SERVER] AUTH OK            user='ostrovska' peer=10.205.250.21:51489 :: hash image matches the database
+2026-10-14 15:08:26.945 [SERVER] REQUEST            peer=10.205.250.21:51490 user='mallory' hash=a87b367517b10ae6...
+2026-10-14 15:08:26.945 [SERVER] AUTH FAIL          user='mallory' peer=10.205.250.21:51490 :: unknown identifier 'mallory'
+2026-10-14 15:08:27.201 [SERVER] AUTH OK            user='ostrovska' peer=10.205.250.21:51491 :: hash image matches the database
+2026-10-14 15:08:27.205 [SERVER] SESSION OPEN       subject 'ostrovska' from 10.205.250.21:51491
+2026-10-14 15:08:27.212 [SERVER] ALLOW              subject='ostrovska' op=list :: 12 object(s)
+2026-10-14 15:08:27.239 [SERVER] ALLOW              subject='ostrovska' op=read object='finance_q1' :: right 'read' on 'finance_q1' is present (as owner)
+2026-10-14 15:08:27.249 [SERVER] ALLOW              subject='ostrovska' op=write object='finance_q1' :: right 'write' on 'finance_q1' is present (as owner)
+2026-10-14 15:08:27.257 [SERVER] DENY               subject='ostrovska' op=read object='lab_report' :: subject 'ostrovska' has no right 'read' on 'lab_report'
+2026-10-14 15:08:27.267 [SERVER] DENY               subject='ostrovska' op=delete object='lab_report' :: subject 'ostrovska' has no right 'delete' on 'lab_report'
+2026-10-14 15:08:27.274 [SERVER] ALLOW              subject='ostrovska' op=caps :: capability list of 'ostrovska'
+2026-10-14 15:08:27.283 [SERVER] SESSION CLOSE      subject 'ostrovska'
+2026-10-14 15:15:40.024 [SERVER] REQUEST            peer=10.205.250.21:51686 user='ostrovska' hash=98eb8388200fc39d...
+2026-10-14 15:15:40.029 [SERVER] AUTH OK            user='ostrovska' peer=10.205.250.21:51686 :: hash image matches the database
+2026-10-14 15:15:40.473 [SERVER] REQUEST            peer=10.205.250.21:51687 user='mallory' hash=a87b367517b10ae6...
+2026-10-14 15:15:40.474 [SERVER] AUTH FAIL          user='mallory' peer=10.205.250.21:51687 :: unknown identifier 'mallory'
+2026-10-14 15:15:40.716 [SERVER] AUTH OK            user='ostrovska' peer=10.205.250.21:51688 :: hash image matches the database
+2026-10-14 15:15:40.722 [SERVER] SESSION OPEN       subject 'ostrovska' from 10.205.250.21:51688
+2026-10-14 15:15:40.727 [SERVER] ALLOW              subject='ostrovska' op=list :: 12 object(s)
+2026-10-14 15:15:40.743 [SERVER] ALLOW              subject='ostrovska' op=read object='finance_q1' :: right 'read' on 'finance_q1' is present (as owner)
+2026-10-14 15:15:40.751 [SERVER] ALLOW              subject='ostrovska' op=write object='finance_q1' :: right 'write' on 'finance_q1' is present (as owner)
+2026-10-14 15:15:40.757 [SERVER] DENY               subject='ostrovska' op=read object='lab_report' :: subject 'ostrovska' has no right 'read' on 'lab_report'
+2026-10-14 15:15:40.763 [SERVER] DENY               subject='ostrovska' op=delete object='lab_report' :: subject 'ostrovska' has no right 'delete' on 'lab_report'
+2026-10-14 15:15:40.770 [SERVER] ALLOW              subject='ostrovska' op=caps :: capability list of 'ostrovska'
+2026-10-14 15:15:40.778 [SERVER] SESSION CLOSE      subject 'ostrovska'

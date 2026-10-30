@@ -711,7 +711,8 @@ def predict_images(model, paths, title, out_png):
         x = np.expand_dims(img_to_array(img) / 255.0, axis=0)
         prob = float(model.predict(x, verbose=0)[0][0])
         label = "dog" if prob > 0.5 else "cat"
-        exp = "cat" if p.stem.startswith("cat") else "dog"
+        # для обрізаних файлів клас береться з імені оригіналу (crop_cat_... -> cat)
+        exp = "cat" if p.stem.replace("crop_", "").startswith("cat") else "dog"
         ok = label == exp
         records.append({"file": p.name, "prob_dog": round(prob, 4), "predicted": label,
                         "expected": exp, "correct": ok})

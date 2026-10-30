@@ -25,6 +25,7 @@ USAGE = """commands:
   delete <obj>              delete an object
   grant  <obj> <user> <r>   give right r (read|write|delete|grant|own) to a user
   revoke <obj> <user> <r>   take right r away from a user
+  audit  [N]                last N records of the audit journal (auditor only)
   quit"""
 
 
@@ -35,6 +36,8 @@ def parse_command(line):
     op, rest = parts[0].lower(), parts[1:]
     if op in ("list", "caps", "matrix", "quit"):
         return {"op": op}
+    if op == "audit":
+        return {"op": op, "count": int(rest[0]) if rest and rest[0].isdigit() else 15}
     if op == "rights" and len(rest) == 1:
         return {"op": op, "object": rest[0]}
     if op in ("read", "delete") and len(rest) == 1:

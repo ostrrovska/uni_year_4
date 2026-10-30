@@ -1,43 +1,39 @@
-2026-10-14 15:33:31.892 [ENROLL] DB WRITE           user='ostrovska' salt=ff7e4361eb0398b5... hash=d04c431908471f10...
-2026-10-14 15:33:31.897 [ENROLL] TOKEN WRITE        C:\Users\Kateryna\AppData\Local\BPD_TOKEN\SECTOKEN\u_ostrovska\token.dat (256 bytes, AES-256 + SHA-256 tag)
-2026-10-14 15:33:32.179 [ENROLL] DB WRITE           user='shevchenko' salt=acd948aadf1e70e2... hash=216ae451b8d6720e...
-2026-10-14 15:33:32.182 [ENROLL] TOKEN WRITE        C:\Users\Kateryna\AppData\Local\BPD_TOKEN\SECTOKEN\u_shevchenko\token.dat (256 bytes, AES-256 + SHA-256 tag)
-2026-10-14 15:33:32.424 [ENROLL] DB WRITE           user='kovalenko' salt=8f7597806f6c7560... hash=6451b9318ede6999...
-2026-10-14 15:33:32.428 [ENROLL] TOKEN WRITE        C:\Users\Kateryna\AppData\Local\BPD_TOKEN\SECTOKEN\u_kovalenko\token.dat (256 bytes, AES-256 + SHA-256 tag)
-2026-10-14 15:33:32.668 [ENROLL] DB SKIPPED         user='ostrovska' is not registered on the server
-2026-10-14 15:33:32.671 [ENROLL] TOKEN WRITE        C:\Users\Kateryna\AppData\Local\BPD_TOKEN\SECTOKEN\u_forged\token.dat (256 bytes, AES-256 + SHA-256 tag)
-2026-10-14 15:33:32.907 [ENROLL] DB SKIPPED         user='mallory' is not registered on the server
-2026-10-14 15:33:32.910 [ENROLL] TOKEN WRITE        C:\Users\Kateryna\AppData\Local\BPD_TOKEN\SECTOKEN\u_mallory\token.dat (240 bytes, AES-256 + SHA-256 tag)
-2026-10-14 15:33:33.393 [SERVER] START              listening on 127.0.0.1:5607, users in database: ['kovalenko', 'ostrovska', 'shevchenko']
-2026-10-14 15:33:33.547 [SERVER] ERROR              peer=127.0.0.1:53133 :: connection closed by peer
-2026-10-14 15:33:33.797 [SERVER] ERROR              peer=127.0.0.1:53134 :: connection closed by peer
-2026-10-14 15:33:34.258 [CLIENT] TOKEN READ         C:\Users\Kateryna\AppData\Local\BPD_TOKEN\SECTOKEN\u_ostrovska\token.dat -> user='ostrovska' hash=d04c431908471f10...
-2026-10-14 15:33:34.280 [CLIENT] SENT               encrypted AES-256 frame to 127.0.0.1:5607
-2026-10-14 15:33:34.283 [SERVER] REQUEST            peer=127.0.0.1:53135 user='ostrovska' hash=d04c431908471f10...
-2026-10-14 15:33:34.284 [SERVER] AUTH OK            user='ostrovska' peer=127.0.0.1:53135 :: hash image matches the database
-2026-10-14 15:33:34.288 [CLIENT] RESPONSE           status=ok reason=hash image matches the database
-2026-10-14 15:33:34.290 [CLIENT] RESULT             AUTHENTICATION GRANTED
-2026-10-14 15:33:34.532 [SERVER] ERROR              peer=127.0.0.1:53136 :: connection closed by peer
-2026-10-14 15:33:34.567 [CLIENT] TOKEN READ         C:\Users\Kateryna\AppData\Local\BPD_TOKEN\SECTOKEN\u_shevchenko\token.dat -> user='shevchenko' hash=216ae451b8d6720e...
-2026-10-14 15:33:34.583 [CLIENT] SENT               encrypted AES-256 frame to 127.0.0.1:5607
-2026-10-14 15:33:34.584 [SERVER] REQUEST            peer=127.0.0.1:53137 user='shevchenko' hash=216ae451b8d6720e...
-2026-10-14 15:33:34.585 [SERVER] AUTH OK            user='shevchenko' peer=127.0.0.1:53137 :: hash image matches the database
-2026-10-14 15:33:34.588 [CLIENT] RESPONSE           status=ok reason=hash image matches the database
-2026-10-14 15:33:34.589 [CLIENT] RESULT             AUTHENTICATION GRANTED
-2026-10-14 15:33:34.853 [CLIENT] TOKEN FAIL         cannot decrypt the token file: wrong PIN or the file is damaged
-2026-10-14 15:33:34.854 [CLIENT] RESULT             AUTHENTICATION DENIED (token unavailable)
-2026-10-14 15:33:35.140 [CLIENT] TOKEN READ         C:\Users\Kateryna\AppData\Local\BPD_TOKEN\SECTOKEN\u_forged\token.dat -> user='ostrovska' hash=c1538876245abaea...
-2026-10-14 15:33:35.155 [CLIENT] SENT               encrypted AES-256 frame to 127.0.0.1:5607
-2026-10-14 15:33:35.155 [SERVER] REQUEST            peer=127.0.0.1:53138 user='ostrovska' hash=c1538876245abaea...
-2026-10-14 15:33:35.156 [SERVER] AUTH FAIL          user='ostrovska' peer=127.0.0.1:53138 :: hash image does not match the database
-2026-10-14 15:33:35.159 [CLIENT] RESPONSE           status=fail reason=hash image does not match the database
-2026-10-14 15:33:35.160 [CLIENT] RESULT             AUTHENTICATION DENIED
-2026-10-14 15:33:35.475 [CLIENT] TOKEN READ         C:\Users\Kateryna\AppData\Local\BPD_TOKEN\SECTOKEN\u_mallory\token.dat -> user='mallory' hash=2096a1d261c57c58...
-2026-10-14 15:33:35.486 [CLIENT] SENT               encrypted AES-256 frame to 127.0.0.1:5607
-2026-10-14 15:33:35.487 [SERVER] REQUEST            peer=127.0.0.1:53139 user='mallory' hash=2096a1d261c57c58...
-2026-10-14 15:33:35.488 [SERVER] AUTH FAIL          user='mallory' peer=127.0.0.1:53139 :: unknown identifier 'mallory'
-2026-10-14 15:33:35.491 [CLIENT] RESPONSE           status=fail reason=unknown identifier 'mallory'
-2026-10-14 15:33:35.492 [CLIENT] RESULT             AUTHENTICATION DENIED
-2026-10-14 15:33:35.552 [SERVER] ERROR              peer=127.0.0.1:53140 :: connection closed by peer
-2026-10-14 15:33:35.763 [CLIENT] TOKEN FAIL         wrong PIN or the token file is not ours
-2026-10-14 15:33:35.764 [CLIENT] RESULT             AUTHENTICATION DENIED (token unavailable)
+2026-10-27 18:20:35.681 [ENROLL] DB WRITE           user='ostrovska' salt=4e31d46bb6156b35... hash=1ae55d81cf0c1354...
+2026-10-27 18:20:35.703 [ENROLL] TOKEN WRITE        D:\SECTOKEN\u_ostrovska\token.dat (256 bytes, AES-256 + SHA-256 tag)
+2026-10-27 18:20:35.859 [ENROLL] DB WRITE           user='shevchenko' salt=ed32f619bd556a45... hash=1592b83346f3d72f...
+2026-10-27 18:20:35.879 [ENROLL] TOKEN WRITE        D:\SECTOKEN\u_shevchenko\token.dat (256 bytes, AES-256 + SHA-256 tag)
+2026-10-27 18:20:36.017 [ENROLL] DB WRITE           user='kovalenko' salt=e9087c5aa5f34c6f... hash=b9c44bff3f8c1f4a...
+2026-10-27 18:20:36.038 [ENROLL] TOKEN WRITE        D:\SECTOKEN\u_kovalenko\token.dat (256 bytes, AES-256 + SHA-256 tag)
+2026-10-27 18:20:36.166 [ENROLL] DB SKIPPED         user='ostrovska' is not registered on the server
+2026-10-27 18:20:36.187 [ENROLL] TOKEN WRITE        D:\SECTOKEN\u_forged\token.dat (256 bytes, AES-256 + SHA-256 tag)
+2026-10-27 18:20:36.321 [ENROLL] DB SKIPPED         user='mallory' is not registered on the server
+2026-10-27 18:20:36.342 [ENROLL] TOKEN WRITE        D:\SECTOKEN\u_mallory\token.dat (240 bytes, AES-256 + SHA-256 tag)
+2026-10-27 18:20:36.610 [SERVER] START              listening on 127.0.0.1:5607, users in database: ['kovalenko', 'ostrovska', 'shevchenko']
+2026-10-27 18:20:37.463 [CLIENT] TOKEN READ         D:\SECTOKEN\u_ostrovska\token.dat -> user='ostrovska' hash=1ae55d81cf0c1354...
+2026-10-27 18:20:37.470 [CLIENT] SENT               encrypted AES-256 frame to 127.0.0.1:5607
+2026-10-27 18:20:37.472 [SERVER] REQUEST            peer=127.0.0.1:53816 user='ostrovska' hash=1ae55d81cf0c1354...
+2026-10-27 18:20:37.473 [SERVER] AUTH OK            user='ostrovska' peer=127.0.0.1:53816 :: hash image matches the database
+2026-10-27 18:20:37.474 [CLIENT] RESPONSE           status=ok reason=hash image matches the database
+2026-10-27 18:20:37.474 [CLIENT] RESULT             AUTHENTICATION GRANTED
+2026-10-27 18:20:37.647 [CLIENT] TOKEN READ         D:\SECTOKEN\u_shevchenko\token.dat -> user='shevchenko' hash=1592b83346f3d72f...
+2026-10-27 18:20:37.657 [CLIENT] SENT               encrypted AES-256 frame to 127.0.0.1:5607
+2026-10-27 18:20:37.658 [SERVER] REQUEST            peer=127.0.0.1:53817 user='shevchenko' hash=1592b83346f3d72f...
+2026-10-27 18:20:37.658 [SERVER] AUTH OK            user='shevchenko' peer=127.0.0.1:53817 :: hash image matches the database
+2026-10-27 18:20:37.659 [CLIENT] RESPONSE           status=ok reason=hash image matches the database
+2026-10-27 18:20:37.660 [CLIENT] RESULT             AUTHENTICATION GRANTED
+2026-10-27 18:20:37.786 [CLIENT] TOKEN FAIL         cannot decrypt the token file: wrong PIN or the file is damaged
+2026-10-27 18:20:37.786 [CLIENT] RESULT             AUTHENTICATION DENIED (token unavailable)
+2026-10-27 18:20:37.916 [CLIENT] TOKEN READ         D:\SECTOKEN\u_forged\token.dat -> user='ostrovska' hash=7f4653c86ba92eb0...
+2026-10-27 18:20:37.935 [CLIENT] SENT               encrypted AES-256 frame to 127.0.0.1:5607
+2026-10-27 18:20:37.935 [SERVER] REQUEST            peer=127.0.0.1:53818 user='ostrovska' hash=7f4653c86ba92eb0...
+2026-10-27 18:20:37.936 [SERVER] AUTH FAIL          user='ostrovska' peer=127.0.0.1:53818 :: hash image does not match the database
+2026-10-27 18:20:37.937 [CLIENT] RESPONSE           status=fail reason=hash image does not match the database
+2026-10-27 18:20:37.938 [CLIENT] RESULT             AUTHENTICATION DENIED
+2026-10-27 18:20:38.073 [CLIENT] TOKEN READ         D:\SECTOKEN\u_mallory\token.dat -> user='mallory' hash=2974b0aa6556d027...
+2026-10-27 18:20:38.084 [CLIENT] SENT               encrypted AES-256 frame to 127.0.0.1:5607
+2026-10-27 18:20:38.084 [SERVER] REQUEST            peer=127.0.0.1:53819 user='mallory' hash=2974b0aa6556d027...
+2026-10-27 18:20:38.085 [SERVER] AUTH FAIL          user='mallory' peer=127.0.0.1:53819 :: unknown identifier 'mallory'
+2026-10-27 18:20:38.087 [CLIENT] RESPONSE           status=fail reason=unknown identifier 'mallory'
+2026-10-27 18:20:38.087 [CLIENT] RESULT             AUTHENTICATION DENIED
+2026-10-27 18:20:38.217 [CLIENT] TOKEN FAIL         wrong PIN or the token file is not ours
+2026-10-27 18:20:38.217 [CLIENT] RESULT             AUTHENTICATION DENIED (token unavailable)

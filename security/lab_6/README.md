@@ -131,8 +131,8 @@ CBC** на ключі, похідному від PIN-коду (`CryptDeriveKey` 
 Реальний вміст файлу (перші 48 байт із 256) — суцільний шум, у блокноті не читається:
 
 ```
-9A 2F 86 F3 89 7A C5 7E CF 4A D8 5D 6D 3C 0B 2A 92 5F 77 E4 9E 70 0E 72
-93 67 D7 75 7F 36 A2 EB 00 85 97 44 E5 DC 73 6B 34 E3 A9 BC 1B 4D 1A 3D
+26 C7 8B 62 FA 53 6E 12 D1 26 56 9B BD B2 B6 CA EF D5 67 F8 80 93 69 DE
+74 4C 30 72 46 A8 E0 E6 0E 33 DB AB 15 DC D6 40 35 83 F2 72 27 3D 98 EA
 ```
 
 ### Обговорення стійкості застосованих засобів захисту
@@ -249,28 +249,23 @@ netsh advfirewall firewall add rule name="BPD lab6-7" dir=in action=allow protoc
 
 ### 5.1 Реєстрація трьох користувачів
 
-> Цей прогін виконано з текою-замінником токена: програма сама переходить у цей
-> режим, коли знімного диска немає. Формат файлу й усі засоби його захисту при
-> цьому ті самі, відрізняється лише носій. Протокол роботи з **фізичним**
-> флеш-диском наведено в розділі 5.4 і в журналах теки `vm/logs/`.
-
 ```
-[ENROLL] DB WRITE     user='ostrovska' salt=e1600abb95e12321... hash=6fb25e68d5d50d22...
-[ENROLL] TOKEN WRITE  C:\Users\Kateryna\AppData\Local\BPD_TOKEN\SECTOKEN\u_ostrovska\token.dat (256 bytes, AES-256 + SHA-256 tag)
-[ENROLL] DB WRITE     user='shevchenko' salt=b6cc2098d164ef16... hash=28c18f86ff79118b...
-[ENROLL] TOKEN WRITE  C:\Users\Kateryna\AppData\Local\BPD_TOKEN\SECTOKEN\u_shevchenko\token.dat (256 bytes, AES-256 + SHA-256 tag)
-[ENROLL] DB WRITE     user='kovalenko' salt=c4f4869df968130a... hash=65d8431ab1f1bc00...
-[ENROLL] TOKEN WRITE  C:\Users\Kateryna\AppData\Local\BPD_TOKEN\SECTOKEN\u_kovalenko\token.dat (256 bytes, AES-256 + SHA-256 tag)
+[ENROLL] DB WRITE     user='ostrovska' salt=4e31d46bb6156b35... hash=1ae55d81cf0c1354...
+[ENROLL] TOKEN WRITE  D:\SECTOKEN\u_ostrovska\token.dat (256 bytes, AES-256 + SHA-256 tag)
+[ENROLL] DB WRITE     user='shevchenko' salt=ed32f619bd556a45... hash=1592b83346f3d72f...
+[ENROLL] TOKEN WRITE  D:\SECTOKEN\u_shevchenko\token.dat (256 bytes, AES-256 + SHA-256 tag)
+[ENROLL] DB WRITE     user='kovalenko' salt=e9087c5aa5f34c6f... hash=b9c44bff3f8c1f4a...
+[ENROLL] TOKEN WRITE  D:\SECTOKEN\u_kovalenko\token.dat (256 bytes, AES-256 + SHA-256 tag)
 ```
 
 ### 5.2 Вдала аутентифікація
 
 ```
 [SERVER] START        listening on 127.0.0.1:5607, users in database: ['kovalenko', 'ostrovska', 'shevchenko']
-[CLIENT] TOKEN READ   C:\Users\Kateryna\AppData\Local\BPD_TOKEN\SECTOKEN\u_ostrovska\token.dat -> user='ostrovska' hash=6fb25e68d5d50d22...
+[CLIENT] TOKEN READ   D:\SECTOKEN\u_ostrovska\token.dat -> user='ostrovska' hash=1ae55d81cf0c1354...
 [CLIENT] SENT         encrypted AES-256 frame to 127.0.0.1:5607
-[SERVER] REQUEST      peer=127.0.0.1:49998 user='ostrovska' hash=6fb25e68d5d50d22...
-[SERVER] AUTH OK      user='ostrovska' peer=127.0.0.1:49998 :: hash image matches the database
+[SERVER] REQUEST      peer=127.0.0.1:53816 user='ostrovska' hash=1ae55d81cf0c1354...
+[SERVER] AUTH OK      user='ostrovska' peer=127.0.0.1:53816 :: hash image matches the database
 [CLIENT] RESPONSE     status=ok reason=hash image matches the database
 [CLIENT] RESULT       AUTHENTICATION GRANTED
 ```
@@ -288,16 +283,16 @@ netsh advfirewall firewall add rule name="BPD lab6-7" dir=in action=allow protoc
 **Підроблений токен** — правильний ідентифікатор, але хеш-образ іншого пароля:
 
 ```
-[CLIENT] TOKEN READ   C:\Users\Kateryna\AppData\Local\BPD_TOKEN\SECTOKEN\u_forged\token.dat -> user='ostrovska' hash=8eda120a2bfa3f5a...
-[SERVER] AUTH FAIL    user='ostrovska' peer=127.0.0.1:50060 :: hash image does not match the database
+[CLIENT] TOKEN READ   D:\SECTOKEN\u_forged\token.dat -> user='ostrovska' hash=7f4653c86ba92eb0...
+[SERVER] AUTH FAIL    user='ostrovska' peer=127.0.0.1:53818 :: hash image does not match the database
 [CLIENT] RESULT       AUTHENTICATION DENIED
 ```
 
 **Незареєстрований ідентифікатор:**
 
 ```
-[CLIENT] TOKEN READ   C:\Users\Kateryna\AppData\Local\BPD_TOKEN\SECTOKEN\u_mallory\token.dat -> user='mallory' hash=a30642f4914010e8...
-[SERVER] AUTH FAIL    user='mallory' peer=127.0.0.1:50061 :: unknown identifier 'mallory'
+[CLIENT] TOKEN READ   D:\SECTOKEN\u_mallory\token.dat -> user='mallory' hash=2974b0aa6556d027...
+[SERVER] AUTH FAIL    user='mallory' peer=127.0.0.1:53819 :: unknown identifier 'mallory'
 [CLIENT] RESULT       AUTHENTICATION DENIED
 ```
 

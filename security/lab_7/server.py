@@ -15,7 +15,9 @@ _HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path[:0] = [_HERE, os.path.dirname(_HERE)]  # run directly: find `common` and siblings
 
 from acl import ALL_RIGHTS, DELETE, GRANT, OWN, READ, WRITE, AccessError, AccessMatrix
+from common import audit as audit_mod
 from common import authcore, netproto
+from common.audit import AuditLog
 from common.protolog import ProtocolLog
 from common.userdb import UserDB
 
@@ -29,12 +31,30 @@ def reply(sock, ok, message, **extra):
     netproto.send(sock, dict(status="ok" if ok else "deny", message=message, **extra))
 
 
-def handle_command(matrix, user, request, log, lock):
+def handle_command(matrix, user, request, log, lock, audit=None, auditor=None):
     """Returns (ok, message, extra). Every decision goes into the protocol."""
     op = request.get("op", "")
     obj = request.get("object")
     with lock:
         matrix.load()
+
+        if op == "audit":
+            # the journal is a protected object too: only the appointed auditor
+            # may read it, and a refusal is itself registered
+            if not audit:
+                return False, "registration subsystem is not enabled", {}
+            if user != auditor:
+                who = auditor or "nobody"
+                return False, (f"subject '{user}' is not the auditor "
+                               f"(the journal may be read by '{who}')"), {}
+            try:
+                records = audit.read_all()
+            except audit_mod.AuditError as exc:
+                return False, str(exc), {}
+            tail = int(request.get("count") or 15)
+            shown = records[-tail:]
+            text = "\n".join(audit_mod.format_record(r) for r in shown)
+            return True, f"{len(shown)} of {len(records)} record(s)", {"text": text}
 
         if op == "list":
             rows = []
@@ -100,7 +120,30 @@ def handle_command(matrix, user, request, log, lock):
         return False, f"unknown operation '{op}'", {}
 
 
-def serve_client(conn, addr, db, matrix, log, lock):
+def describe(request):
+    """The subject's action as a command line, for the protocol and the journal."""
+    op = request.get("op", "")
+    parts = [op]
+    if request.get("object"):
+        parts.append(request["object"])
+    if request.get("subject"):
+        parts.append(request["subject"])
+    if request.get("right"):
+        parts.append(request["right"])
+    if op == "write" and request.get("text"):
+        parts.append(f'"{request["text"]}"')
+    return " ".join(parts)
+
+
+# which kind of journal entry an operation produces
+EVENT_OF = {
+    "read": audit_mod.ACCESS, "write": audit_mod.ACCESS, "delete": audit_mod.ACCESS,
+    "grant": audit_mod.RIGHTS, "revoke": audit_mod.RIGHTS,
+    "create": audit_mod.OBJECT, "audit": audit_mod.AUDIT,
+}
+
+
+def serve_client(conn, addr, db, matrix, log, lock, audit=None, auditor=None):
     peer = f"{addr[0]}:{addr[1]}"
     user = None
     try:
@@ -109,12 +152,15 @@ def serve_client(conn, addr, db, matrix, log, lock):
             reply(conn, False, "the first message must be 'auth'")
             return
         db.load()
-        ok, response = authcore.handle_auth(db, request, log, peer)
+        ok, response = authcore.handle_auth(db, request, log, peer, audit)
         netproto.send(conn, response)
         if not ok:
             return
         user = request["user_id"]
         log("SESSION OPEN", f"subject '{user}' from {peer}")
+        if audit:
+            audit.record(audit_mod.SESSION, audit_mod.SUCCESS, subject=user,
+                         action="open session", detail="authentication passed", peer=peer)
 
         while True:
             try:
@@ -125,7 +171,8 @@ def serve_client(conn, addr, db, matrix, log, lock):
             if op == "quit":
                 break
             try:
-                ok, message, extra = handle_command(matrix, user, request, log, lock)
+                ok, message, extra = handle_command(matrix, user, request, log, lock,
+                                                    audit, auditor)
             except AccessError as exc:
                 ok, message, extra = False, str(exc), {}
             detail = f"subject='{user}' op={op}"
@@ -134,12 +181,22 @@ def serve_client(conn, addr, db, matrix, log, lock):
             if request.get("subject"):
                 detail += f" to='{request['subject']}' right='{request.get('right')}'"
             log("ALLOW" if ok else "DENY", f"{detail} :: {message}")
+            if audit and op in EVENT_OF:
+                # every decision of the access control subsystem is registered here,
+                # which is the single path all operations take
+                audit.record(EVENT_OF[op],
+                             audit_mod.SUCCESS if ok else audit_mod.FAILURE,
+                             subject=user, action=describe(request),
+                             detail=message, obj=request.get("object"), peer=peer)
             reply(conn, ok, message, **extra)
     except Exception as exc:
         log("ERROR", f"peer={peer} :: {exc}")
     finally:
         if user:
             log("SESSION CLOSE", f"subject '{user}'")
+            if audit:
+                audit.record(audit_mod.SESSION, audit_mod.SUCCESS, subject=user,
+                             action="close session", detail="session ended", peer=peer)
         conn.close()
 
 
@@ -151,12 +208,23 @@ def main():
     ap.add_argument("--acl", default=DEFAULT_ACL)
     ap.add_argument("--storage", default=DEFAULT_STORAGE)
     ap.add_argument("--log", default=None)
+    ap.add_argument("--audit", default=None, help="path of the audit journal (lab 8)")
+    ap.add_argument("--audit-key", default=None)
+    ap.add_argument("--auditor", default=None,
+                    help="the only subject allowed to read the journal over the network")
     args = ap.parse_args()
 
     log = ProtocolLog(args.log, tag="SERVER")
     db = UserDB(args.db)
     matrix = AccessMatrix(args.acl, args.storage)
     lock = threading.Lock()
+    audit = None
+    if args.audit:
+        audit = AuditLog(args.audit, args.audit_key) if args.audit_key else AuditLog(args.audit)
+        audit.record(audit_mod.SYSTEM, audit_mod.SUCCESS,
+                     action=f"access control service started on {args.host}:{args.port}",
+                     detail=f"objects: {len(matrix.objects)}, auditor: {args.auditor or '-'}")
+        log("AUDIT", f"journal {args.audit}, auditor '{args.auditor or '-'}'")
     log("START", f"{args.host}:{args.port}, subjects={db.ids()}, "
                  f"objects={len(matrix.objects)}")
 
@@ -176,7 +244,8 @@ def main():
         while True:
             conn, addr = srv.accept()
             t = threading.Thread(target=serve_client,
-                                 args=(conn, addr, db, matrix, log, lock), daemon=True)
+                                 args=(conn, addr, db, matrix, log, lock,
+                                       audit, args.auditor), daemon=True)
             t.start()
             t.join()
     except KeyboardInterrupt:
@@ -184,6 +253,9 @@ def main():
     finally:
         srv.close()
         log("STOP", "server stopped")
+        if audit:
+            audit.record(audit_mod.SYSTEM, audit_mod.SUCCESS,
+                         action="access control service stopped", detail="shutdown")
 
 
 if __name__ == "__main__":

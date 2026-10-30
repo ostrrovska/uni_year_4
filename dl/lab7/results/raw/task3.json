@@ -1,0 +1,33 @@
+{
+  "task": "task3_happy_or_sad",
+  "epochs_planned": 15,
+  "epochs_done": 7,
+  "target_accuracy": 0.999,
+  "reached_accuracy": 1.0,
+  "history": {
+    "accuracy": [
+      0.5125,
+      0.7375,
+      0.8,
+      0.9625,
+      0.9875,
+      0.9625,
+      1.0
+    ],
+    "loss": [
+      1.9142,
+      0.4924,
+      0.5917,
+      0.2224,
+      0.0868,
+      0.1012,
+      0.0327
+    ]
+  },
+  "total_params": 9494561,
+  "samples": 80,
+  "class_indices": {
+    "happy": 0,
+    "sad": 1
+  }
+}

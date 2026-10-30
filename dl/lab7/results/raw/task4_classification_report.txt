@@ -1,0 +1,13 @@
+Найкраща модель: RMSprop(0.001)
+
+[[1584  291]
+ [ 300 1575]]
+
+              precision    recall  f1-score   support
+
+        cats       0.84      0.84      0.84      1875
+        dogs       0.84      0.84      0.84      1875
+
+    accuracy                           0.84      3750
+   macro avg       0.84      0.84      0.84      3750
+weighted avg       0.84      0.84      0.84      3750

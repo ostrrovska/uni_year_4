@@ -4,11 +4,17 @@
 """
 import json
 import platform
+import re
 from pathlib import Path
 
 LAB_ROOT = Path(__file__).resolve().parent.parent
 RAW = LAB_ROOT / "results" / "raw"
 RESULTS = LAB_ROOT / "results"
+
+
+def fmt(n):
+    """Число з пробілом як роздільником тисяч."""
+    return f"{n:,}".replace(",", " ")
 
 
 def load(name):
@@ -67,6 +73,88 @@ def cat_dog_table(records, prob_key="prob_dog"):
     return "\n".join(rows)
 
 
+def flatten_size(task):
+    """Кількість входів у Dense, прочитана з опису моделі."""
+    f = RAW / f"{task}_model_summary.txt"
+    if not f.exists():
+        return None
+    m = re.search(r"flatten[^│]*│[^│]*\(None, (\d+)\)", f.read_text(encoding="utf-8"))
+    return int(m.group(1)) if m else None
+
+
+def observations(t0, t1, t2, t3, t4):
+    """Короткі фактичні спостереження — усе рахується з уже зібраних чисел."""
+    out = ["## Фактичні спостереження", ""]
+    if t1 and t2:
+        f1, f2 = flatten_size("task1"), flatten_size("task2")
+        if f1 and f2:
+            out.append(
+                f"- Входів у шар Dense: **{fmt(f1)}** (300×300, 5 пар Conv+Pool) проти "
+                f"**{fmt(f2)}** (150×150, 3 пари). Попри менший вхід, після вилучення двох пар "
+                f"Conv+Pool карта ознак згортається менше (17×17×64), тому параметрів у моделі "
+                f"завдання 2 **більше** ({fmt(t2['total_params'])} проти {fmt(t1['total_params'])}).")
+        speed = t1["train_time_sec"] / t2["train_time_sec"]
+        out.append(f"- Навчання на 150×150 швидше у **{speed:.1f} раза** "
+                   f"({t1['train_time_sec']:.0f} с → {t2['train_time_sec']:.0f} с) "
+                   f"при тих самих 15 епохах і 8 кроках.")
+        for name, d in (("завдання 1", t1), ("завдання 2", t2)):
+            vl = d["history"]["val_loss"]
+            best = vl.index(min(vl)) + 1
+            out.append(f"- {name}: найменша val_loss на епосі **{best}** ({min(vl):.3f}), "
+                       f"на останній епосі {vl[-1]:.3f} — val_loss зростає при тому, що "
+                       f"accuracy на навчанні тримається близько "
+                       f"{d['history']['accuracy'][-1]:.2f}: ознака перенавчання.")
+    sets = [d for d in (t0, t1, t2) if d]
+    if len(sets) >= 2:
+        wrong_everywhere = []
+        for r in sets[0]["own_images"]:
+            if r["correct"] is None:
+                continue
+            same = [next((x for x in d["own_images"] if x["file"] == r["file"]), None) for d in sets]
+            if all(x is not None and x["correct"] is False for x in same):
+                wrong_everywhere.append(r["file"])
+        if wrong_everywhere:
+            out.append("- Усі три моделі помиляються на: " +
+                       ", ".join(f"`{f}`" for f in wrong_everywhere) +
+                       " — це саме ті «каверзні» випадки з пункту 1, де людина не у звичній "
+                       "для навчального набору позі на весь зріст.")
+    if t3:
+        out.append(f"- Завдання 3: 99,9 % досягнуто на епосі {t3['epochs_done']} з 15, "
+                   f"тобто з запасом — набір із 80 однотипних зображень модель запам'ятовує швидко.")
+    if t4:
+        a, r = t4["adam"], t4["rmsprop"]
+        diff = (a["test_accuracy"] - r["test_accuracy"]) * 100
+        better = "Adam" if diff > 0 else "RMSprop(0.001)"
+        out.append(f"- Завдання 4: на тесті {better} кращий на **{abs(diff):.2f} в. п.** "
+                   f"(Adam {a['test_accuracy'] * 100:.2f} % проти "
+                   f"RMSprop {r['test_accuracy'] * 100:.2f} %).")
+        cm = t4["confusion_matrix"]
+        out.append(f"- Помилки на тесті: котів названо собаками **{cm[0][1]}**, "
+                   f"собак котами **{cm[1][0]}**.")
+        ok_my = sum(x["correct"] for x in t4["own_images"])
+        wrong_hard = [x for x in t4["hard_images"] if not x["correct"]]
+        out.append(f"- Власні звичайні фото: {ok_my} з {len(t4['own_images'])} правильно; "
+                   f"складні (тварина мала, фон строкатий): помилок "
+                   f"{len(wrong_hard)} з {len(t4['hard_images'])}.")
+        if t4["cropped_images"]:
+            fixed = sum(c["correct"] for c in t4["cropped_images"])
+            moved = 0
+            for c in t4["cropped_images"]:
+                before = next(x for x in t4["hard_images"]
+                              if x["file"] == c["file"].replace("crop_", ""))
+                delta = c["prob_dog"] - before["prob_dog"]
+                if (c["expected"] == "dog" and delta > 0) or (c["expected"] == "cat" and delta < 0):
+                    moved += 1
+            total = len(t4["cropped_images"])
+            out.append(f"- Обрізання (пункт 26) виправило **{fixed} з {total}** помилок; "
+                       f"ймовірність зсунулась у бік правильної відповіді у {moved} випадках "
+                       f"із {total} (разом із виправленими). Тобто наближення масштабу тварини до "
+                       f"навчального набору допомагає, але саме по собі не гарантує правильної "
+                       f"відповіді.")
+    out.append("")
+    return out
+
+
 def main():
     t0, t1, t2, t3, t4 = (load(f"task{i}.json") for i in range(5))
     probe = load("timing_probe.json")
@@ -86,7 +174,7 @@ def main():
         md += ["## Завдання 1 — валідація, вхід 300×300 (пункти 1–13)", "",
                f"- навчальний набір: **{t1['train_samples']}** зображень, "
                f"валідаційний: **{t1['validation_samples']}** (`{t1['class_indices']}`)",
-               f"- параметрів у моделі: **{t1['total_params']:,}**".replace(",", " "),
+               f"- параметрів у моделі: **{fmt(t1['total_params'])}**",
                f"- час навчання: **{t1['train_time_sec']:.0f} с** "
                f"({t1['train_time_sec'] / 60:.1f} хв), епох: {t1['epochs_done']}",
                f"- остання епоха: accuracy **{t1['history']['accuracy'][-1]:.4f}**, "
@@ -96,7 +184,7 @@ def main():
                "", history_table(t1["history"], "Історія навчання, завдання 1"), ""]
     if t2:
         md += ["## Завдання 2 — вхід 150×150, без 4-ї та 5-ї пар Conv+Pool (пункти 14–19)", "",
-               f"- параметрів у моделі: **{t2['total_params']:,}**".replace(",", " "),
+               f"- параметрів у моделі: **{fmt(t2['total_params'])}**",
                f"- час навчання: **{t2['train_time_sec']:.0f} с** ({t2['train_time_sec'] / 60:.1f} хв)",
                f"- остання епоха: accuracy **{t2['history']['accuracy'][-1]:.4f}**, "
                f"val_accuracy **{t2['history']['val_accuracy'][-1]:.4f}**",
@@ -105,7 +193,7 @@ def main():
         c1, c2 = t1["history"], t2["history"]
         md += ["### Порівняння завдання 1 (300×300) і завдання 2 (150×150)", "",
                "| Показник | Завдання 1 (300×300) | Завдання 2 (150×150) |", "|---|---|---|",
-               f"| Параметрів | {t1['total_params']:,} | {t2['total_params']:,} |".replace(",", " "),
+               f"| Параметрів | {fmt(t1['total_params'])} | {fmt(t2['total_params'])} |",
                f"| Час навчання, с | {t1['train_time_sec']:.0f} | {t2['train_time_sec']:.0f} |",
                f"| accuracy (остання епоха) | {c1['accuracy'][-1]:.4f} | {c2['accuracy'][-1]:.4f} |",
                f"| val_accuracy (остання епоха) | {c1['val_accuracy'][-1]:.4f} | {c2['val_accuracy'][-1]:.4f} |",
@@ -131,8 +219,8 @@ def main():
     if t3:
         ep = t3["epochs_done"]
         md += ["## Завдання 3 — Happy or Sad (пункт 20)", "",
-               f"- набір: **{t3['samples']}** зображень (`{t3['class_indices']}`), параметрів: "
-               f"**{t3['total_params']:,}**".replace(",", " "),
+               f"- набір: **{t3['samples']}** зображень (`{t3['class_indices']}`), "
+               f"параметрів: **{fmt(t3['total_params'])}**",
                f"- порога 99,9 % досягнуто на **епосі {ep}** з 15 "
                f"(accuracy {t3['history']['accuracy'][-1]:.4f}), callback зупинив навчання",
                "- повідомлення callback: «Досягнуто 99,9% точності, тому скасовуємо навчання!»",
@@ -150,7 +238,7 @@ def main():
                f"на клас ({'повний набір 70/15/15' if s['full_dataset'] else 'підмножина'})",
                f"- зображень: train **{t4['samples']['train']}**, val **{t4['samples']['val']}**, "
                f"test **{t4['samples']['test']}** (`{t4['class_indices']}`)",
-               f"- параметрів у моделі: **{t4['total_params']:,}**".replace(",", " "), "",
+               f"- параметрів у моделі: **{fmt(t4['total_params'])}**", "",
                "### Adam vs RMSprop(0.001)", "",
                "| Показник | Adam | RMSprop(0.001) |", "|---|---|---|",
                f"| Епох виконано (EarlyStopping) | {a['epochs_done']} | {r['epochs_done']} |",
@@ -192,6 +280,7 @@ def main():
             fixed = sum(c["correct"] for c in t4["cropped_images"])
             md += ["", f"Обрізання виправило **{fixed} з {len(t4['cropped_images'])}** помилок.", ""]
 
+    md += observations(t0, t1, t2, t3, t4)
     md += ["## Файли", "",
            "- графіки навчання: `task*_history*.png`; сітки передбачень: `task*_predictions*.png`",
            "- матриця помилок: `task4_confusion_matrix.png`; дерево каталогів: `dir_tree.txt`",

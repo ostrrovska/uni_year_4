@@ -40,5 +40,6 @@ dl/lab7/.venv/
 dl/lab7/data/
 dl/lab7/models/
 dl/lab7/notebooks/data/
+dl/lab7/notebooks/data.zip
 dl/lab7/notebooks/.ipynb_checkpoints/
 *.keras

@@ -34,3 +34,11 @@ __pycache__/
 # Editor/IDE
 # .idea/
 # .vscode/
+
+# DL Lab 7: venv, datasets, trained models
+dl/lab7/.venv/
+dl/lab7/data/
+dl/lab7/models/
+dl/lab7/notebooks/data/
+dl/lab7/notebooks/.ipynb_checkpoints/
+*.keras

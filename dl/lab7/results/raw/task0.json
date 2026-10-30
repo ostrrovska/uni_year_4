@@ -1,0 +1,140 @@
+{
+  "task": "task0_base_no_validation",
+  "input_size": [
+    300,
+    300
+  ],
+  "optimizer": "RMSprop(learning_rate=0.001)",
+  "steps_per_epoch": 8,
+  "epochs_planned": 15,
+  "epochs_done": 15,
+  "total_params": 1704097,
+  "train_time_sec": 151.1,
+  "history": {
+    "accuracy": [
+      0.5562,
+      0.6562,
+      0.6396,
+      0.4375,
+      0.7564,
+      0.8047,
+      0.743,
+      0.8438,
+      0.802,
+      0.9141,
+      0.9444,
+      0.625,
+      0.9032,
+      0.9609,
+      0.9199
+    ],
+    "loss": [
+      0.6871,
+      0.6218,
+      0.6634,
+      0.6824,
+      0.4937,
+      0.4162,
+      0.7502,
+      0.5952,
+      0.4691,
+      0.2705,
+      0.1552,
+      1.3858,
+      0.2686,
+      0.0984,
+      0.2081
+    ]
+  },
+  "train_samples": 1027,
+  "class_indices": {
+    "horses": 0,
+    "humans": 1
+  },
+  "own_images": [
+    {
+      "file": "both_person_and_horse.jpg",
+      "prob_human": 0.0531,
+      "predicted": "horse",
+      "expected": null,
+      "correct": null
+    },
+    {
+      "file": "horse_cartoon.jpg",
+      "prob_human": 0.0,
+      "predicted": "horse",
+      "expected": "horse",
+      "correct": true
+    },
+    {
+      "file": "horse_legs_in_grass.jpg",
+      "prob_human": 0.844,
+      "predicted": "human",
+      "expected": "horse",
+      "correct": false
+    },
+    {
+      "file": "horse_plain.jpg",
+      "prob_human": 0.697,
+      "predicted": "human",
+      "expected": "horse",
+      "correct": false
+    },
+    {
+      "file": "horse_toy.jpg",
+      "prob_human": 0.0,
+      "predicted": "horse",
+      "expected": "horse",
+      "correct": true
+    },
+    {
+      "file": "horse_white_grass.jpg",
+      "prob_human": 0.3989,
+      "predicted": "horse",
+      "expected": "horse",
+      "correct": true
+    },
+    {
+      "file": "human_angel_wings.jpg",
+      "prob_human": 0.0956,
+      "predicted": "horse",
+      "expected": "human",
+      "correct": false
+    },
+    {
+      "file": "human_hat.jpg",
+      "prob_human": 0.6299,
+      "predicted": "human",
+      "expected": "human",
+      "correct": true
+    },
+    {
+      "file": "human_long_dress_back.jpg",
+      "prob_human": 0.0019,
+      "predicted": "horse",
+      "expected": "human",
+      "correct": false
+    },
+    {
+      "file": "human_long_hair.jpg",
+      "prob_human": 0.9546,
+      "predicted": "human",
+      "expected": "human",
+      "correct": true
+    },
+    {
+      "file": "human_plain_1.jpg",
+      "prob_human": 0.9999,
+      "predicted": "human",
+      "expected": "human",
+      "correct": true
+    },
+    {
+      "file": "human_plain_2.jpg",
+      "prob_human": 0.9998,
+      "predicted": "human",
+      "expected": "human",
+      "correct": true
+    }
+  ]
+}

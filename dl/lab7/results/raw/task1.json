@@ -1,0 +1,176 @@
+{
+  "task": "task1",
+  "input_size": [
+    300,
+    300
+  ],
+  "optimizer": "RMSprop(learning_rate=0.001)",
+  "steps_per_epoch": 8,
+  "validation_steps": 8,
+  "epochs_planned": 15,
+  "epochs_done": 15,
+  "total_params": 1704097,
+  "train_time_sec": 163.6,
+  "history": {
+    "accuracy": [
+      0.5495,
+      0.5,
+      0.6572,
+      1.0,
+      0.7241,
+      0.9219,
+      0.7998,
+      0.8594,
+      0.9188,
+      0.5391,
+      0.9299,
+      0.9609,
+      0.8198,
+      0.7422,
+      0.9155
+    ],
+    "loss": [
+      0.8098,
+      0.6774,
+      0.6594,
+      0.2542,
+      1.8533,
+      0.3751,
+      0.4508,
+      0.3784,
+      0.2617,
+      0.7555,
+      0.2704,
+      0.106,
+      0.8373,
+      0.4728,
+      0.2408
+    ],
+    "val_accuracy": [
+      0.5,
+      0.5,
+      0.8086,
+      0.5,
+      0.8516,
+      0.8086,
+      0.8125,
+      0.8711,
+      0.5977,
+      0.7578,
+      0.8281,
+      0.8555,
+      0.9062,
+      0.7539,
+      0.8047
+    ],
+    "val_loss": [
+      0.7157,
+      0.7995,
+      0.4435,
+      12.093,
+      0.3747,
+      0.5452,
+      0.5408,
+      0.3923,
+      1.673,
+      0.5785,
+      1.3328,
+      0.9924,
+      0.2551,
+      0.9207,
+      1.1325
+    ]
+  },
+  "train_samples": 1027,
+  "validation_samples": 256,
+  "class_indices": {
+    "horses": 0,
+    "humans": 1
+  },
+  "own_images": [
+    {
+      "file": "both_person_and_horse.jpg",
+      "prob_human": 0.0214,
+      "predicted": "horse",
+      "expected": null,
+      "correct": null
+    },
+    {
+      "file": "horse_cartoon.jpg",
+      "prob_human": 0.0,
+      "predicted": "horse",
+      "expected": "horse",
+      "correct": true
+    },
+    {
+      "file": "horse_legs_in_grass.jpg",
+      "prob_human": 0.3717,
+      "predicted": "horse",
+      "expected": "horse",
+      "correct": true
+    },
+    {
+      "file": "horse_plain.jpg",
+      "prob_human": 0.617,
+      "predicted": "human",
+      "expected": "horse",
+      "correct": false
+    },
+    {
+      "file": "horse_toy.jpg",
+      "prob_human": 0.0001,
+      "predicted": "horse",
+      "expected": "horse",
+      "correct": true
+    },
+    {
+      "file": "horse_white_grass.jpg",
+      "prob_human": 0.1116,
+      "predicted": "horse",
+      "expected": "horse",
+      "correct": true
+    },
+    {
+      "file": "human_angel_wings.jpg",
+      "prob_human": 0.0391,
+      "predicted": "horse",
+      "expected": "human",
+      "correct": false
+    },
+    {
+      "file": "human_hat.jpg",
+      "prob_human": 0.9603,
+      "predicted": "human",
+      "expected": "human",
+      "correct": true
+    },
+    {
+      "file": "human_long_dress_back.jpg",
+      "prob_human": 0.0049,
+      "predicted": "horse",
+      "expected": "human",
+      "correct": false
+    },
+    {
+      "file": "human_long_hair.jpg",
+      "prob_human": 0.9923,
+      "predicted": "human",
+      "expected": "human",
+      "correct": true
+    },
+    {
+      "file": "human_plain_1.jpg",
+      "prob_human": 0.9958,
+      "predicted": "human",
+      "expected": "human",
+      "correct": true
+    },
+    {
+      "file": "human_plain_2.jpg",
+      "prob_human": 0.9989,
+      "predicted": "human",
+      "expected": "human",
+      "correct": true
+    }
+  ]
+}

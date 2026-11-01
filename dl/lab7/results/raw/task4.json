@@ -1,0 +1,434 @@
+{
+  "task": "task4_dogs_vs_cats",
+  "subset": {
+    "train_per_class": 8750,
+    "val_per_class": 1875,
+    "test_per_class": 1875,
+    "full_dataset": true
+  },
+  "input_size": [
+    150,
+    150
+  ],
+  "batch_size": 32,
+  "epochs_planned": 15,
+  "samples": {
+    "train": 17500,
+    "val": 3750,
+    "test": 3750
+  },
+  "class_indices": {
+    "cats": 0,
+    "dogs": 1
+  },
+  "total_params": 1212513,
+  "adam": {
+    "epochs_done": 12,
+    "train_time_sec": 810.0,
+    "history": {
+      "accuracy": [
+        0.6671,
+        0.6875,
+        0.7606,
+        0.6875,
+        0.7955,
+        0.8438,
+        0.8234,
+        0.75,
+        0.8499,
+        0.9062,
+        0.8741,
+        0.875
+      ],
+      "loss": [
+        0.6018,
+        0.586,
+        0.4999,
+        0.5828,
+        0.4402,
+        0.3039,
+        0.3926,
+        0.404,
+        0.3418,
+        0.2004,
+        0.2909,
+        0.3296
+      ],
+      "val_accuracy": [
+        0.6862,
+        0.7035,
+        0.7778,
+        0.7799,
+        0.7975,
+        0.7962,
+        0.8248,
+        0.8261,
+        0.8299,
+        0.8299,
+        0.8379,
+        0.8392
+      ],
+      "val_loss": [
+        0.5886,
+        0.5614,
+        0.4637,
+        0.4562,
+        0.4273,
+        0.4295,
+        0.3936,
+        0.3937,
+        0.3838,
+        0.3859,
+        0.387,
+        0.388
+      ]
+    },
+    "test_accuracy": 0.8267,
+    "test_loss": 0.3971
+  },
+  "rmsprop": {
+    "epochs_done": 15,
+    "train_time_sec": 1046.4,
+    "history": {
+      "accuracy": [
+        0.65,
+        0.7188,
+        0.7465,
+        0.8438,
+        0.7904,
+        0.6562,
+        0.8147,
+        0.7812,
+        0.8367,
+        0.875,
+        0.861,
+        0.9375,
+        0.873,
+        0.75,
+        0.8907
+      ],
+      "loss": [
+        0.619,
+        0.5334,
+        0.5228,
+        0.4872,
+        0.4613,
+        0.6021,
+        0.4167,
+        0.4233,
+        0.3777,
+        0.2831,
+        0.336,
+        0.2192,
+        0.3037,
+        0.3827,
+        0.2683
+      ],
+      "val_accuracy": [
+        0.7217,
+        0.73,
+        0.7965,
+        0.7764,
+        0.8173,
+        0.8178,
+        0.8005,
+        0.8216,
+        0.8101,
+        0.8438,
+        0.8395,
+        0.8192,
+        0.8483,
+        0.8384,
+        0.8507
+      ],
+      "val_loss": [
+        0.5529,
+        0.5386,
+        0.4372,
+        0.4632,
+        0.4018,
+        0.4054,
+        0.4164,
+        0.3873,
+        0.4108,
+        0.3638,
+        0.3896,
+        0.4357,
+        0.346,
+        0.3706,
+        0.3703
+      ]
+    },
+    "test_accuracy": 0.8424,
+    "test_loss": 0.3644
+  },
+  "best_model": "RMSprop(0.001)",
+  "confusion_matrix": [
+    [
+      1584,
+      291
+    ],
+    [
+      300,
+      1575
+    ]
+  ],
+  "own_images": [
+    {
+      "file": "cat_01.jpg",
+      "prob_dog": 0.1384,
+      "predicted": "cat",
+      "expected": "cat",
+      "correct": true
+    },
+    {
+      "file": "cat_02.jpg",
+      "prob_dog": 0.3071,
+      "predicted": "cat",
+      "expected": "cat",
+      "correct": true
+    },
+    {
+      "file": "cat_03.jpg",
+      "prob_dog": 0.9003,
+      "predicted": "dog",
+      "expected": "cat",
+      "correct": false
+    },
+    {
+      "file": "cat_04.jpg",
+      "prob_dog": 0.0249,
+      "predicted": "cat",
+      "expected": "cat",
+      "correct": true
+    },
+    {
+      "file": "cat_05.jpg",
+      "prob_dog": 0.0631,
+      "predicted": "cat",
+      "expected": "cat",
+      "correct": true
+    },
+    {
+      "file": "cat_06.jpg",
+      "prob_dog": 0.0478,
+      "predicted": "cat",
+      "expected": "cat",
+      "correct": true
+    },
+    {
+      "file": "cat_07.jpg",
+      "prob_dog": 0.2141,
+      "predicted": "cat",
+      "expected": "cat",
+      "correct": true
+    },
+    {
+      "file": "cat_08.jpg",
+      "prob_dog": 0.8232,
+      "predicted": "dog",
+      "expected": "cat",
+      "correct": false
+    },
+    {
+      "file": "cat_09.jpg",
+      "prob_dog": 0.7206,
+      "predicted": "dog",
+      "expected": "cat",
+      "correct": false
+    },
+    {
+      "file": "cat_10.jpg",
+      "prob_dog": 0.743,
+      "predicted": "dog",
+      "expected": "cat",
+      "correct": false
+    },
+    {
+      "file": "dog_01.jpg",
+      "prob_dog": 0.9992,
+      "predicted": "dog",
+      "expected": "dog",
+      "correct": true
+    },
+    {
+      "file": "dog_02.jpg",
+      "prob_dog": 0.6893,
+      "predicted": "dog",
+      "expected": "dog",
+      "correct": true
+    },
+    {
+      "file": "dog_03.jpg",
+      "prob_dog": 0.5277,
+      "predicted": "dog",
+      "expected": "dog",
+      "correct": true
+    },
+    {
+      "file": "dog_04.jpg",
+      "prob_dog": 0.6607,
+      "predicted": "dog",
+      "expected": "dog",
+      "correct": true
+    },
+    {
+      "file": "dog_05.jpg",
+      "prob_dog": 0.6442,
+      "predicted": "dog",
+      "expected": "dog",
+      "correct": true
+    },
+    {
+      "file": "dog_06.jpg",
+      "prob_dog": 0.7477,
+      "predicted": "dog",
+      "expected": "dog",
+      "correct": true
+    },
+    {
+      "file": "dog_07.jpg",
+      "prob_dog": 0.7633,
+      "predicted": "dog",
+      "expected": "dog",
+      "correct": true
+    },
+    {
+      "file": "dog_08.jpg",
+      "prob_dog": 0.9285,
+      "predicted": "dog",
+      "expected": "dog",
+      "correct": true
+    },
+    {
+      "file": "dog_09.jpg",
+      "prob_dog": 0.7385,
+      "predicted": "dog",
+      "expected": "dog",
+      "correct": true
+    },
+    {
+      "file": "dog_10.jpg",
+      "prob_dog": 0.531,
+      "predicted": "dog",
+      "expected": "dog",
+      "correct": true
+    }
+  ],
+  "hard_images": [
+    {
+      "file": "cat_hard_bushes.jpg",
+      "prob_dog": 0.562,
+      "predicted": "dog",
+      "expected": "cat",
+      "correct": false
+    },
+    {
+      "file": "cat_hard_flowers.jpg",
+      "prob_dog": 0.9042,
+      "predicted": "dog",
+      "expected": "cat",
+      "correct": false
+    },
+    {
+      "file": "cat_hard_garden.jpg",
+      "prob_dog": 0.1084,
+      "predicted": "cat",
+      "expected": "cat",
+      "correct": true
+    },
+    {
+      "file": "cat_hard_park.jpg",
+      "prob_dog": 0.9983,
+      "predicted": "dog",
+      "expected": "cat",
+      "correct": false
+    },
+    {
+      "file": "cat_hard_tree.jpg",
+      "prob_dog": 0.5902,
+      "predicted": "dog",
+      "expected": "cat",
+      "correct": false
+    },
+    {
+      "file": "dog_hard_grass.jpg",
+      "prob_dog": 0.9991,
+      "predicted": "dog",
+      "expected": "dog",
+      "correct": true
+    },
+    {
+      "file": "dog_hard_lawn.jpg",
+      "prob_dog": 0.8349,
+      "predicted": "dog",
+      "expected": "dog",
+      "correct": true
+    },
+    {
+      "file": "dog_hard_moto.jpg",
+      "prob_dog": 0.8464,
+      "predicted": "dog",
+      "expected": "dog",
+      "correct": true
+    },
+    {
+      "file": "dog_hard_snow.jpg",
+      "prob_dog": 0.2741,
+      "predicted": "cat",
+      "expected": "dog",
+      "correct": false
+    },
+    {
+      "file": "dog_hard_street.jpg",
+      "prob_dog": 0.336,
+      "predicted": "cat",
+      "expected": "dog",
+      "correct": false
+    }
+  ],
+  "cropped_images": [
+    {
+      "file": "crop_cat_hard_bushes.jpg",
+      "prob_dog": 0.6386,
+      "predicted": "dog",
+      "expected": "cat",
+      "correct": false
+    },
+    {
+      "file": "crop_cat_hard_flowers.jpg",
+      "prob_dog": 0.8074,
+      "predicted": "dog",
+      "expected": "cat",
+      "correct": false
+    },
+    {
+      "file": "crop_cat_hard_park.jpg",
+      "prob_dog": 0.9986,
+      "predicted": "dog",
+      "expected": "cat",
+      "correct": false
+    },
+    {
+      "file": "crop_cat_hard_tree.jpg",
+      "prob_dog": 0.4851,
+      "predicted": "cat",
+      "expected": "cat",
+      "correct": true
+    },
+    {
+      "file": "crop_dog_hard_snow.jpg",
+      "prob_dog": 0.7853,
+      "predicted": "dog",
+      "expected": "dog",
+      "correct": true
+    },
+    {
+      "file": "crop_dog_hard_street.jpg",
+      "prob_dog": 0.4889,
+      "predicted": "cat",
+      "expected": "dog",
+      "correct": false
+    }
+  ]
+}

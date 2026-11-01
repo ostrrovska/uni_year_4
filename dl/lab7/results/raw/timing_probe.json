@@ -1,0 +1,12 @@
+{
+  "cpu_only": true,
+  "probe_steps": 60,
+  "probe_sec": 27.9,
+  "sec_per_train_step": 0.466,
+  "sec_per_val_step": 0.332,
+  "full_train_steps": 546,
+  "full_val_steps": 117,
+  "projected_full_epoch_sec": 293.0,
+  "projected_full_epoch_min": 4.9,
+  "subset_2000_epoch_min": 1.1
+}

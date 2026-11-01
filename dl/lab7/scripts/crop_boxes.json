@@ -1,0 +1,12 @@
+{
+  "cat_hard_bushes.jpg":  [100, 300, 290, 500],
+  "cat_hard_flowers.jpg": [180, 420, 680, 860],
+  "cat_hard_garden.jpg":  [620, 690, 960, 1030],
+  "cat_hard_park.jpg":    [740, 850, 960, 1040],
+  "cat_hard_tree.jpg":    [460, 50, 670, 480],
+  "dog_hard_grass.jpg":   [420, 160, 580, 360],
+  "dog_hard_lawn.jpg":    [510, 1000, 780, 1300],
+  "dog_hard_moto.jpg":    [500, 480, 850, 960],
+  "dog_hard_snow.jpg":    [360, 275, 530, 440],
+  "dog_hard_street.jpg":  [270, 470, 390, 600]
+}

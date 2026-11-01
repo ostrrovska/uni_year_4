@@ -1,0 +1,10 @@
+C:\uni_year_4\dl\lab7\data\cats_dogs
+├── train/
+│   ├── cats/  8750 файлів
+│   └── dogs/  8750 файлів
+├── val/
+│   ├── cats/  1875 файлів
+│   └── dogs/  1875 файлів
+└── test/
+    ├── cats/  1875 файлів
+    └── dogs/  1875 файлів

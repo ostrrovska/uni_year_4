@@ -1,0 +1,30 @@
+# Companion to cdn-control-plane-ci.yml. That workflow is scoped to
+# high-load-systems/**, so PRs touching other courses never report its three
+# required checks and stay stuck on "Expected". These no-op jobs carry the same
+# names and run on the complementary paths, so the checks report success.
+name: CDN Control Plane CI (not applicable)
+
+on:
+  pull_request:
+    paths-ignore:
+      - 'high-load-systems/**'
+      - '.github/workflows/cdn-control-plane-ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "No high-load-systems/** changes - nothing to lint."
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "No high-load-systems/** changes - nothing to test."
+
+  docker-image:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "No high-load-systems/** changes - no image to build."

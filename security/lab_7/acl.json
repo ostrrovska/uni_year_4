@@ -2,70 +2,52 @@
   "objects": {
     "budget": {
       "acl": {},
-      "created_at": "2026-10-14T15:38:15",
+      "created_at": "2026-10-28T14:38:22",
       "owner": "shevchenko"
     },
     "contacts": {
       "acl": {},
-      "created_at": "2026-10-14T15:38:15",
+      "created_at": "2026-10-28T14:38:22",
       "owner": "shevchenko"
     },
     "diary": {
       "acl": {},
-      "created_at": "2026-10-14T15:38:15",
-      "owner": "ostrovska"
-    },
-    "finance_q1": {
-      "acl": {},
-      "created_at": "2026-10-14T15:38:15",
+      "created_at": "2026-10-28T14:38:22",
       "owner": "ostrovska"
     },
     "finance_q2": {
-      "acl": {
-        "shevchenko": [
-          "write"
-        ]
-      },
-      "created_at": "2026-10-14T15:38:15",
+      "acl": {},
+      "created_at": "2026-10-28T14:38:22",
       "owner": "ostrovska"
+    },
+    "grades": {
+      "acl": {},
+      "created_at": "2026-10-28T14:38:22",
+      "owner": "kovalenko"
     },
     "lab_report": {
       "acl": {},
-      "created_at": "2026-10-14T15:38:15",
+      "created_at": "2026-10-28T14:38:22",
       "owner": "shevchenko"
-    },
-    "meeting_notes": {
-      "acl": {},
-      "created_at": "2026-10-14T15:38:18",
-      "owner": "kovalenko"
     },
     "passwords": {
       "acl": {},
-      "created_at": "2026-10-14T15:38:15",
+      "created_at": "2026-10-28T14:38:22",
       "owner": "ostrovska"
     },
     "poems": {
       "acl": {},
-      "created_at": "2026-10-14T15:38:15",
+      "created_at": "2026-10-28T14:38:22",
       "owner": "shevchenko"
     },
     "protocol": {
       "acl": {},
-      "created_at": "2026-10-14T15:38:15",
-      "owner": "ostrovska"
-    },
-    "public_notes": {
-      "acl": {
-        "shevchenko": [
-          "read"
-        ]
-      },
-      "created_at": "2026-10-14T15:38:15",
+      "created_at": "2026-10-28T14:38:22",
       "owner": "kovalenko"
     },
-    "schedule": {
+    "public_notes": {
       "acl": {},
-      "created_at": "2026-10-14T15:38:15",
+      "created_at": "2026-10-28T14:38:22",
       "owner": "kovalenko"
     }
   }

@@ -1,19 +1,19 @@
 {
   "users": {
     "ostrovska": {
-      "salt": "0e1feb868a9193c4cbed40833b3cddbd",
-      "pwd_hash": "5526c2925fdff2ce8ee57d74475df7f4f7e7f73d4410e67efba02ae81c9ab12b",
-      "enrolled_at": "2026-10-14T15:38:14"
+      "salt": "7ac54835ecf6763877642a61b0bf1b0b",
+      "pwd_hash": "3dd898765f92bf1cb58a9bb8f3f5efda74055fe1ec7669d0baed7a87d4d1de0c",
+      "enrolled_at": "2026-10-28T14:38:21"
     },
     "shevchenko": {
-      "salt": "b7a611999dfcaed5587a55de56fab375",
-      "pwd_hash": "20661e4d7abe7296534a4f1144fc59d234aee5e6fb4ed62c86da72c26e5eae33",
-      "enrolled_at": "2026-10-14T15:38:14"
+      "salt": "ccbb8d61020efa8bf79482e2350ba497",
+      "pwd_hash": "0eb5238870e20ac4f583a5f16a0dba5922c2249fbc89633cfd34d35a075805ce",
+      "enrolled_at": "2026-10-28T14:38:22"
     },
     "kovalenko": {
-      "salt": "d6bdbbb4cf75c6a2e038238904276567",
-      "pwd_hash": "6efbcc1aefa1c3caa205b90a43d8772f171e12879a0614b71631b7ac62ef6f8f",
-      "enrolled_at": "2026-10-14T15:38:14"
+      "salt": "5f6fb78e2010541fb620fc85e129466b",
+      "pwd_hash": "33bde21f2d2eb352fa3c055b1a23ca1356bd227be9fdd3fd37635a98f3bb7b74",
+      "enrolled_at": "2026-10-28T14:38:22"
     }
   }
 }

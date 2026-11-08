@@ -43,3 +43,21 @@ dl/lab7/notebooks/data/
 dl/lab7/notebooks/data.zip
 dl/lab7/notebooks/.ipynb_checkpoints/
 *.keras
+
+# DL Lab 8: датасети, моделі, архіви для Colab і вхідні зіпи з результатами
+dl/lab8/data/
+dl/lab8/models/*.keras
+dl/lab8/my_images.zip
+dl/lab8/results/incoming/
+dl/lab8/notebooks/.ipynb_checkpoints/
+*.h5
+*.weights.h5
+
+# DL Lab 10: datasets, trained models, own images, incoming results
+dl/lab10/data/
+dl/lab10/models/*.keras
+dl/lab10/my_images.zip
+dl/lab10/my_images/
+dl/lab10/results/incoming/
+dl/lab10/notebooks/.ipynb_checkpoints/
+dl/lab10/scripts/__pycache__/

@@ -1,0 +1,567 @@
+{
+  "task": "task2_horses_humans",
+  "seed": 42,
+  "tensorflow": "2.21.0",
+  "runs": {
+    "base_150": {
+      "name": "base_150",
+      "title": "TL, 150x150, без аугментації",
+      "size": 150,
+      "augment": false,
+      "lr": 0.0001,
+      "epochs": 20,
+      "unfreeze_from": null,
+      "unfrozen_layers": 0,
+      "total_params": 47512481,
+      "trainable_params": 38537217,
+      "epochs_run": 2,
+      "final_train_accuracy": 1.0,
+      "final_val_accuracy": 0.98828125,
+      "best_val_accuracy": 0.98828125,
+      "overfit_gap": 0.01171875,
+      "train_time_sec": 46.4,
+      "history": {
+        "accuracy": [
+          0.9795520901679993,
+          1.0
+        ],
+        "loss": [
+          0.036492738872766495,
+          0.0007512048468925059
+        ],
+        "val_accuracy": [
+          0.98828125,
+          0.98828125
+        ],
+        "val_loss": [
+          0.021705228835344315,
+          0.021263448521494865
+        ]
+      },
+      "own_images": [
+        {
+          "file": "both_person_and_horse.jpg",
+          "prob_human": 0.00306613533757627,
+          "predicted": "кінь",
+          "actual": "—",
+          "correct": null
+        },
+        {
+          "file": "horse_cartoon.jpg",
+          "prob_human": 2.3729373424430378e-05,
+          "predicted": "кінь",
+          "actual": "кінь",
+          "correct": true
+        },
+        {
+          "file": "horse_legs_in_grass.jpg",
+          "prob_human": 0.00019235291983932257,
+          "predicted": "кінь",
+          "actual": "кінь",
+          "correct": true
+        },
+        {
+          "file": "horse_plain.jpg",
+          "prob_human": 1.442464690626366e-05,
+          "predicted": "кінь",
+          "actual": "кінь",
+          "correct": true
+        },
+        {
+          "file": "horse_toy.jpg",
+          "prob_human": 0.31796732544898987,
+          "predicted": "кінь",
+          "actual": "кінь",
+          "correct": true
+        },
+        {
+          "file": "horse_white_grass.jpg",
+          "prob_human": 8.043651178013533e-06,
+          "predicted": "кінь",
+          "actual": "кінь",
+          "correct": true
+        },
+        {
+          "file": "human_angel_wings.jpg",
+          "prob_human": 0.9762634634971619,
+          "predicted": "людина",
+          "actual": "людина",
+          "correct": true
+        },
+        {
+          "file": "human_hat.jpg",
+          "prob_human": 0.751030683517456,
+          "predicted": "людина",
+          "actual": "людина",
+          "correct": true
+        },
+        {
+          "file": "human_long_dress_back.jpg",
+          "prob_human": 0.4496997892856598,
+          "predicted": "кінь",
+          "actual": "людина",
+          "correct": false
+        },
+        {
+          "file": "human_long_hair.jpg",
+          "prob_human": 0.9822695255279541,
+          "predicted": "людина",
+          "actual": "людина",
+          "correct": true
+        },
+        {
+          "file": "human_plain_1.jpg",
+          "prob_human": 0.9971293807029724,
+          "predicted": "людина",
+          "actual": "людина",
+          "correct": true
+        },
+        {
+          "file": "human_plain_2.jpg",
+          "prob_human": 0.41551563143730164,
+          "predicted": "кінь",
+          "actual": "людина",
+          "correct": false
+        }
+      ],
+      "own_correct": 9,
+      "own_total": 11
+    },
+    "aug_150": {
+      "name": "aug_150",
+      "title": "TL + аугментація, 150x150",
+      "size": 150,
+      "augment": true,
+      "lr": 0.0001,
+      "epochs": 20,
+      "unfreeze_from": null,
+      "unfrozen_layers": 0,
+      "total_params": 47512481,
+      "trainable_params": 38537217,
+      "epochs_run": 10,
+      "final_train_accuracy": 0.9990262985229492,
+      "final_val_accuracy": 1.0,
+      "best_val_accuracy": 1.0,
+      "overfit_gap": -0.0009737014770507812,
+      "train_time_sec": 128.2,
+      "history": {
+        "accuracy": [
+          0.9308665990829468,
+          0.9873417615890503,
+          0.9941577315330505,
+          0.9912366271018982,
+          0.9970788955688477,
+          0.9931840300559998,
+          0.9951314330101013,
+          0.9970788955688477,
+          0.9961051344871521,
+          0.9990262985229492
+        ],
+        "loss": [
+          0.17058004438877106,
+          0.03134160488843918,
+          0.017504505813121796,
+          0.028848892077803612,
+          0.007821510545909405,
+          0.017409225925803185,
+          0.01385563425719738,
+          0.009614578448235989,
+          0.009201498702168465,
+          0.004049269482493401
+        ],
+        "val_accuracy": [
+          0.98828125,
+          0.984375,
+          0.98828125,
+          0.96484375,
+          0.96875,
+          0.98828125,
+          1.0,
+          1.0,
+          0.99609375,
+          1.0
+        ],
+        "val_loss": [
+          0.028014404699206352,
+          0.04440862312912941,
+          0.023183058947324753,
+          0.1432623714208603,
+          0.07134808599948883,
+          0.025312861427664757,
+          0.0021902848966419697,
+          0.0011928339954465628,
+          0.009154927916824818,
+          0.003171079559251666
+        ]
+      },
+      "own_images": [
+        {
+          "file": "both_person_and_horse.jpg",
+          "prob_human": 5.077050445834175e-06,
+          "predicted": "кінь",
+          "actual": "—",
+          "correct": null
+        },
+        {
+          "file": "horse_cartoon.jpg",
+          "prob_human": 2.7986155615167263e-08,
+          "predicted": "кінь",
+          "actual": "кінь",
+          "correct": true
+        },
+        {
+          "file": "horse_legs_in_grass.jpg",
+          "prob_human": 2.7125320656296026e-08,
+          "predicted": "кінь",
+          "actual": "кінь",
+          "correct": true
+        },
+        {
+          "file": "horse_plain.jpg",
+          "prob_human": 2.9380553545621524e-10,
+          "predicted": "кінь",
+          "actual": "кінь",
+          "correct": true
+        },
+        {
+          "file": "horse_toy.jpg",
+          "prob_human": 0.0018473934615030885,
+          "predicted": "кінь",
+          "actual": "кінь",
+          "correct": true
+        },
+        {
+          "file": "horse_white_grass.jpg",
+          "prob_human": 6.593345314165333e-11,
+          "predicted": "кінь",
+          "actual": "кінь",
+          "correct": true
+        },
+        {
+          "file": "human_angel_wings.jpg",
+          "prob_human": 0.9999942779541016,
+          "predicted": "людина",
+          "actual": "людина",
+          "correct": true
+        },
+        {
+          "file": "human_hat.jpg",
+          "prob_human": 0.9589359760284424,
+          "predicted": "людина",
+          "actual": "людина",
+          "correct": true
+        },
+        {
+          "file": "human_long_dress_back.jpg",
+          "prob_human": 0.2890738844871521,
+          "predicted": "кінь",
+          "actual": "людина",
+          "correct": false
+        },
+        {
+          "file": "human_long_hair.jpg",
+          "prob_human": 0.9978439807891846,
+          "predicted": "людина",
+          "actual": "людина",
+          "correct": true
+        },
+        {
+          "file": "human_plain_1.jpg",
+          "prob_human": 0.9998601675033569,
+          "predicted": "людина",
+          "actual": "людина",
+          "correct": true
+        },
+        {
+          "file": "human_plain_2.jpg",
+          "prob_human": 0.7790460586547852,
+          "predicted": "людина",
+          "actual": "людина",
+          "correct": true
+        }
+      ],
+      "own_correct": 10,
+      "own_total": 11
+    },
+    "base_300": {
+      "name": "base_300",
+      "title": "TL, 300x300, без аугментації",
+      "size": 300,
+      "augment": false,
+      "lr": 0.0001,
+      "epochs": 20,
+      "unfreeze_from": null,
+      "unfrozen_layers": 0,
+      "total_params": 236256161,
+      "trainable_params": 227280897,
+      "epochs_run": 2,
+      "final_train_accuracy": 1.0,
+      "final_val_accuracy": 0.94921875,
+      "best_val_accuracy": 0.94921875,
+      "overfit_gap": 0.05078125,
+      "train_time_sec": 47.5,
+      "history": {
+        "accuracy": [
+          0.9639727473258972,
+          1.0
+        ],
+        "loss": [
+          0.2266276776790619,
+          7.766627095406875e-05
+        ],
+        "val_accuracy": [
+          0.94921875,
+          0.94921875
+        ],
+        "val_loss": [
+          0.2433878630399704,
+          0.21592922508716583
+        ]
+      },
+      "own_images": [
+        {
+          "file": "both_person_and_horse.jpg",
+          "prob_human": 2.1889898107474437e-06,
+          "predicted": "кінь",
+          "actual": "—",
+          "correct": null
+        },
+        {
+          "file": "horse_cartoon.jpg",
+          "prob_human": 2.2848112735118775e-07,
+          "predicted": "кінь",
+          "actual": "кінь",
+          "correct": true
+        },
+        {
+          "file": "horse_legs_in_grass.jpg",
+          "prob_human": 4.329449865281276e-08,
+          "predicted": "кінь",
+          "actual": "кінь",
+          "correct": true
+        },
+        {
+          "file": "horse_plain.jpg",
+          "prob_human": 5.867081540600338e-07,
+          "predicted": "кінь",
+          "actual": "кінь",
+          "correct": true
+        },
+        {
+          "file": "horse_toy.jpg",
+          "prob_human": 0.07395102828741074,
+          "predicted": "кінь",
+          "actual": "кінь",
+          "correct": true
+        },
+        {
+          "file": "horse_white_grass.jpg",
+          "prob_human": 2.284217316628201e-06,
+          "predicted": "кінь",
+          "actual": "кінь",
+          "correct": true
+        },
+        {
+          "file": "human_angel_wings.jpg",
+          "prob_human": 0.9641196131706238,
+          "predicted": "людина",
+          "actual": "людина",
+          "correct": true
+        },
+        {
+          "file": "human_hat.jpg",
+          "prob_human": 0.850249171257019,
+          "predicted": "людина",
+          "actual": "людина",
+          "correct": true
+        },
+        {
+          "file": "human_long_dress_back.jpg",
+          "prob_human": 0.4956972301006317,
+          "predicted": "кінь",
+          "actual": "людина",
+          "correct": false
+        },
+        {
+          "file": "human_long_hair.jpg",
+          "prob_human": 0.9999901056289673,
+          "predicted": "людина",
+          "actual": "людина",
+          "correct": true
+        },
+        {
+          "file": "human_plain_1.jpg",
+          "prob_human": 0.9999986886978149,
+          "predicted": "людина",
+          "actual": "людина",
+          "correct": true
+        },
+        {
+          "file": "human_plain_2.jpg",
+          "prob_human": 0.017996584996581078,
+          "predicted": "кінь",
+          "actual": "людина",
+          "correct": false
+        }
+      ],
+      "own_correct": 9,
+      "own_total": 11
+    },
+    "aug_ft_150": {
+      "name": "aug_ft_150",
+      "title": "TL + аугментація + донавчання з mixed6",
+      "size": 150,
+      "augment": true,
+      "lr": 1e-05,
+      "epochs": 20,
+      "unfreeze_from": "mixed6",
+      "unfrozen_layers": 81,
+      "total_params": 47512481,
+      "trainable_params": 40675329,
+      "epochs_run": 10,
+      "final_train_accuracy": 0.9990262985229492,
+      "final_val_accuracy": 0.9921875,
+      "best_val_accuracy": 1.0,
+      "overfit_gap": 0.006838798522949219,
+      "train_time_sec": 133.9,
+      "history": {
+        "accuracy": [
+          0.9172346591949463,
+          0.9834469556808472,
+          0.9883154630661011,
+          0.9873417615890503,
+          0.9912366271018982,
+          0.9931840300559998,
+          0.9941577315330505,
+          0.9970788955688477,
+          0.9951314330101013,
+          0.9990262985229492
+        ],
+        "loss": [
+          0.25398483872413635,
+          0.07642030715942383,
+          0.04250742495059967,
+          0.037829216569662094,
+          0.025547845289111137,
+          0.021030232310295105,
+          0.018015524372458458,
+          0.014045380987226963,
+          0.013929137960076332,
+          0.007494740188121796
+        ],
+        "val_accuracy": [
+          0.984375,
+          0.984375,
+          1.0,
+          0.9921875,
+          0.98828125,
+          0.98828125,
+          0.9921875,
+          0.9921875,
+          0.9921875,
+          0.9921875
+        ],
+        "val_loss": [
+          0.05878539755940437,
+          0.03539526090025902,
+          0.012534257024526596,
+          0.014906497672200203,
+          0.02913723699748516,
+          0.02970696985721588,
+          0.010107673704624176,
+          0.011719785630702972,
+          0.01756332814693451,
+          0.00948728621006012
+        ]
+      },
+      "own_images": [
+        {
+          "file": "both_person_and_horse.jpg",
+          "prob_human": 6.053433389752172e-05,
+          "predicted": "кінь",
+          "actual": "—",
+          "correct": null
+        },
+        {
+          "file": "horse_cartoon.jpg",
+          "prob_human": 1.707347109913826e-06,
+          "predicted": "кінь",
+          "actual": "кінь",
+          "correct": true
+        },
+        {
+          "file": "horse_legs_in_grass.jpg",
+          "prob_human": 6.860045687062666e-06,
+          "predicted": "кінь",
+          "actual": "кінь",
+          "correct": true
+        },
+        {
+          "file": "horse_plain.jpg",
+          "prob_human": 3.9052938660688596e-08,
+          "predicted": "кінь",
+          "actual": "кінь",
+          "correct": true
+        },
+        {
+          "file": "horse_toy.jpg",
+          "prob_human": 0.001541661098599434,
+          "predicted": "кінь",
+          "actual": "кінь",
+          "correct": true
+        },
+        {
+          "file": "horse_white_grass.jpg",
+          "prob_human": 5.285089255124831e-09,
+          "predicted": "кінь",
+          "actual": "кінь",
+          "correct": true
+        },
+        {
+          "file": "human_angel_wings.jpg",
+          "prob_human": 0.9994422793388367,
+          "predicted": "людина",
+          "actual": "людина",
+          "correct": true
+        },
+        {
+          "file": "human_hat.jpg",
+          "prob_human": 0.8684914708137512,
+          "predicted": "людина",
+          "actual": "людина",
+          "correct": true
+        },
+        {
+          "file": "human_long_dress_back.jpg",
+          "prob_human": 0.8031917810440063,
+          "predicted": "людина",
+          "actual": "людина",
+          "correct": true
+        },
+        {
+          "file": "human_long_hair.jpg",
+          "prob_human": 0.9936848282814026,
+          "predicted": "людина",
+          "actual": "людина",
+          "correct": true
+        },
+        {
+          "file": "human_plain_1.jpg",
+          "prob_human": 0.9992996454238892,
+          "predicted": "людина",
+          "actual": "людина",
+          "correct": true
+        },
+        {
+          "file": "human_plain_2.jpg",
+          "prob_human": 0.10803497582674026,
+          "predicted": "кінь",
+          "actual": "людина",
+          "correct": false
+        }
+      ],
+      "own_correct": 10,
+      "own_total": 11
+    }
+  }
+}

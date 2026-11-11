@@ -9,6 +9,7 @@ from app.models.distribution_rule import DistributionRule
 from app.models.region import Region
 from app.schemas.distribution import DistributionPolicy, DistributionRuleItem
 from app.services import assets as assets_service
+from app.services.cache import CacheBackend, invalidate, route_scope
 
 
 async def get_policy(session: AsyncSession, asset_id: uuid.UUID) -> list[DistributionRuleItem]:
@@ -26,7 +27,11 @@ async def get_policy(session: AsyncSession, asset_id: uuid.UUID) -> list[Distrib
 
 
 async def replace_policy(
-    session: AsyncSession, asset_id: uuid.UUID, policy: DistributionPolicy
+    session: AsyncSession,
+    asset_id: uuid.UUID,
+    policy: DistributionPolicy,
+    *,
+    cache: CacheBackend | None = None,
 ) -> list[DistributionRuleItem]:
     """Replace an asset's whole rule set in one transaction.
 
@@ -34,7 +39,8 @@ async def replace_policy(
     state, so the operation is idempotent and a half-applied policy — some regions
     updated, others not — cannot be observed by a concurrent reader.
     """
-    await assets_service.get_asset(session, asset_id)
+    # Kept rather than discarded: origin_path is the cache identity for invalidation below.
+    asset = await assets_service.get_asset(session, asset_id)
 
     requested_codes = [rule.region_code for rule in policy.rules]
     regions: Sequence[Region] = (
@@ -62,4 +68,7 @@ async def replace_policy(
         ]
     )
     await session.commit()
+    # The rule set is the region allow-list in the candidate query's WHERE clause, so every
+    # cached resolution for this asset may now name a region it is no longer served from.
+    await invalidate(cache, route_scope(asset.origin_path))
     return await get_policy(session, asset_id)

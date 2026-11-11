@@ -4,6 +4,7 @@ from sqlalchemy import case, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_settings
+from app.db.session import release_connection
 from app.models.asset import Asset
 from app.models.asset_replica import AssetReplica
 from app.models.edge_node import EdgeNode
@@ -11,6 +12,8 @@ from app.models.enums import AssetStatus, NodeStatus, PurgeStatus, ReplicaState
 from app.models.purge_event import PurgeEvent
 from app.models.region import Region
 from app.schemas.stats import NetworkStats, RegionStats
+from app.services.cache import STATS_ENTITY, CacheBackend, cache_key
+from app.services.cache_aside import CachedRead, read_through
 
 
 async def network_stats(session: AsyncSession) -> NetworkStats:
@@ -89,6 +92,7 @@ async def network_stats(session: AsyncSession) -> NetworkStats:
     replicas_total, replicas_cached = replicas_row
     coverage = (replicas_cached / replicas_total * 100) if replicas_total else 0.0
 
+    await release_connection(session)
     return NetworkStats(
         nodes_total=fleet[0],
         nodes_by_status={status.value: count for status, count in status_rows},
@@ -112,4 +116,24 @@ async def network_stats(session: AsyncSession) -> NetworkStats:
             )
             for code, continent, node_count, healthy, capacity, load in region_rows
         ],
+    )
+
+
+# Lab4
+async def network_stats_cached(
+    session: AsyncSession, cache: CacheBackend
+) -> CachedRead[NetworkStats]:
+    """Cache-aside wrapper over `network_stats`.
+
+    Six grouped aggregates over the largest tables, answering a question whose result changes
+    slowly. Expiration rather than invalidation: almost every write in the system moves one of
+    these counters, so invalidating on each would keep the key permanently cold, and nobody
+    makes a decision on a fleet summary that is 30 seconds old.
+    """
+    return await read_through(
+        cache,
+        key=cache_key(STATS_ENTITY, "network"),
+        model=NetworkStats,
+        loader=lambda: network_stats(session),
+        ttl_seconds=get_settings().cache_stats_ttl_seconds,
     )

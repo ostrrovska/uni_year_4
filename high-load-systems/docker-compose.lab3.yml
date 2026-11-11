@@ -1,0 +1,122 @@
+# Lab3 — horizontally scaled pool behind a single entry point.
+#
+# DO NOT COMBINE WITH docker-compose.lab2.yml. Both declare api1/api2, and Compose cannot
+# remove a port mapping in an override, so layering them would silently republish the instance
+# ports and break the encapsulation this lab is graded on. Use lab2 to reproduce the Lab 2
+# defence, lab3 for everything from Lab 3 onwards.
+#
+#   docker compose -f docker-compose.yml -f docker-compose.lab3.yml --profile demo up -d --build
+#
+#   http://localhost:8080   single entry point (nginx) + dashboard
+#   http://localhost:8090   the same pool via HAProxy (active health checks)
+#   http://localhost:8404   HAProxy stats: per-server sessions, up/down state
+#
+# Anchors do not cross compose files, so the environment below mirrors the base
+# x-api-environment — keep them in sync.
+
+name: cdn-control-plane
+
+x-lab3-api-environment: &lab3-api-environment
+  APP_ENV: development
+  LOG_LEVEL: INFO
+  DATABASE_URL: postgresql+asyncpg://cdn:cdn@postgres:5432/cdn_control_plane
+  DB_POOL_SIZE: 10
+  DB_MAX_OVERFLOW: 10
+  DB_POOL_TIMEOUT: 10
+  HEARTBEAT_STALE_AFTER_SECONDS: 120
+  HEARTBEAT_INTERVAL_SECONDS: 10
+  NODE_OVERLOAD_THRESHOLD_PERCENT: 85
+
+x-lab3-api: &lab3-api
+  build:
+    context: .
+    dockerfile: docker/Dockerfile
+  restart: unless-stopped
+  depends_on:
+    migrate:
+      condition: service_completed_successfully
+  networks: [cdn_net]
+
+services:
+  # Named instances rather than `--scale api=N`: nginx OSS resolves an upstream name once at
+  # startup and picks one A record, and the `resolve` parameter that would re-resolve Docker's
+  # round-robin DNS set is nginx Plus only. Named peers also let the demo kill one specific
+  # container and inject latency into exactly one instance.
+  api1:
+    <<: *lab3-api
+    environment:
+      <<: *lab3-api-environment
+      INSTANCE_ID: cdn-api-1
+
+  # The asymmetric-load subject. Both knobs default to 0, so this is an ordinary instance
+  # until an experiment sets one.
+  api2:
+    <<: *lab3-api
+    environment:
+      <<: *lab3-api-environment
+      INSTANCE_ID: cdn-api-2
+      FAULT_DELAY_MS: ${FAULT_DELAY_MS:-0}
+      FAULT_CPU_SPIN_MS: ${FAULT_CPU_SPIN_MS:-0}
+
+  api3:
+    <<: *lab3-api
+    environment:
+      <<: *lab3-api-environment
+      INSTANCE_ID: cdn-api-3
+
+  # A fourth instance exists for the scale-out experiment's "3+" configuration, and because the
+  # three-instance run predicted PostgreSQL would saturate at about four - a prediction worth
+  # testing rather than extrapolating. Not started by the default demo command; bring it up
+  # explicitly, and switch the balancer to the pools/4.conf fragment.
+  api4:
+    <<: *lab3-api
+    environment:
+      <<: *lab3-api-environment
+      INSTANCE_ID: cdn-api-4
+
+  lb:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    environment:
+      LB_ALGORITHM: ${LB_ALGORITHM:-round-robin}
+      LB_POOL_SIZE: ${LB_POOL_SIZE:-3}
+    volumes:
+      - ./loadbalancer/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./loadbalancer/nginx/proxy.conf:/etc/nginx/proxy.conf:ro
+      - ./loadbalancer/nginx/algorithms:/etc/nginx/algorithms:ro
+      - ./loadbalancer/nginx/pools:/etc/nginx/pools:ro
+      - ./loadbalancer/nginx/switch.sh:/usr/local/bin/lb-switch:ro
+      - ./ui:/usr/share/nginx/html:ro
+    # Invoked through `sh` because a bind-mounted script from Windows may arrive without the
+    # executable bit.
+    command: ["/bin/sh", "-c", "sh /usr/local/bin/lb-switch && exec nginx -g 'daemon off;'"]
+    # No depends_on: nginx refuses to start on an unresolvable upstream name, but a *stopped*
+    # peer is fine — its IP is already resolved, so a kill gives connection-refused, passive
+    # ejection and a retry, which is exactly the failure demo.
+    healthcheck:
+      # 127.0.0.1, not localhost. nginx here listens on IPv4 only (`listen 80`), while
+      # localhost inside the container resolves to ::1 first, so wget got connection refused
+      # and the balancer reported itself unhealthy for its entire uptime while serving traffic
+      # perfectly. Verified in place: wget to localhost fails, to 127.0.0.1 answers "lb ok".
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/lb-health || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks: [cdn_net]
+
+  # Co-resident rather than profile-gated: a profiled service with `restart: unless-stopped`
+  # is invisible to a bare `docker compose down` and orphans the network. Running both also
+  # lets the same pool be probed on two ports with no restart.
+  haproxy:
+    image: haproxy:3.0-alpine
+    restart: unless-stopped
+    ports:
+      - "8090:8080"
+      - "8404:8404"
+    volumes:
+      - ./loadbalancer/haproxy/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
+    # Master-worker mode, so `kill -s HUP` is a seamless reload.
+    command: ["haproxy", "-W", "-db", "-f", "/usr/local/etc/haproxy/haproxy.cfg"]
+    networks: [cdn_net]

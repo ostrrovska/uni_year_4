@@ -1,0 +1,138 @@
+{
+  "label": "b-warm-25vu",
+  "config": "3inst-warm-pool10",
+  "scenario": "B-write",
+  "stage_vus": 25,
+  "measure_seconds": 60,
+  "base_url": "http://127.0.0.1:8080",
+  "generated_at": "2026-11-11T12:50:39.458Z",
+  "k6_run_duration_ms": 86449.0997,
+  "requests": 14071,
+  "errors": 0,
+  "error_rate_percent": 0,
+  "rps": 234.52,
+  "latency_ms": {
+    "count": 14071,
+    "min": 0.52,
+    "mean": 106.51,
+    "p50": 109.75,
+    "p90": 195.34,
+    "p95": 221.6,
+    "p99": 281.79,
+    "max": 632.21
+  },
+  "iteration_ms": {
+    "count": 14071,
+    "min": 0.52,
+    "mean": 106.67,
+    "p50": 109.91,
+    "p90": 195.54,
+    "p95": 221.88,
+    "p99": 281.79,
+    "max": 632.21
+  },
+  "server_ms": {
+    "count": 14071,
+    "min": 5.49,
+    "mean": 87.53,
+    "p50": 94.5,
+    "p90": 164.97,
+    "p95": 188.39,
+    "p99": 222.48,
+    "max": 495.76
+  },
+  "status_counts": {
+    "200": 2054,
+    "202": 12017
+  },
+  "instances": {
+    "cdn-api-1": 4690,
+    "cdn-api-2": 4691,
+    "cdn-api-3": 4690
+  },
+  "instance_share_percent": {
+    "cdn-api-1": 33.33,
+    "cdn-api-2": 33.34,
+    "cdn-api-3": 33.33
+  },
+  "latency_ms_by_instance": {
+    "cdn-api-1": {
+      "count": 4690,
+      "min": 2.59,
+      "mean": 108.48,
+      "p50": 110.8,
+      "p90": 175.89,
+      "p95": 196.46,
+      "p99": 244.17,
+      "max": 453.44
+    },
+    "cdn-api-2": {
+      "count": 4691,
+      "min": 0.52,
+      "mean": 48.24,
+      "p50": 22.03,
+      "p90": 123.28,
+      "p95": 162.37,
+      "p99": 217.17,
+      "max": 387.34
+    },
+    "cdn-api-3": {
+      "count": 4690,
+      "min": 28.47,
+      "mean": 162.83,
+      "p50": 157.51,
+      "p90": 232.51,
+      "p95": 260.22,
+      "p99": 308.08,
+      "max": 632.21
+    }
+  },
+  "cache": {
+    "HIT": 0,
+    "MISS": 0,
+    "BYPASS": 0
+  },
+  "cache_hit_ratio_percent": null,
+  "latency_ms_by_cache": {},
+  "server_ms_by_cache": {},
+  "latency_ms_by_op": {
+        "heartbeat": {
+          "count": 12017,
+          "min": 0.52,
+          "mean": 104.85,
+          "p50": 108.54,
+          "p90": 192.68,
+          "p95": 217.85,
+          "p99": 276.85,
+          "max": 632.21
+        },
+        "replica": {
+          "count": 2054,
+          "min": 3.7,
+          "mean": 116.23,
+          "p50": 119.06,
+          "p90": 210.14,
+          "p95": 240.25,
+          "p99": 303.92,
+          "max": 505.36
+        }
+      },
+  "server_ms_by_op": {
+        "heartbeat": {
+          "count": 12017,
+          "min": 5.49,
+          "mean": 85.93,
+          "p50": 93.01,
+          "p90": 161.84,
+          "p95": 184.46,
+          "p99": 216.58,
+          "max": 495.76
+        }
+      },
+  "requests_by_op": {
+        "heartbeat": 12017,
+        "replica": 2054
+      },
+  "thresholds_failed": [],
+  "ramp": false
+}

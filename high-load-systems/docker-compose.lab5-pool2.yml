@@ -1,0 +1,33 @@
+# Lab5 - the connection-pool exhaustion experiment (clause 2.5).
+#
+#   docker compose -f docker-compose.yml -f docker-compose.lab3.yml -f docker-compose.lab4.yml \
+#                  -f docker-compose.lab5.yml -f docker-compose.lab5-pool2.yml up -d
+#
+# docs/bottlenecks.md #4 predicts a specific and counter-intuitive signature: once every pooled
+# connection is busy, a request waits DB_POOL_TIMEOUT seconds *before doing any work*, so
+# latency climbs while database CPU falls, and the error rate climbs with it once the timeout
+# starts expiring. At the shipped pool of 10+10 per instance, 200 VUs over three instances
+# never quite gets there, so the prediction would stay untested.
+#
+# Two connections and no overflow per instance - six for the whole fleet - moves the knee down
+# to a VU count the ladder already covers. The point is not that a pool of 2 is a sensible
+# configuration; it is that the *mechanism* is real and visible, and that the same ladder run
+# against the shipped pool then tells us how much headroom the shipped pool actually has.
+#
+# DB_POOL_TIMEOUT stays at 10 s, unchanged from the baseline: shortening it would convert the
+# queueing into errors sooner and make the latency wall - the thing being demonstrated -
+# disappear behind a wall of 500s instead.
+
+name: cdn-control-plane
+
+x-lab5-pool2: &lab5-pool2
+  DB_POOL_SIZE: 2
+  DB_MAX_OVERFLOW: 0
+
+services:
+  api1:
+    environment: *lab5-pool2
+  api2:
+    environment: *lab5-pool2
+  api3:
+    environment: *lab5-pool2

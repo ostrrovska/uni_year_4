@@ -1,0 +1,576 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Lab 4 — Distributed Caching</title>
+<link rel="stylesheet" href="styles.css" />
+<link rel="stylesheet" href="report.css" />
+</head>
+<body>
+<header class="bar">
+  <div>
+    <h1>Lab 4 — Distributed caching</h1>
+    <p class="sub">Cache-aside on one Redis container shared by three API instances. Every number
+      here was measured on this stack.</p>
+  </div>
+  <nav class="tabs">
+    <a class="tab" href="/">Dashboard</a>
+    <a class="tab current" href="/lab4-report.html">Lab 4 report</a>
+      <a class="tab" href="/lab5-report.html">Lab 5 report</a>
+  </nav>
+</header>
+
+<main>
+  <nav class="jump">
+    <a href="#headline">Headline</a>
+    <a href="#how">How it works</a>
+    <a href="#key">The key</a>
+    <a href="#what">What we cache</a>
+    <a href="#ttl">TTL</a>
+    <a href="#inval">Invalidation</a>
+    <a href="#measured">Measured</a>
+    <a href="#dies">When Redis dies</a>
+    <a href="#theory">Theory</a>
+  </nav>
+
+  <!-- ------------------------------------------------------------------ headline -->
+  <section class="card" id="headline">
+    <div class="card-head">
+      <h2>Four numbers</h2>
+      <p>If there is time for nothing else, these are the four.</p>
+    </div>
+    <div class="hero tiles">
+      <div class="tile good">
+        <span class="tile-label">Hit vs miss</span><strong>50&times;</strong>
+        <span class="tile-note">109.11 ms &rarr; 2.20 ms, server-side</span>
+      </div>
+      <div class="tile good">
+        <span class="tile-label">Rows read from PostgreSQL</span><strong>&minus;99.5 %</strong>
+        <span class="tile-note">798 &rarr; 4.1 rows per request</span>
+      </div>
+      <div class="tile good">
+        <span class="tile-label">Errors when Redis is killed</span><strong>0</strong>
+        <span class="tile-note">15 s under load, all HTTP 200</span>
+      </div>
+      <div class="tile">
+        <span class="tile-label">Stampede on a cold key</span><strong>3</strong>
+        <span class="tile-note">misses from 64 concurrent users</span>
+      </div>
+    </div>
+    <p class="note">The last one is the interesting one: 64 users hit a flushed key and produced
+      <strong>three</strong> queries, not 64 &mdash; one per instance. More on that in Theory.</p>
+  </section>
+
+  <!-- ------------------------------------------------------------------ how it works -->
+  <section class="card" id="how">
+    <div class="card-head">
+      <h2>How a cached read actually flows</h2>
+      <p>Cache-aside: the <em>application</em> owns the cache. Redis never sits in the write path,
+        which is the whole reason it can die without taking the API with it.</p>
+    </div>
+
+    <svg class="flow" viewBox="0 0 760 240" role="img"
+         aria-label="Request goes to Redis. On a hit it responds in 2.2 ms. On a miss it queries PostgreSQL, stores the result in Redis with a 10 second TTL, and responds in 109 ms.">
+      <defs>
+        <marker id="a-mute" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0 0 L10 5 L0 10 z" fill="currentColor" />
+        </marker>
+      </defs>
+
+      <!-- nodes -->
+      <rect class="box" x="10" y="98" width="96" height="40" rx="8" />
+      <text x="58" y="123" text-anchor="middle">Request</text>
+
+      <rect class="box-cache" x="140" y="98" width="128" height="40" rx="8" />
+      <text x="204" y="117" text-anchor="middle">Redis GET</text>
+      <text class="lbl" x="204" y="131" text-anchor="middle">one key lookup</text>
+
+      <rect class="box" x="316" y="20" width="236" height="40" rx="8" />
+      <text x="434" y="39" text-anchor="middle">respond &middot; X-Cache: HIT</text>
+      <text class="lbl" x="434" y="53" text-anchor="middle">2.20 ms &mdash; PostgreSQL untouched</text>
+
+      <rect class="box-db" x="316" y="176" width="236" height="40" rx="8" />
+      <text x="434" y="195" text-anchor="middle">PostgreSQL</text>
+      <text class="lbl" x="434" y="209" text-anchor="middle">3 queries, last a ranked 3-table join</text>
+
+      <rect class="box-cache" x="586" y="176" width="164" height="40" rx="8" />
+      <text x="668" y="195" text-anchor="middle">Redis SET</text>
+      <text class="lbl" x="668" y="209" text-anchor="middle">ex = 10 s, jittered down</text>
+
+      <!-- edges -->
+      <g color="var(--text-muted)">
+        <path class="edge" d="M106 118 H136" marker-end="url(#a-mute)" />
+        <path class="edge" d="M552 196 H582" marker-end="url(#a-mute)" />
+      </g>
+      <g color="var(--good)">
+        <path class="edge-hit" d="M268 110 C292 110 292 40 312 40" marker-end="url(#a-mute)" />
+      </g>
+      <g color="var(--warning)">
+        <path class="edge-miss" d="M268 126 C292 126 292 196 312 196" marker-end="url(#a-mute)" />
+      </g>
+
+      <text class="step" x="330" y="14">hit</text>
+      <text class="step" x="330" y="170">miss</text>
+      <text class="lbl" x="668" y="232" text-anchor="middle">then respond &middot; MISS &middot; 109.11 ms</text>
+    </svg>
+
+    <div class="callout warn">
+      <strong>Third path, not drawn:</strong> if Redis is unreachable the circuit breaker opens and
+      the lookup is skipped entirely &mdash; straight to PostgreSQL, header
+      <code>X-Cache: BYPASS</code>. <em>BYPASS means the cache was never consulted</em>, which is a
+      different statement from <code>MISS</code>, and reporting them separately is what makes the
+      failure demo legible.
+    </div>
+  </section>
+
+  <!-- ------------------------------------------------------------------ the key -->
+  <section class="card" id="key">
+    <div class="card-head">
+      <h2>The key, taken apart</h2>
+      <p>Deterministic, human-readable, and safe to enumerate with <code>redis-cli --scan</code>.</p>
+    </div>
+
+    <div class="anatomy">
+      <div class="seg n1"><code>cdn:v1</code><span>namespace</span></div>
+      <div class="seg n2"><code>route</code><span>entity</span></div>
+      <div class="seg n3"><code>/static/app.bundle.js</code><span>identity</span></div>
+      <div class="seg n4"><code>68ac7b571abe8ec1</code><span>params hash</span></div>
+    </div>
+
+    <div class="facts">
+      <div class="fact"><span>Order-independent</span><span>Parameters are sorted before hashing, so
+        <code>?a=1&amp;b=2</code> and <code>?b=2&amp;a=1</code> are one entry, not two copies of one answer.</span></div>
+      <div class="fact"><span><code>None</code> is dropped</span><span>"Absent" and "explicitly null"
+        collapse together &mdash; they return the same body, so they share a key.</span></div>
+      <div class="fact"><span><code>limit</code> is normalised</span><span>Hashed as the resolved
+        integer, so <code>?limit=3</code> and an omitted <code>limit</code> &mdash; byte-identical
+        responses &mdash; do not get stored twice.</span></div>
+      <div class="fact"><span>Collisions</span><span>64-bit truncated SHA-256. Birthday bound: 50 % at
+        ~2<sup>32</sup> keys <em>for one path</em>; the real space is a handful of combinations per asset.</span></div>
+      <div class="fact"><span>Schema changes</span><span>The namespace is versioned. A planned change
+        bumps <code>v1</code>&rarr;<code>v2</code>; an <em>unplanned</em> one is caught at read time &mdash; a payload
+        that no longer validates is treated as a miss and deleted, so no instance can ever serve a
+        validation error out of the cache.</span></div>
+    </div>
+
+    <div class="callout">
+      The identity is <strong>real user data</strong>, so it is glob-escaped before
+      <code>SCAN MATCH</code>. An asset published at <code>/media/*.m3u8</code> would otherwise match
+      half the keyspace and one publish would wipe the cache.
+    </div>
+  </section>
+
+  <!-- ------------------------------------------------------------------ what we cache -->
+  <section class="card" id="what">
+    <div class="card-head">
+      <h2>Two endpoints cached, three refused</h2>
+      <p>The refusals are the defensible part &mdash; caching everything is not a design.</p>
+    </div>
+    <div class="facts">
+      <div class="fact"><span>&#10003; <code>GET /routing/resolve</code></span><span>Read on
+        <strong>every client download</strong>; 3 queries, the last a 3-table join whose
+        <code>ORDER BY</code> is a <em>computed score</em>, so no index can serve it. Cost is paid per
+        <em>read</em>, inputs change per <em>write</em>, reads vastly outnumber writes &mdash; that is the
+        definition of a cacheable read.</span></div>
+      <div class="fact"><span>&#10003; <code>GET /stats/network</code></span><span>Six grouped
+        aggregates over the largest tables, read by dashboards, changes slowly. Nobody decides
+        anything on a fresher fleet summary.</span></div>
+      <div class="fact no"><span>&#10007; <code>POST /heartbeat</code></span><span>The write hot path.
+        Caching a write is meaningless.</span></div>
+      <div class="fact no"><span>&#10007; <code>GET /assets</code></span><span>The key space is the
+        <em>product</em> of every filter and page offset &mdash; poor hit ratio, expensive invalidation.</span></div>
+      <div class="fact no"><span>&#10007; <code>GET /purges/{id}</code></span><span>Polled precisely to
+        watch a counter change. Caching it would break the feature.</span></div>
+    </div>
+  </section>
+
+  <!-- ------------------------------------------------------------------ ttl -->
+  <section class="card" id="ttl">
+    <div class="card-head">
+      <h2>TTL: 10 seconds, and not because it is a round number</h2>
+    </div>
+    <div class="facts">
+      <div class="fact"><span><code>route:{path}</code></span><span><code>min(asset.cache_ttl_seconds, 10 s)</code>
+        &mdash; bound by <strong>fleet freshness, not content freshness</strong>. The answer embeds
+        heartbeat-derived eligibility and per-node load, so it must not outlive one
+        <code>HEARTBEAT_INTERVAL_SECONDS</code>.</span></div>
+      <div class="fact"><span><code>stats:network</code></span><span>30 s, by business tolerance.
+        Expiration only &mdash; never invalidated.</span></div>
+      <div class="fact"><span>Both</span><span>Jittered <strong>down</strong> by 0&ndash;10 %. Upward
+        jitter would breach the ceiling, and the ceiling is a correctness statement, not a
+        performance knob.</span></div>
+    </div>
+
+    <div class="callout">
+      Seeded assets declare TTLs from <strong>300 s to 7 days</strong>, so the 10 s ceiling is always
+      what binds &mdash; never the asset's own value. The freshness constraint comes from the fleet,
+      not from the content.
+    </div>
+
+    <div class="callout good">
+      <strong>Measured trade-off:</strong> TTL 10 s &rarr; hit ratio <strong>99.8 %</strong>.
+      TTL 60 s &rarr; <strong>100.0 %</strong>. Six times the TTL bought <strong>0.2 points</strong>.
+      At this request rate the key is re-read far more often than it expires, so the short TTL is
+      free &mdash; there is nothing to trade freshness for.
+    </div>
+  </section>
+
+  <!-- ------------------------------------------------------------------ invalidation -->
+  <section class="card" id="inval">
+    <div class="card-head">
+      <h2>Invalidation</h2>
+      <p>Every mutation that changes a cached answer drops it &mdash; <strong>after the commit</strong>.
+        Invalidating before would let a concurrent reader refill the key from the old row.</p>
+    </div>
+
+    <div class="scopes">
+      <div class="scope">
+        <h4>That path's routes <span class="cmp-delta">+ stats</span></h4>
+        <code>cdn:v1:route:/static/app.bundle.js:</code>
+        <ul>
+          <li><code>POST /assets</code> &mdash; a 404 becomes a 200</li>
+          <li><code>POST /assets/{id}/versions</code></li>
+          <li><code>DELETE /assets/{id}</code> &mdash; worst possible staleness</li>
+          <li><code>PUT /assets/{id}/distribution</code></li>
+          <li><code>PUT /nodes/{id}/replicas/{asset}</code></li>
+          <li><code>POST /purges/{id}/acknowledgements</code> (on <code>purged</code>)</li>
+        </ul>
+      </div>
+      <div class="scope">
+        <h4>All routes, fleet-wide <span class="cmp-delta">+ stats</span></h4>
+        <code>cdn:v1:route:</code>
+        <ul>
+          <li><code>PATCH /nodes/{id}</code> &mdash; status or capacity</li>
+          <li><code>DELETE /nodes/{id}</code> &mdash; a candidate vanished</li>
+          <li><code>POST /heartbeat</code> &mdash; <strong>only on a real status transition</strong></li>
+        </ul>
+      </div>
+      <div class="scope">
+        <h4>Stats only</h4>
+        <code>cdn:v1:stats:</code>
+        <ul>
+          <li><code>POST /purges</code></li>
+          <li><code>POST /nodes</code></li>
+          <li><code>POST /regions</code></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="callout warn">
+      <strong>The trailing colon is load-bearing.</strong> The scope for
+      <code>/static/app.bundle.js</code> is <code>cdn:v1:route:/static/app.bundle.js<b>:</b></code>.
+      Without it, publishing that asset would also evict <code>/static/app.bundle.js.map</code>.
+    </div>
+
+    <div class="callout">
+      <strong>The heartbeat decision &mdash; the one that makes the cache viable.</strong>
+      Every node heartbeats every 10 s. Dropping the route keyspace on every sample would mean
+      ~1.3 fleet-wide <code>SCAN</code>s per second at 13 nodes and ~1&nbsp;000/s at 10&nbsp;000 &mdash;
+      the hit ratio would sit near zero <em>and</em> the invalidations would synchronise every miss
+      into exactly the stampede the cache exists to prevent. So only a real transition invalidates:
+      <br />&nbsp;
+      <br />&bull; crossing the overload threshold, draining, recovering &rarr; <strong>eligibility</strong> changes &rarr; invalidate
+      <br />&bull; load drifting 22 % &rarr; 24 % &rarr; only <strong>ranking</strong> changes &rarr; leave it to the TTL
+    </div>
+
+    <div class="card-head" style="margin-top:16px">
+      <h2>The third metric</h2>
+      <p>The lab asks for <strong>hit / miss / invalidation</strong>. The first two are in
+        <code>X-Cache</code> on every response. An invalidation belongs to a <em>write</em>, has no
+        response header of its own, and is the one a reader cannot see &mdash; so it is logged.</p>
+    </div>
+    <div class="cmd-box">
+      <pre class="cmd">cache.invalidated prefix=cdn:v1:route:/static/app.bundle.js: keys_dropped=1 invalidations_total=1</pre>
+    </div>
+    <p class="note">Scope, how many entries actually went, a per-instance running total, and which
+      instance did it. <code>keys_dropped=0</code> is a common and <em>correct</em> outcome &mdash; the TTL
+      had already expired the entry. That is the expiration-versus-invalidation split visible in a
+      log line.</p>
+  </section>
+
+  <!-- ------------------------------------------------------------------ measured -->
+  <section class="card" id="measured">
+    <div class="card-head">
+      <h2>Measured</h2>
+      <p>64 virtual users, 30 s per run, identical in every respect except
+        <code>CACHE_ENABLED</code>.</p>
+    </div>
+
+    <div class="pair">
+      <figure>
+        <figcaption>Server-side response time, one request each (ms)</figcaption>
+        <div class="cmp">
+          <div class="cmp-row">
+            <span class="cmp-name">cold &middot; MISS</span>
+            <div class="cmp-track"><div class="cmp-fill miss" style="width:100%" title="Cold: 109.11 ms, X-Cache MISS"></div></div>
+              <span class="cmp-value">109.11</span>
+          </div>
+          <div class="cmp-row">
+            <span class="cmp-name">hot &middot; HIT</span>
+            <div class="cmp-track"><div class="cmp-fill hit" style="width:2%" title="Hot: 2.20 ms mean of 20, X-Cache HIT"></div></div>
+              <span class="cmp-value">2.20 <span class="cmp-delta">50&times; faster</span></span>
+          </div>
+        </div>
+      </figure>
+
+      <figure>
+        <figcaption>Throughput (requests / s)</figcaption>
+        <div class="cmp">
+          <div class="cmp-row">
+            <span class="cmp-name">cache off</span>
+            <div class="cmp-track"><div class="cmp-fill" style="width:69.5%" title="Cache off: 240.7 req/s"></div></div>
+              <span class="cmp-value">240.7</span>
+          </div>
+          <div class="cmp-row">
+            <span class="cmp-name">cache on</span>
+            <div class="cmp-track"><div class="cmp-fill" style="width:100%" title="Cache on: 346.3 req/s"></div></div>
+              <span class="cmp-value">346.3 <span class="cmp-delta">+43.9 %</span></span>
+          </div>
+        </div>
+      </figure>
+
+      <figure>
+        <figcaption>Median latency, p50 (ms)</figcaption>
+        <div class="cmp">
+          <div class="cmp-row">
+            <span class="cmp-name">cache off</span>
+            <div class="cmp-track"><div class="cmp-fill" style="width:100%" title="Cache off: p50 224.6 ms"></div></div>
+              <span class="cmp-value">224.6</span>
+          </div>
+          <div class="cmp-row">
+            <span class="cmp-name">cache on</span>
+            <div class="cmp-track"><div class="cmp-fill" style="width:43.7%" title="Cache on: p50 98.1 ms"></div></div>
+              <span class="cmp-value">98.1 <span class="cmp-delta">2.3&times; lower</span></span>
+          </div>
+        </div>
+      </figure>
+
+      <figure>
+        <figcaption>Rows returned by PostgreSQL, per request</figcaption>
+        <div class="cmp">
+          <div class="cmp-row">
+            <span class="cmp-name">cache off</span>
+            <div class="cmp-track"><div class="cmp-fill" style="width:100%" title="Cache off: 798 rows per request"></div></div>
+              <span class="cmp-value">798</span>
+          </div>
+          <div class="cmp-row">
+            <span class="cmp-name">cache on</span>
+            <div class="cmp-track"><div class="cmp-fill" style="width:0.6%" title="Cache on: 4.1 rows per request"></div></div>
+              <span class="cmp-value">4.1 <span class="cmp-delta">&minus;99.5 %</span></span>
+          </div>
+        </div>
+      </figure>
+
+      <figure>
+        <figcaption>PostgreSQL CPU during the run (%)</figcaption>
+        <div class="cmp">
+          <div class="cmp-row">
+            <span class="cmp-name">cache off</span>
+            <div class="cmp-track"><div class="cmp-fill" style="width:100%" title="Cache off: PostgreSQL CPU 43.9 %"></div></div>
+              <span class="cmp-value">43.9</span>
+          </div>
+          <div class="cmp-row">
+            <span class="cmp-name">cache on</span>
+            <div class="cmp-track"><div class="cmp-fill" style="width:14.8%" title="Cache on: PostgreSQL CPU 6.5 %"></div></div>
+              <span class="cmp-value">6.5 <span class="cmp-delta">6.7&times; down</span></span>
+          </div>
+        </div>
+      </figure>
+    </div>
+
+    <table class="data">
+      <caption>Both runs in full &mdash; 0 errors in each</caption>
+      <thead><tr><th></th><th>RPS</th><th>p50 ms</th><th>p99 ms</th><th>Hit ratio</th><th>Errors</th></tr></thead>
+      <tbody>
+        <tr><td>cache off</td><td>240.7</td><td>224.6</td><td>708</td><td>&mdash;</td><td>0</td></tr>
+        <tr><td>cache on</td><td>346.3</td><td>98.1</td><td>911</td><td>99.9 %</td><td>0</td></tr>
+      </tbody>
+    </table>
+
+    <div class="callout warn">
+      <strong>The p99 rose, and that is reported rather than hidden.</strong> The cache did not make
+      the tail worse &mdash; it moved the measurement to a higher load point. The same 64 users now
+      push 44 % more requests through the same three single-worker instances. Being able to say that
+      is the point of measuring percentiles instead of averages.
+    </div>
+
+    <div class="callout">
+      <strong>Rows returned, not transactions committed.</strong> <code>xact_commit</code> was the
+      obvious metric and it is the wrong one: a read-only transaction is <em>rolled back</em> when its
+      session closes, so that counter mostly tracks the agent simulator's heartbeats and says nothing
+      about the read path. The expensive ranked join was replaced by a key lookup &mdash; that is what
+      <code>tup_returned</code> shows and <code>xact_commit</code> hides.
+    </div>
+
+    <div class="callout good">
+      <strong>Distributed, not per-process.</strong> The entry was stored by <em>one</em> instance and
+      served by <em>all three</em>. An in-process cache would have given three independent copies,
+      three times the misses, and no way to invalidate the other two.
+    </div>
+  </section>
+
+  <!-- ------------------------------------------------------------------ when redis dies -->
+  <section class="card" id="dies">
+    <div class="card-head">
+      <h2>When Redis dies</h2>
+      <p><code>docker compose … stop redis</code> with traffic flowing.</p>
+    </div>
+
+    <div class="timeline">
+      <div class="tl bad"><span class="tl-when">t = 0</span>
+        <span class="tl-what">Redis container stopped mid-load.</span></div>
+      <div class="tl ok"><span class="tl-when">824 ms</span>
+        <span class="tl-what">Every instance is reporting <strong><code>X-Cache: BYPASS</code></strong>
+          &mdash; breakers open, Redis no longer consulted at all.</span></div>
+      <div class="tl ok"><span class="tl-when">0&ndash;15 s</span>
+        <span class="tl-what"><strong>0 errors.</strong> Every status is 200; throughput settles at
+          226 req/s &mdash; exactly the uncached baseline, not a degraded version of it.</span></div>
+      <div class="tl ok"><span class="tl-when">restart</span>
+        <span class="tl-what">First read <code>MISS</code>, next <code>HIT</code>. The cache refills
+          itself &mdash; <strong>no API restart</strong>.</span></div>
+      <div class="tl"><span class="tl-when">after</span>
+        <span class="tl-what">Recovery is <strong>staggered, per instance</strong>: each owns its own
+          breaker, so one is already serving hits while another still answers
+          <code>BYPASS</code>.</span></div>
+    </div>
+
+    <div class="facts" style="margin-top:14px">
+      <div class="fact"><span>1. Fail-open at the boundary</span><span>The cache-aside layer swallows
+        backend failures and falls through to PostgreSQL &mdash; enforced in one place, not left to each
+        backend. A test that injected a <em>raising</em> backend found a real bug here: a cache error
+        escaping <code>invalidate</code> turned a perfectly good <code>POST /heartbeat</code> into a
+        500.</span></div>
+      <div class="fact"><span>2. A circuit breaker</span><span>After N consecutive failures the backend
+        stops consulting Redis for a cooldown. <strong>Without it</strong> every request would pay the
+        250 ms socket timeout &mdash; the fallback would be functional but roughly an order of magnitude
+        slower. The breaker is what makes this <em>graceful</em> rather than merely survivable.</span></div>
+      <div class="fact"><span>3. Honest headers</span><span>While the breaker is open the backend
+        reports itself disabled, so <code>X-Cache</code> says <code>BYPASS</code> &mdash; "not
+        consulted" &mdash; instead of a misleading <code>MISS</code>.</span></div>
+    </div>
+  </section>
+
+  <!-- ------------------------------------------------------------------ theory -->
+  <section class="card" id="theory">
+    <div class="card-head">
+      <h2>Theory, one line each</h2>
+    </div>
+
+    <details open>
+      <summary>Why cache-aside and not the other three</summary>
+      <div class="facts" style="margin-top:10px">
+        <div class="fact"><span>Cache-Aside &mdash; chosen</span><span>App reads the cache, falls back to
+          the DB on a miss, then stores. The cache is never in the write path.</span></div>
+        <div class="fact no"><span>Read-Through</span><span>Needs a cache that can run the query. A
+          3-table ranked join is not something Redis can load for us.</span></div>
+        <div class="fact no"><span>Write-Through</span><span><strong>There is nothing to write.</strong>
+          A route resolution is a <em>derived</em> result &mdash; no single write produces it; it is a
+          function of an asset, the fleet's heartbeats and the distribution rules.</span></div>
+        <div class="fact no"><span>Write-Behind</span><span>Would put a cache in the durability path of
+          a system of record. Losing Redis would lose committed data.</span></div>
+      </div>
+    </details>
+
+    <details>
+      <summary>Stampede / thundering herd &mdash; measured, and deliberately not mitigated</summary>
+      <p class="note">N concurrent misses on one hot key become N identical queries.
+        <strong>Measured: 64 users on a flushed key produced 3 misses</strong> &mdash; one per instance,
+        99.9 % hit ratio &mdash; because the loader takes ~2 ms. The herd is bounded by the
+        <em>instance count</em>, not by concurrency.</p>
+      <div class="callout">
+        A single-flight lock earns its place when
+        <code>loader_cost &times; concurrency</code> exceeds the database burst you can absorb. At
+        3 extra queries per TTL window it does not &mdash; and an <em>unmeasured mitigation is worse
+        defence material than a measured problem</em>. A per-instance <code>asyncio.Lock</code> would
+        also only have reduced the herd 3-fold, since each instance misses independently; solving it
+        across the pool needs a lock <em>in Redis</em>, which reintroduces the very dependency the
+        fail-open design just removed.
+      </div>
+    </details>
+
+    <details>
+      <summary>Avalanche &mdash; mitigated</summary>
+      <p class="note">Many keys expiring in the <em>same instant</em>, sending a synchronised wave at
+        the database &mdash; classically after a bulk warm-up or an invalidation burst. Every TTL is
+        jittered down by up to 10 %, which spreads the wave. A cold Redis restart is an avalanche by
+        another name, covered by the same fail-open path plus the breaker.</p>
+      <p class="note"><strong>Not the same problem as a stampede:</strong> a stampede is many clients on
+        <em>one</em> key, an avalanche is one client pattern across <em>many</em> keys. Jitter fixes the
+        second and does nothing for the first &mdash; which is why they are answered separately.</p>
+    </details>
+
+    <details>
+      <summary>Eviction &mdash; <code>allkeys-lru</code>, 256 MB</summary>
+      <div class="facts" style="margin-top:10px">
+        <div class="fact"><span>LRU &mdash; chosen</span><span>Evicts least <em>recently</em> used.
+          Matches a recency-skewed workload: a release makes one path hot for minutes, then it
+          cools.</span></div>
+        <div class="fact no"><span>LFU</span><span>Evicts least <em>frequently</em> used &mdash; would keep
+          long-dead popular paths resident while evicting a path that just became hot.</span></div>
+        <div class="fact no"><span>Random</span><span>No reason to prefer it.</span></div>
+        <div class="fact no"><span><code>noeviction</code></span><span>Writes fail at the limit &mdash;
+          turning a full cache into failing writes is unacceptable for an optimisation.</span></div>
+      </div>
+      <p class="note"><code>allkeys-</code> rather than <code>volatile-</code> because every key written
+        here already carries a TTL, which makes them equivalent today while keeping the policy correct
+        if one is ever written without one.</p>
+    </details>
+
+    <details>
+      <summary>Expiration vs invalidation &mdash; this system uses both, on purpose</summary>
+      <table class="data" style="margin-top:10px">
+        <thead><tr><th></th><th>Expiration</th><th>Invalidation</th></tr></thead>
+        <tbody>
+          <tr><td>Trigger</td><td>time</td><td>an event (a write)</td></tr>
+          <tr><td>Guarantees</td><td>staleness &le; TTL</td><td>the next read is fresh</td></tr>
+          <tr><td>Costs</td><td>nothing</td><td>a <code>SCAN</code> + <code>UNLINK</code> per mutation,
+            and knowing <em>which</em> keys a write affects</td></tr>
+          <tr><td>Used here for</td><td>ranking drift, and all of <code>stats:network</code></td>
+            <td>eligibility changes, and every asset mutation</td></tr>
+        </tbody>
+      </table>
+      <div class="callout">
+        A <em>failed</em> invalidation degrades to <strong>bounded</strong> staleness, not permanent
+        staleness &mdash; the entry still expires on its TTL. That is the second reason the ceiling is
+        short: it is the backstop for a cache that was unreachable at the moment a write committed.
+      </div>
+    </details>
+
+    <details>
+      <summary>Does the cache break statelessness? No &mdash; and that is the point</summary>
+      <p class="note">An <em>in-process</em> cache would be the textbook violation. This one is
+        <strong>shared external state</strong>, in the same category as PostgreSQL:</p>
+      <div class="facts">
+        <div class="fact"><span>Any instance, any request</span><span>Served from the same entry &mdash;
+          proven live: stored by one, served by three.</span></div>
+        <div class="fact"><span>Kill an instance</span><span>No cache content is lost.</span></div>
+        <div class="fact"><span>The only new per-process object</span><span>A Redis <em>connection
+          pool</em> &mdash; same category as the SQLAlchemy pool.</span></div>
+        <div class="fact"><span>The one genuinely local piece</span><span>Each backend's circuit breaker
+          &mdash; health information about <em>that</em> instance's link to Redis, not business data. Which
+          is exactly why recovery is staggered.</span></div>
+      </div>
+    </details>
+  </section>
+
+  <section class="card">
+    <div class="card-head"><h2>Where everything lives</h2></div>
+    <div class="facts">
+      <div class="fact"><span>Cache-aside logic</span><span><code>app/services/cache_aside.py</code></span></div>
+      <div class="fact"><span>Keys, scopes, glob-escaping</span><span><code>app/services/cache.py</code></span></div>
+      <div class="fact"><span>Redis backend, breaker, SCAN+UNLINK</span><span><code>app/services/cache_redis.py</code></span></div>
+      <div class="fact"><span>Only-on-transition invalidation</span><span><code>app/services/nodes.py</code></span></div>
+      <div class="fact"><span>Redis container and its flags</span><span><code>docker-compose.lab4.yml</code></span></div>
+      <div class="fact"><span>Full measurement tables</span><span><code>docs/lab4-results.md</code></span></div>
+      <div class="fact"><span>9 asserted checks</span><span><code>./scripts/lab4_demo.ps1</code></span></div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <p>All figures measured on this stack &middot; three API instances behind nginx <code>:8080</code>,
+    Redis 7-alpine with no published port.</p>
+</footer>
+</body>
+</html>

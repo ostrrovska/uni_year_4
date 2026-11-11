@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Response, status
 
-from app.api.deps import SessionDep
+from app.api.deps import CacheDep, SessionDep
 from app.api.responses import problems
 from app.schemas.region import RegionCreate, RegionRead
 from app.services import regions as regions_service
@@ -21,8 +21,8 @@ async def list_regions(session: SessionDep) -> list[RegionRead]:
     responses=problems(409),
 )
 async def create_region(
-    payload: RegionCreate, session: SessionDep, response: Response
+    payload: RegionCreate, session: SessionDep, cache: CacheDep, response: Response
 ) -> RegionRead:
-    region = await regions_service.create_region(session, payload)
+    region = await regions_service.create_region(session, payload, cache=cache)
     response.headers["Location"] = f"/api/v1/regions/{region.id}"
     return RegionRead.model_validate(region)

@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>CDN Control Plane — Labs 3 &amp; 4</title>
+<link rel="stylesheet" href="styles.css" />
+<link rel="stylesheet" href="report.css" />
+</head>
+<body>
+<header class="bar">
+  <div>
+    <h1>CDN Control Plane</h1>
+    <p class="sub">Served by the load balancer on <code>:8080</code> — the only port this page can reach.</p>
+  </div>
+  <div class="bar-right">
+    <nav class="tabs">
+      <a class="tab current" href="/">Dashboard</a>
+      <a class="tab" href="/lab4-report.html">Lab 4 report</a>
+      <a class="tab" href="/lab5-report.html">Lab 5 report</a>
+    </nav>
+    <span class="pill" id="lb-health"><span class="dot"></span><span id="lb-health-text">checking…</span></span>
+    <span class="pill" id="lb-alg">algorithm: <strong id="alg-name">…</strong></span>
+    <a class="pill link" href="http://localhost:8404/" target="_blank" rel="noopener">HAProxy stats ↗</a>
+  </div>
+</header>
+
+<main>
+  <!-- Lab3 -->
+  <section class="card">
+    <div class="card-head">
+      <h2>Lab 3 · Balancing</h2>
+      <p>Fire a burst through the balancer and see where it actually lands. Switch the algorithm
+        with <code>./scripts/lb_switch.ps1 -Algorithm least-conn</code> and fire again.</p>
+    </div>
+
+    <div class="controls">
+      <label>Requests <input type="number" id="burst-n" value="120" min="3" max="600" step="3" /></label>
+      <label>Concurrency <input type="number" id="burst-c" value="8" min="1" max="32" /></label>
+      <button id="burst-go" class="primary">Send burst</button>
+      <span class="hint" id="burst-state"></span>
+    </div>
+
+    <div class="cmd-box">
+      <pre class="cmd muted" id="burst-cmd">Press Send burst to see the request it issues.</pre>
+      <button class="copy" type="button">Copy</button>
+    </div>
+
+    <div class="viz-root">
+      <figure>
+        <figcaption>Requests completed per instance</figcaption>
+        <div id="dist-bars" class="bars" role="img" aria-labelledby="dist-table-caption"></div>
+      </figure>
+
+      <table class="data" id="dist-table">
+        <caption id="dist-table-caption">Per-instance distribution and latency for the last burst</caption>
+        <thead><tr><th>Instance</th><th>Requests</th><th>Share</th><th>p50 ms</th><th>p99 ms</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <div class="tiles">
+      <div class="tile"><span class="tile-label">Requests</span><strong id="burst-total">—</strong></div>
+      <div class="tile"><span class="tile-label">p50</span><strong id="burst-p50">—</strong><span class="unit">ms</span></div>
+      <div class="tile"><span class="tile-label">p99</span><strong id="burst-p99">—</strong><span class="unit">ms</span></div>
+      <div class="tile" id="burst-err-tile"><span class="tile-label">Non-2xx</span><strong id="burst-err">—</strong></div>
+    </div>
+
+    <p class="note">Kill an instance in another terminal and fire the burst again — it disappears from
+      the chart while <strong>Non-2xx stays at 0</strong>:
+      <code>docker compose -f docker-compose.yml -f docker-compose.lab3.yml stop api2</code></p>
+
+    <details class="cmds">
+      <summary>Commands this page cannot run (Lab 3)</summary>
+      <div class="cmd-rows">
+        <div class="cmd-row">
+          <span class="cmd-label">2.1 · No instance port is published — the balancer is the only entry point.
+            Answers <code>invalid IP:0</code>, i.e. there is nothing to publish.</span>
+          <div class="cmd-box"><pre class="cmd">docker compose @ca port api1 8000</pre>
+            <button class="copy" type="button">Copy</button></div>
+        </div>
+        <div class="cmd-row">
+          <span class="cmd-label">2.2 · The same distribution recomputed from the balancer's own access log, so it
+            does not depend on this page being believed.</span>
+          <div class="cmd-box"><pre class="cmd">docker compose @ca logs --no-log-prefix --tail 200 lb | Select-String "instance=cdn" | Group-Object { ($_ -split "instance=")[1].Split(" ")[0] } | Select-Object Count, Name</pre>
+            <button class="copy" type="button">Copy</button></div>
+        </div>
+        <div class="cmd-row">
+          <span class="cmd-label">2.3 · Switch the algorithm with no downtime, then press Send burst again.
+            Also <code>weighted</code>, <code>ip-hash</code>, <code>round-robin</code>.</span>
+          <div class="cmd-box"><pre class="cmd">./scripts/lb_switch.ps1 -Algorithm least-conn</pre>
+            <button class="copy" type="button">Copy</button></div>
+        </div>
+        <div class="cmd-row">
+          <span class="cmd-label">2.4 · Kill a node mid-demo, fire the burst, then restore it. Non-2xx stays 0
+            throughout; the peer returns after <code>fail_timeout</code>.</span>
+          <div class="cmd-box"><pre class="cmd">docker compose @ca stop api2
+docker compose @ca start api2</pre>
+            <button class="copy" type="button">Copy</button></div>
+        </div>
+        <div class="cmd-row">
+          <span class="cmd-label">Active health checks — the same pool through HAProxy on <code>:8090</code>,
+            which removes a peer before any client request reaches it.</span>
+          <div class="cmd-box"><pre class="cmd">curl.exe -s -D - -o NUL "http://localhost:8090/health" | Select-String "X-Instance-ID"</pre>
+            <button class="copy" type="button">Copy</button></div>
+        </div>
+      </div>
+    </details>
+  </section>
+
+  <!-- Lab4 -->
+  <section class="card">
+    <div class="card-head">
+      <h2>Lab 4 · Distributed cache</h2>
+      <p>Cache-aside on Redis. The first read computes and stores; the next one is served from
+        Redis without touching PostgreSQL.</p>
+    </div>
+
+    <div class="controls">
+      <button id="read-once">Resolve once</button>
+      <button id="read-ten">Resolve 10×</button>
+      <button id="demo-invalidate" class="primary">Run invalidation demo</button>
+      <button id="clear-log" class="ghost">Clear</button>
+      <span class="hint" id="cache-state"></span>
+    </div>
+
+    <div class="cmd-box">
+      <pre class="cmd muted" id="cache-cmd">Press a button to see the request it issues.</pre>
+      <button class="copy" type="button">Copy</button>
+    </div>
+
+    <div class="tiles">
+      <div class="tile good"><span class="tile-label">avg HIT</span><strong id="hit-ms">—</strong><span class="unit">ms</span></div>
+      <div class="tile warn"><span class="tile-label">avg MISS</span><strong id="miss-ms">—</strong><span class="unit">ms</span></div>
+      <div class="tile"><span class="tile-label">Hit ratio</span><strong id="hit-ratio">—</strong><span class="unit">%</span></div>
+      <div class="tile"><span class="tile-label">HIT / MISS / BYPASS</span><strong id="cache-tally">0 / 0 / 0</strong></div>
+    </div>
+
+    <div class="viz-root">
+      <figure>
+        <figcaption>Response time per request, newest on the right</figcaption>
+        <div class="legend" id="cache-legend"></div>
+        <div id="lat-chart" class="strip" role="img" aria-label="Response time per request, coloured by cache outcome"></div>
+      </figure>
+    </div>
+
+    <p class="note">Stop Redis and keep clicking — every request still answers <code>200</code>, the header
+      turns <code>BYPASS</code> and latency returns to the uncached baseline:
+      <code>docker compose … -f docker-compose.lab4.yml stop redis</code></p>
+
+    <details class="cmds">
+      <summary>Commands this page cannot run (Lab 4)</summary>
+      <div class="cmd-rows">
+        <div class="cmd-row">
+          <span class="cmd-label">Every cached key with its remaining TTL. It reads the TTL of keys that exist, so it
+            never answers <code>-2</code> — and a route key lives only ~10 s, which is why the scan and the TTL
+            belong in one command.</span>
+          <div class="cmd-box"><pre class="cmd">docker compose @ca exec redis redis-cli --scan --pattern "cdn:v1:*" | ForEach-Object { "{0}  ttl={1}" -f $_, (docker compose @ca exec redis redis-cli ttl $_) }</pre>
+            <button class="copy" type="button">Copy</button></div>
+        </div>
+        <div class="cmd-row">
+          <span class="cmd-label">Redis' own hit and miss counters — the server side of the ratio shown above.</span>
+          <div class="cmd-box"><pre class="cmd">docker compose @ca exec redis redis-cli info stats | Select-String "keyspace_hits|keyspace_misses"</pre>
+            <button class="copy" type="button">Copy</button></div>
+        </div>
+        <div class="cmd-row">
+          <span class="cmd-label">Invalidation events from the instances' own logs, with the prefix that was dropped
+            and how many keys went with it — run this after Run invalidation demo.</span>
+          <div class="cmd-box"><pre class="cmd">docker compose @ca logs --no-log-prefix --tail 400 api1 api2 api3 | Select-String "cache.invalidated"</pre>
+            <button class="copy" type="button">Copy</button></div>
+        </div>
+        <div class="cmd-row">
+          <span class="cmd-label">Graceful degradation: stop Redis, keep pressing Resolve — still <code>200</code>,
+            header <code>BYPASS</code>, latency back at the uncached baseline — then restore it.</span>
+          <div class="cmd-box"><pre class="cmd">docker compose @ca stop redis
+docker compose @ca start redis</pre>
+            <button class="copy" type="button">Copy</button></div>
+        </div>
+      </div>
+    </details>
+  </section>
+
+  <section class="card">
+    <div class="card-head">
+      <h2>Commands</h2>
+      <p>Every action taken above, as the command that does the same thing from a terminal, newest
+        first. This page never runs docker or a shell — it issues only the HTTP requests it shows,
+        and names the rest for you to run.</p>
+    </div>
+    <div class="cmd-box">
+      <pre class="cmd">$ca = @("-f","docker-compose.yml","-f","docker-compose.lab3.yml","-f","docker-compose.lab4.yml")</pre>
+      <button class="copy" type="button">Copy</button>
+    </div>
+    <p class="cmd-prefix">Define <code>$ca</code> once per terminal; every <code>@ca</code> above and below expands to it.</p>
+    <div id="cmd-log" class="cmd-rows"></div>
+  </section>
+
+  <section class="card">
+    <div class="card-head"><h2>Request log</h2><p>Last 50 requests, with the headers each balancer and instance added.</p></div>
+    <table class="data log">
+      <thead><tr><th>Time</th><th>Request</th><th>Status</th><th>Instance</th><th>Cache</th><th>Server ms</th><th>Wall ms</th></tr></thead>
+      <tbody id="log-body"><tr class="empty"><td colspan="7">No requests yet.</td></tr></tbody>
+    </table>
+  </section>
+
+  <section class="card">
+    <div class="card-head"><h2>INFO</h2></div>
+    <details>
+      <summary>Balancing algorithms</summary>
+      <dl>
+        <dt>Round Robin</dt><dd>Equal share per peer, by request count. Optimal for a homogeneous pool; pathological when one peer is slow, because it keeps receiving its full 1/N share while its queue grows.</dd>
+        <dt>Least Connections</dt><dd>Fewest in-flight requests wins, so a slow peer stops being fed as soon as its work piles up. In nginx OSS the count is per worker, which is why this pool runs one worker.</dd>
+        <dt>Weighted Round Robin</dt><dd>Share proportional to configured weight — for genuinely heterogeneous hardware. On an even pool it only concentrates load.</dd>
+        <dt>IP Hash</dt><dd>Affinity by client address. nginx hashes the first three octets, so a whole /24 — and everything behind one NAT — lands on a single peer.</dd>
+      </dl>
+    </details>
+    <details>
+      <summary>Health checks: passive vs active</summary>
+      <dl>
+        <dt>Passive (nginx OSS)</dt><dd><code>max_fails</code> / <code>fail_timeout</code> plus <code>proxy_next_upstream</code>. Learns of a failure only by failing a real request, then retries it on another peer so the client sees no error. Cannot see an instance that is listening but broken.</dd>
+        <dt>Active (HAProxy)</dt><dd><code>option httpchk GET /health/ready</code> on a timer. Removes a peer <em>before</em> any client request reaches it — the only mechanism that catches "alive but cannot reach the database".</dd>
+        <dt>Liveness vs readiness</dt><dd><code>/health</code> answers "the process runs" and must not touch the database, or a database blip would restart the fleet. <code>/health/ready</code> answers "this instance can serve traffic" and is what a balancer polls.</dd>
+      </dl>
+    </details>
+    <details>
+      <summary>The balancer is now the single point of failure</summary>
+      <dl>
+        <dt>Keepalived / VRRP</dt><dd>Active-passive pair sharing a floating IP; sub-second failover, needs L2 adjacency, one node idle.</dd>
+        <dt>DNS round robin / health-checked DNS</dt><dd>No shared address needed, but failover is bounded by TTL and client-side caching.</dd>
+        <dt>L4 ECMP / anycast, or a managed cloud LB</dt><dd>Genuinely horizontal balancer scaling, at operational cost.</dd>
+      </dl>
+    </details>
+    <details>
+      <summary>Caching patterns and failure modes</summary>
+      <dl>
+        <dt>Cache-Aside (used here)</dt><dd>The application reads the cache, falls back to the database on a miss and stores the result. The cache never sits in the write path, so it can fail without taking writes with it.</dd>
+        <dt>Read-through / write-through / write-behind</dt><dd>The cache owns the read or the write. Write-through is wrong for a derived join result like a route resolution: no single write produces it.</dd>
+        <dt>Stampede / thundering herd</dt><dd>N concurrent misses on one hot key become N identical queries. Bounded here by a 10 s TTL and a ~2 ms loader; the fix beyond that is single-flight or a lock.</dd>
+        <dt>Avalanche</dt><dd>Many keys expiring in the same instant. Mitigated by jittering each TTL downward by up to 10 %.</dd>
+        <dt>Eviction: LRU vs LFU</dt><dd>Configured <code>allkeys-lru</code>. This workload is recency-skewed — a release makes one path hot then it cools — and LFU would keep long-dead popular paths resident.</dd>
+        <dt>Expiration vs invalidation</dt><dd>Expiration is time-based and needs no coordination; invalidation is event-driven and exact. Here: invalidate on <em>eligibility</em> changes, expire for <em>ranking</em> drift.</dd>
+      </dl>
+    </details>
+  </section>
+</main>
+
+<footer>
+  <p>Single entry point <code>:8080</code> (nginx) · same pool via <code>:8090</code> (HAProxy) · no API instance port is published.</p>
+</footer>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>

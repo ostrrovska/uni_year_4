@@ -1,0 +1,204 @@
+{
+  "label": "a-warm-100vu",
+  "generated_at": "2026-11-11T12:45:55+00:00",
+  "requests": 32212,
+  "window_seconds": 89.65,
+  "database_delta": {
+    "xact_commit": 195,
+    "xact_rollback": 13024,
+    "tup_returned": 1199271,
+    "tup_fetched": 398148,
+    "tup_inserted": 0,
+    "tup_updated": 22,
+    "tup_deleted": 0,
+    "blks_read": 0,
+    "blks_hit": 583489,
+    "deadlocks": 0,
+    "temp_files": 0
+  },
+  "rows_per_request": 37.23,
+  "tuples_inserted_per_request": 0.0,
+  "tuples_updated_per_request": 0.001,
+  "buffer_hit_percent": 100.0,
+  "connections_before": {
+    "active": 1,
+    "idle": 30,
+    "idle_in_transaction": 0,
+    "total": 31,
+    "max_connections": 100
+  },
+  "connections_after": {
+    "active": 1,
+    "idle": 30,
+    "idle_in_transaction": 0,
+    "total": 31,
+    "max_connections": 100
+  },
+  "waits_during": [
+    {
+      "type": "none",
+      "event": "none",
+      "backends": 1
+    }
+  ],
+  "node_heartbeat_rows_before": 12,
+  "node_heartbeat_rows_after": 12,
+  "top_statements": [
+    {
+      "calls": 5063,
+      "total_exec_ms": 544.25,
+      "mean_exec_ms": 0.107,
+      "rows": 101264,
+      "query": "SELECT assets.id, assets.origin_path, assets.content_hash, assets.size_bytes, assets.content_type, assets.vers"
+    },
+    {
+      "calls": 1402,
+      "total_exec_ms": 315.34,
+      "mean_exec_ms": 0.225,
+      "rows": 4091,
+      "query": "SELECT edge_nodes.id, edge_nodes.hostname, edge_nodes.public_ipv4, edge_nodes.capacity_mbps, edge_nodes.curren"
+    },
+    {
+      "calls": 5063,
+      "total_exec_ms": 175.28,
+      "mean_exec_ms": 0.035,
+      "rows": 5063,
+      "query": "SELECT count(*) AS count_1 FROM assets"
+    },
+    {
+      "calls": 29,
+      "total_exec_ms": 113.01,
+      "mean_exec_ms": 3.897,
+      "rows": 29,
+      "query": "SELECT count(*) AS count_1 FROM purge_events WHERE purge_events.status IN ($1::purge_status, $2::purge_statu"
+    },
+    {
+      "calls": 322,
+      "total_exec_ms": 80.88,
+      "mean_exec_ms": 0.251,
+      "rows": 463,
+      "query": "WITH RECURSIVE typeinfo_tree( oid, ns, name, kind, basetype, elemtype, elemdelim, range_subtype, attrt"
+    },
+    {
+      "calls": 1402,
+      "total_exec_ms": 66.39,
+      "mean_exec_ms": 0.047,
+      "rows": 1402,
+      "query": "SELECT assets.id, assets.origin_path, assets.content_hash, assets.size_bytes, assets.content_type, assets.vers"
+    },
+    {
+      "calls": 1402,
+      "total_exec_ms": 35.97,
+      "mean_exec_ms": 0.026,
+      "rows": 1402,
+      "query": "SELECT regions.id, regions.code, regions.name, regions.continent, regions.created_at FROM regions WHERE regi"
+    },
+    {
+      "calls": 13077,
+      "total_exec_ms": 21.93,
+      "mean_exec_ms": 0.002,
+      "rows": 0,
+      "query": "ROLLBACK"
+    },
+    {
+      "calls": 13077,
+      "total_exec_ms": 20.02,
+      "mean_exec_ms": 0.002,
+      "rows": 0,
+      "query": "BEGIN"
+    },
+    {
+      "calls": 29,
+      "total_exec_ms": 5.0,
+      "mean_exec_ms": 0.172,
+      "rows": 406,
+      "query": "SELECT regions.code, regions.continent, count(edge_nodes.id) AS count_1, coalesce(sum(CASE WHEN (edge_nodes.st"
+    },
+    {
+      "calls": 322,
+      "total_exec_ms": 4.8,
+      "mean_exec_ms": 0.015,
+      "rows": 322,
+      "query": "SELECT current_setting('jit') AS cur, set_config('jit', 'off',"
+    },
+    {
+      "calls": 322,
+      "total_exec_ms": 4.15,
+      "mean_exec_ms": 0.013,
+      "rows": 322,
+      "query": "SELECT set_config('jit', $1, false)"
+    }
+  ],
+  "table_delta": {
+    "asset_replicas": {
+      "ins": 0,
+      "upd": 0,
+      "seq_scan": 0,
+      "idx_scan": 12343,
+      "hot_upd": 0,
+      "hot_update_percent": null,
+      "dead_tuples_now": 0,
+      "live_tuples_now": 339
+    },
+    "node_heartbeats": {
+      "ins": 0,
+      "upd": 0,
+      "seq_scan": 1,
+      "idx_scan": 0,
+      "hot_upd": 0,
+      "hot_update_percent": null,
+      "dead_tuples_now": 0,
+      "live_tuples_now": 12
+    },
+    "edge_nodes": {
+      "ins": 0,
+      "upd": 0,
+      "seq_scan": 59,
+      "idx_scan": 3617,
+      "hot_upd": 0,
+      "hot_update_percent": null,
+      "dead_tuples_now": 0,
+      "live_tuples_now": 20
+    },
+    "purge_events": {
+      "ins": 0,
+      "upd": 0,
+      "seq_scan": 29,
+      "idx_scan": 0,
+      "hot_upd": 0,
+      "hot_update_percent": null,
+      "dead_tuples_now": 2252,
+      "live_tuples_now": 17085
+    },
+    "assets": {
+      "ins": 0,
+      "upd": 0,
+      "seq_scan": 7071,
+      "idx_scan": 4451,
+      "hot_upd": 0,
+      "hot_update_percent": null,
+      "dead_tuples_now": 0,
+      "live_tuples_now": 24
+    },
+    "regions": {
+      "ins": 0,
+      "upd": 0,
+      "seq_scan": 9814,
+      "idx_scan": 1142,
+      "hot_upd": 0,
+      "hot_update_percent": null,
+      "dead_tuples_now": 18,
+      "live_tuples_now": 14
+    },
+    "distribution_rules": {
+      "ins": 0,
+      "upd": 0,
+      "seq_scan": 0,
+      "idx_scan": 1553,
+      "hot_upd": 0,
+      "hot_update_percent": null,
+      "dead_tuples_now": 36,
+      "live_tuples_now": 1
+    }
+  }
+}

@@ -27,6 +27,7 @@ from app.db.session import async_session_factory, engine
 from app.models.edge_node import EdgeNode
 from app.schemas.node import HeartbeatReport
 from app.services import nodes as nodes_service
+from app.services.cache import close_cache, get_cache
 from scripts.seed import NODES
 
 _LOAD_BY_HOSTNAME = {hostname: load for hostname, _, _, load, _ in NODES}
@@ -54,7 +55,11 @@ async def refresh_once() -> tuple[int, int]:
                 active_connections=load * 120,
                 cache_hit_ratio=0.9,
             )
-            await nodes_service.record_heartbeat(session, node.id, report)
+            # Lab4: this process mutates shared state without going through HTTP, so it has
+            # to participate in cache invalidation. Every automatic status transition in the
+            # live demo originates here, and a node crossing the overload threshold must drop
+            # the cached routing answers that still list it as eligible.
+            await nodes_service.record_heartbeat(session, node.id, report, cache=get_cache())
             refreshed += 1
 
     return refreshed, skipped
@@ -92,6 +97,7 @@ async def main() -> None:
     except KeyboardInterrupt:
         print("stopped")
     finally:
+        await close_cache()
         await engine.dispose()
 
 

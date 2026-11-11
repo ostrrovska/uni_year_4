@@ -1,0 +1,100 @@
+{
+  "label": "scale-3inst-100vu",
+  "ticks": 35,
+  "duration_s": 74.1,
+  "generated_at": "2026-11-10T19:59:11+00:00",
+  "resources": {
+    "cdn-control-plane-postgres-1": {
+      "samples": 35,
+      "cpu_percent_mean": 44.06,
+      "cpu_percent_max": 201.13,
+      "mem_used_mib_mean": 215.97,
+      "mem_used_mib_max": 285.8,
+      "mem_percent_max": 27.91
+    },
+    "cdn-control-plane-redis-1": {
+      "samples": 35,
+      "cpu_percent_mean": 1.23,
+      "cpu_percent_max": 3.88,
+      "mem_used_mib_mean": 10.01,
+      "mem_used_mib_max": 14.46,
+      "mem_percent_max": 4.52
+    },
+    "cdn-control-plane-api1-1": {
+      "samples": 35,
+      "cpu_percent_mean": 65.86,
+      "cpu_percent_max": 75.15,
+      "mem_used_mib_mean": 90.81,
+      "mem_used_mib_max": 91.68,
+      "mem_percent_max": 23.87
+    },
+    "cdn-control-plane-api2-1": {
+      "samples": 35,
+      "cpu_percent_mean": 62.16,
+      "cpu_percent_max": 75.95,
+      "mem_used_mib_mean": 71.68,
+      "mem_used_mib_max": 73.1,
+      "mem_percent_max": 19.04
+    },
+    "cdn-control-plane-api3-1": {
+      "samples": 35,
+      "cpu_percent_mean": 62.86,
+      "cpu_percent_max": 75.03,
+      "mem_used_mib_mean": 72.67,
+      "mem_used_mib_max": 73.58,
+      "mem_percent_max": 19.16
+    },
+    "cdn-control-plane-lb-1": {
+      "samples": 35,
+      "cpu_percent_mean": 7.94,
+      "cpu_percent_max": 12.16,
+      "mem_used_mib_mean": 10.84,
+      "mem_used_mib_max": 12.21,
+      "mem_percent_max": 9.54
+    }
+  },
+  "containers": {
+    "cdn-control-plane-postgres-1": {
+      "oom_killed": false,
+      "restart_count": 0,
+      "status": "running",
+      "cpu_limit": 2.0,
+      "mem_limit_mib": 1024.0
+    },
+    "cdn-control-plane-redis-1": {
+      "oom_killed": false,
+      "restart_count": 0,
+      "status": "running",
+      "cpu_limit": 0.5,
+      "mem_limit_mib": 320.0
+    },
+    "cdn-control-plane-api1-1": {
+      "oom_killed": false,
+      "restart_count": 0,
+      "status": "running",
+      "cpu_limit": 0.75,
+      "mem_limit_mib": 384.0
+    },
+    "cdn-control-plane-api2-1": {
+      "oom_killed": false,
+      "restart_count": 0,
+      "status": "running",
+      "cpu_limit": 0.75,
+      "mem_limit_mib": 384.0
+    },
+    "cdn-control-plane-api3-1": {
+      "oom_killed": false,
+      "restart_count": 0,
+      "status": "running",
+      "cpu_limit": 0.75,
+      "mem_limit_mib": 384.0
+    },
+    "cdn-control-plane-lb-1": {
+      "oom_killed": false,
+      "restart_count": 2,
+      "status": "running",
+      "cpu_limit": 0.5,
+      "mem_limit_mib": 128.0
+    }
+  }
+}

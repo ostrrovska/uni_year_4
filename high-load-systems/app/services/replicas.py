@@ -11,6 +11,7 @@ from app.models.asset import Asset
 from app.models.asset_replica import AssetReplica
 from app.models.edge_node import EdgeNode
 from app.models.enums import ReplicaState
+from app.services.cache import CacheBackend, invalidate, route_scope, stats_scope
 
 
 async def list_replicas_for_node(
@@ -33,6 +34,7 @@ async def report_replica(
     state: ReplicaState,
     cached_version: int | None,
     bytes_cached: int,
+    cache: CacheBackend | None = None,
 ) -> AssetReplica:
     """Upsert what a node reports holding for one asset.
 
@@ -83,4 +85,7 @@ async def report_replica(
     )
     replica = (await session.execute(statement)).scalar_one()
     await session.commit()
+    # Replica state is the warm/cold input to the routing score and appears in the payload as
+    # `cache_state`, so a report changes both the ranking and the body for this asset.
+    await invalidate(cache, route_scope(asset.origin_path), stats_scope())
     return replica

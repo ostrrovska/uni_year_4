@@ -3,7 +3,7 @@ from fastapi import APIRouter, Response
 from app.api.deps import CacheDep, SessionDep
 from app.schemas.stats import NetworkStats
 from app.services import stats as stats_service
-from app.services.cache import CACHE_HEADER, CacheStatus
+from app.services.cache import CACHE_HEADER
 
 router = APIRouter(prefix="/stats", tags=["stats"])
 
@@ -16,6 +16,6 @@ async def network_stats(session: SessionDep, cache: CacheDep, response: Response
     result changes slowly — the textbook profile for a cached read, which is what
     Lab 4 turns it into.
     """
-    stats = await stats_service.network_stats(session)
-    response.headers[CACHE_HEADER] = CacheStatus.MISS if cache.enabled else CacheStatus.BYPASS
-    return stats
+    cached = await stats_service.network_stats_cached(session, cache)
+    response.headers[CACHE_HEADER] = cached.status
+    return cached.value

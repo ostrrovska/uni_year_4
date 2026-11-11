@@ -1,4 +1,5 @@
 import uuid
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from decimal import Decimal
 
@@ -15,6 +16,7 @@ from app.models.node_heartbeat import NodeHeartbeat
 from app.models.region import Region
 from app.schemas.node import HeartbeatReport, NodeRegister, NodeUpdate
 from app.services import regions as regions_service
+from app.services.cache import CacheBackend, invalidate, route_scope, stats_scope
 
 # Operators drain and decommission nodes; agents bring them back. Encoding the legal
 # moves rejects nonsense like reviving a decommissioned node straight into `draining`,
@@ -26,6 +28,20 @@ _ALLOWED_TRANSITIONS: dict[NodeStatus, frozenset[NodeStatus]] = {
     NodeStatus.DRAINING: frozenset({NodeStatus.HEALTHY, NodeStatus.OFFLINE}),
     NodeStatus.OFFLINE: frozenset({NodeStatus.PROVISIONING, NodeStatus.HEALTHY}),
 }
+
+
+@dataclass(frozen=True, slots=True)
+class HeartbeatOutcome:
+    """What one telemetry sample did.
+
+    `status_changed` exists so the caller can tell a routine sample from an eligibility
+    change without comparing statuses itself — Lab 4 keys cache invalidation off it.
+    """
+
+    node: EdgeNode
+    received_at: datetime
+    previous_status: NodeStatus
+    status_changed: bool
 
 
 def _apply_filters(
@@ -81,7 +97,9 @@ async def get_node(session: AsyncSession, node_id: uuid.UUID) -> tuple[EdgeNode,
     return row[0], row[1]
 
 
-async def register_node(session: AsyncSession, payload: NodeRegister) -> tuple[EdgeNode, str]:
+async def register_node(
+    session: AsyncSession, payload: NodeRegister, *, cache: CacheBackend | None = None
+) -> tuple[EdgeNode, str]:
     region = await regions_service.get_region_by_code(session, payload.region_code)
 
     duplicate = await session.scalar(
@@ -104,13 +122,22 @@ async def register_node(session: AsyncSession, payload: NodeRegister) -> tuple[E
     ):
         await session.commit()
     await session.refresh(node)
+    # Stats only: a node is registered as `provisioning`, so it is not routable yet and no
+    # cached resolution can change because of it.
+    await invalidate(cache, stats_scope())
     return node, region.code
 
 
 async def update_node(
-    session: AsyncSession, node_id: uuid.UUID, payload: NodeUpdate
+    session: AsyncSession,
+    node_id: uuid.UUID,
+    payload: NodeUpdate,
+    *,
+    cache: CacheBackend | None = None,
 ) -> tuple[EdgeNode, str]:
     node, region_code = await get_node(session, node_id)
+    previous_status = node.status
+    previous_capacity = node.capacity_mbps
 
     if payload.status is not None and payload.status is not node.status:
         allowed = _ALLOWED_TRANSITIONS[node.status]
@@ -128,14 +155,25 @@ async def update_node(
 
     await session.commit()
     await session.refresh(node)
+
+    # Fleet-wide, not per-asset: status decides eligibility for every asset at once, and
+    # capacity is the ranking tie-break and appears in the response payload.
+    if node.status is not previous_status or node.capacity_mbps != previous_capacity:
+        await invalidate(cache, route_scope(), stats_scope())
+    else:
+        await invalidate(cache, stats_scope())
     return node, region_code
 
 
-async def delete_node(session: AsyncSession, node_id: uuid.UUID) -> None:
+async def delete_node(
+    session: AsyncSession, node_id: uuid.UUID, *, cache: CacheBackend | None = None
+) -> None:
     result = await session.execute(delete(EdgeNode).where(EdgeNode.id == node_id))
     if result.rowcount == 0:
         raise NotFoundError(f"No edge node with id '{node_id}'.")
     await session.commit()
+    # A candidate has disappeared; a cached answer would send clients to a node that is gone.
+    await invalidate(cache, route_scope(), stats_scope())
 
 
 def _derive_load_percent(report: HeartbeatReport, capacity_mbps: int) -> int:
@@ -166,8 +204,12 @@ def _derive_status(current: NodeStatus, load_percent: int, overload_threshold: i
 
 
 async def record_heartbeat(
-    session: AsyncSession, node_id: uuid.UUID, report: HeartbeatReport
-) -> tuple[EdgeNode, datetime]:
+    session: AsyncSession,
+    node_id: uuid.UUID,
+    report: HeartbeatReport,
+    *,
+    cache: CacheBackend | None = None,
+) -> HeartbeatOutcome:
     """Ingest one telemetry sample — the write-intensive hot path.
 
     One transaction, two statements: an append to the telemetry table and an update
@@ -207,9 +249,27 @@ async def record_heartbeat(
     node.current_load_percent = load_percent
     node.active_connections = report.active_connections
     node.cache_hit_ratio = cache_hit_ratio
+    previous_status = node.status
     node.status = _derive_status(
         node.status, load_percent, settings.node_overload_threshold_percent
     )
+    status_changed = node.status is not previous_status
 
     await session.commit()
-    return node, received_at
+
+    # Invalidate only on a real status transition. Every node heartbeats once per
+    # HEARTBEAT_INTERVAL_SECONDS, so dropping the route keyspace on each sample would mean
+    # ~1.3 fleet-wide SCANs per second for 13 nodes and ~1000/s for 10 000 - the hit ratio
+    # would sit near zero and the invalidations would synchronise every miss into exactly the
+    # stampede the cache exists to prevent. A transition (crossing the overload threshold,
+    # draining, recovering) changes *eligibility*; load drifting 22 % -> 24 % only changes
+    # *ranking*, and the TTL - one heartbeat interval - already bounds that.
+    if status_changed:
+        await invalidate(cache, route_scope(), stats_scope())
+
+    return HeartbeatOutcome(
+        node=node,
+        received_at=received_at,
+        previous_status=previous_status,
+        status_changed=status_changed,
+    )

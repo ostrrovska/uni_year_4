@@ -40,3 +40,8 @@ load-tests/results/*.csv
 CONTEXT.md
 docs/context/
 docs/labs/
+
+# Lab5 - PostgreSQL and docker-stats snapshots taken around each run. The committed record is
+# the per-run summary under docs/loadtest/lab5/; these are the intermediate files the
+# orchestrator diffs, and the k6 --out csv dumps behind them are tens of MB each.
+load-tests/results/

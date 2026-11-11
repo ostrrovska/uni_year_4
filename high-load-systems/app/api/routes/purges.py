@@ -2,7 +2,7 @@ import uuid
 
 from fastapi import APIRouter, Query, Response, status
 
-from app.api.deps import PageDep, SessionDep
+from app.api.deps import CacheDep, PageDep, SessionDep
 from app.api.responses import problems
 from app.core.pagination import Page
 from app.models.enums import PurgeStatus
@@ -33,14 +33,16 @@ async def list_purges(
     summary="Broadcast a cache invalidation",
     responses=problems(404, 422),
 )
-async def create_purge(payload: PurgeCreate, session: SessionDep, response: Response) -> PurgeRead:
+async def create_purge(
+    payload: PurgeCreate, session: SessionDep, cache: CacheDep, response: Response
+) -> PurgeRead:
     """Open a purge campaign against the nodes in scope.
 
     202, not 201: the campaign record is created synchronously, but the invalidation
     itself only completes when the targeted nodes acknowledge it. Returning 201 would
     claim the content is already gone from the edge.
     """
-    purge = await purges_service.create_purge(session, payload)
+    purge = await purges_service.create_purge(session, payload, cache=cache)
     response.headers["Location"] = f"/api/v1/purges/{purge.id}"
     return PurgeRead.model_validate(purge)
 
@@ -57,12 +59,12 @@ async def get_purge(purge_id: uuid.UUID, session: SessionDep) -> PurgeRead:
     responses=problems(404),
 )
 async def acknowledge_purge(
-    purge_id: uuid.UUID, payload: PurgeAcknowledge, session: SessionDep
+    purge_id: uuid.UUID, payload: PurgeAcknowledge, session: SessionDep, cache: CacheDep
 ) -> PurgeRead:
     """Record that one node has acted on the purge.
 
     Idempotent by primary key: an agent retrying after a timeout re-sends the same
     acknowledgement without inflating the campaign's progress counter.
     """
-    purge = await purges_service.acknowledge(session, purge_id, payload)
+    purge = await purges_service.acknowledge(session, purge_id, payload, cache=cache)
     return PurgeRead.model_validate(purge)

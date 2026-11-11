@@ -1,0 +1,194 @@
+{
+  "label": "open-563rps",
+  "generated_at": "2026-11-10T20:36:35+00:00",
+  "requests": 17354,
+  "window_seconds": 99.02,
+  "database_delta": {
+    "xact_commit": 80,
+    "xact_rollback": 8647,
+    "tup_returned": 667631,
+    "tup_fetched": 150903,
+    "tup_inserted": 0,
+    "tup_updated": 35,
+    "tup_deleted": 0,
+    "blks_read": 0,
+    "blks_hit": 341422,
+    "deadlocks": 0,
+    "temp_files": 0
+  },
+  "rows_per_request": 38.47,
+  "tuples_inserted_per_request": 0.0,
+  "tuples_updated_per_request": 0.002,
+  "buffer_hit_percent": 100.0,
+  "connections_before": {
+    "active": 1,
+    "idle": 30,
+    "idle_in_transaction": 0,
+    "total": 31,
+    "max_connections": 100
+  },
+  "connections_after": {
+    "active": 1,
+    "idle": 30,
+    "idle_in_transaction": 0,
+    "total": 31,
+    "max_connections": 100
+  },
+  "waits_during": [
+    {
+      "type": "none",
+      "event": "none",
+      "backends": 1
+    }
+  ],
+  "node_heartbeat_rows_before": 24,
+  "node_heartbeat_rows_after": 24,
+  "top_statements": [
+    {
+      "calls": 4232,
+      "total_exec_ms": 1055.87,
+      "mean_exec_ms": 0.249,
+      "rows": 12342,
+      "query": "SELECT edge_nodes.id, edge_nodes.hostname, edge_nodes.public_ipv4, edge_nodes.capacity_mbps, edge_nodes.curren"
+    },
+    {
+      "calls": 4232,
+      "total_exec_ms": 192.42,
+      "mean_exec_ms": 0.045,
+      "rows": 4232,
+      "query": "SELECT assets.id, assets.origin_path, assets.content_hash, assets.size_bytes, assets.content_type, assets.vers"
+    },
+    {
+      "calls": 4232,
+      "total_exec_ms": 136.54,
+      "mean_exec_ms": 0.032,
+      "rows": 4232,
+      "query": "SELECT regions.id, regions.code, regions.name, regions.continent, regions.created_at FROM regions WHERE regi"
+    },
+    {
+      "calls": 62,
+      "total_exec_ms": 30.59,
+      "mean_exec_ms": 0.493,
+      "rows": 93,
+      "query": "WITH RECURSIVE typeinfo_tree( oid, ns, name, kind, basetype, elemtype, elemdelim, range_subtype, attrt"
+    },
+    {
+      "calls": 8663,
+      "total_exec_ms": 12.53,
+      "mean_exec_ms": 0.001,
+      "rows": 0,
+      "query": "BEGIN"
+    },
+    {
+      "calls": 8663,
+      "total_exec_ms": 12.15,
+      "mean_exec_ms": 0.001,
+      "rows": 0,
+      "query": "ROLLBACK"
+    },
+    {
+      "calls": 62,
+      "total_exec_ms": 1.18,
+      "mean_exec_ms": 0.019,
+      "rows": 62,
+      "query": "SELECT current_setting($1) AS cur, set_config($2, $3, $4) AS n"
+    },
+    {
+      "calls": 62,
+      "total_exec_ms": 0.96,
+      "mean_exec_ms": 0.016,
+      "rows": 62,
+      "query": "SELECT set_config($2, $1, $3)"
+    },
+    {
+      "calls": 113,
+      "total_exec_ms": 0.82,
+      "mean_exec_ms": 0.007,
+      "rows": 113,
+      "query": "SELECT 1"
+    },
+    {
+      "calls": 1,
+      "total_exec_ms": 0.12,
+      "mean_exec_ms": 0.12,
+      "rows": 20,
+      "query": "SELECT edge_nodes.id, edge_nodes.hostname, edge_nodes.public_ipv4, edge_nodes.region_id, edge_nodes.capacity_m"
+    },
+    {
+      "calls": 1,
+      "total_exec_ms": 0.08,
+      "mean_exec_ms": 0.079,
+      "rows": 1,
+      "query": "SELECT count(*) AS count_1 FROM edge_nodes JOIN regions ON regions.id = edge_nodes.region_id"
+    },
+    {
+      "calls": 1,
+      "total_exec_ms": 0.06,
+      "mean_exec_ms": 0.059,
+      "rows": 24,
+      "query": "SELECT assets.id, assets.origin_path, assets.content_hash, assets.size_bytes, assets.content_type, assets.vers"
+    }
+  ],
+  "table_delta": {
+    "asset_replicas": {
+      "ins": 0,
+      "upd": 0,
+      "seq_scan": 0,
+      "idx_scan": 38174,
+      "hot_upd": 0,
+      "hot_update_percent": null,
+      "dead_tuples_now": 0,
+      "live_tuples_now": 339
+    },
+    "node_heartbeats": {
+      "ins": 0,
+      "upd": 0,
+      "seq_scan": 1,
+      "idx_scan": 0,
+      "hot_upd": 0,
+      "hot_update_percent": null,
+      "dead_tuples_now": 0,
+      "live_tuples_now": 24
+    },
+    "edge_nodes": {
+      "ins": 0,
+      "upd": 0,
+      "seq_scan": 1,
+      "idx_scan": 5041,
+      "hot_upd": 0,
+      "hot_update_percent": null,
+      "dead_tuples_now": 12,
+      "live_tuples_now": 20
+    },
+    "assets": {
+      "ins": 0,
+      "upd": 0,
+      "seq_scan": 4222,
+      "idx_scan": 0,
+      "hot_upd": 0,
+      "hot_update_percent": null,
+      "dead_tuples_now": 0,
+      "live_tuples_now": 24
+    },
+    "regions": {
+      "ins": 0,
+      "upd": 0,
+      "seq_scan": 42396,
+      "idx_scan": 412,
+      "hot_upd": 0,
+      "hot_update_percent": null,
+      "dead_tuples_now": 6,
+      "live_tuples_now": 14
+    },
+    "distribution_rules": {
+      "ins": 0,
+      "upd": 0,
+      "seq_scan": 0,
+      "idx_scan": 4781,
+      "hot_upd": 0,
+      "hot_update_percent": null,
+      "dead_tuples_now": 30,
+      "live_tuples_now": 1
+    }
+  }
+}

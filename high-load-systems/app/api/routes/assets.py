@@ -2,7 +2,7 @@ import uuid
 
 from fastapi import APIRouter, Query, Response, status
 
-from app.api.deps import PageDep, SessionDep
+from app.api.deps import CacheDep, PageDep, SessionDep
 from app.api.responses import problems
 from app.core.pagination import Page
 from app.models.enums import AssetStatus
@@ -44,8 +44,10 @@ async def list_assets(
     summary="Register an asset",
     responses=problems(409),
 )
-async def create_asset(payload: AssetCreate, session: SessionDep, response: Response) -> AssetRead:
-    asset = await assets_service.create_asset(session, payload)
+async def create_asset(
+    payload: AssetCreate, session: SessionDep, cache: CacheDep, response: Response
+) -> AssetRead:
+    asset = await assets_service.create_asset(session, payload, cache=cache)
     response.headers["Location"] = f"/api/v1/assets/{asset.id}"
     return AssetRead.model_validate(asset)
 
@@ -63,7 +65,7 @@ async def get_asset(asset_id: uuid.UUID, session: SessionDep) -> AssetRead:
     responses=problems(404, 409),
 )
 async def publish_version(
-    asset_id: uuid.UUID, payload: AssetVersionPublish, session: SessionDep
+    asset_id: uuid.UUID, payload: AssetVersionPublish, session: SessionDep, cache: CacheDep
 ) -> AssetVersionPublished:
     """Publish new content under an existing path.
 
@@ -72,7 +74,7 @@ async def publish_version(
     holding them. That chain is the reason this is a POST to a sub-collection rather
     than a PATCH on the asset — it creates a new version resource and a new purge.
     """
-    outcome = await assets_service.publish_version(session, asset_id, payload)
+    outcome = await assets_service.publish_version(session, asset_id, payload, cache=cache)
     return AssetVersionPublished(
         asset=AssetRead.model_validate(outcome.asset),
         previous_version=outcome.previous_version,
@@ -90,6 +92,7 @@ async def publish_version(
 async def archive_asset(
     asset_id: uuid.UUID,
     session: SessionDep,
+    cache: CacheDep,
     requested_by: str = Query(..., min_length=1, max_length=128),
 ) -> PurgeRead:
     """Archive the asset and return the purge campaign it triggered.
@@ -97,7 +100,9 @@ async def archive_asset(
     202 with the purge event rather than a bare 204: removal from the edge is
     asynchronous, and the caller needs a handle to follow it to completion.
     """
-    purge = await assets_service.archive_asset(session, asset_id, requested_by=requested_by)
+    purge = await assets_service.archive_asset(
+        session, asset_id, requested_by=requested_by, cache=cache
+    )
     return PurgeRead.model_validate(purge)
 
 
@@ -117,7 +122,7 @@ async def get_distribution(asset_id: uuid.UUID, session: SessionDep) -> Distribu
     responses=problems(404, 422),
 )
 async def replace_distribution(
-    asset_id: uuid.UUID, payload: DistributionPolicy, session: SessionDep
+    asset_id: uuid.UUID, payload: DistributionPolicy, session: SessionDep, cache: CacheDep
 ) -> DistributionPolicyRead:
-    rules = await distribution_service.replace_policy(session, asset_id, payload)
+    rules = await distribution_service.replace_policy(session, asset_id, payload, cache=cache)
     return DistributionPolicyRead(rules=rules, unrestricted=not any(rule.enabled for rule in rules))

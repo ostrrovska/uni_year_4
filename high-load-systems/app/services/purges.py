@@ -16,6 +16,7 @@ from app.models.purge_acknowledgement import PurgeAcknowledgement
 from app.models.purge_event import PurgeEvent
 from app.schemas.purge import PurgeAcknowledge, PurgeCreate
 from app.services import regions as regions_service
+from app.services.cache import CacheBackend, invalidate, route_scope, stats_scope
 
 
 async def _resolve_target_node_ids(
@@ -74,7 +75,9 @@ async def open_asset_purge(
     return purge
 
 
-async def create_purge(session: AsyncSession, payload: PurgeCreate) -> PurgeEvent:
+async def create_purge(
+    session: AsyncSession, payload: PurgeCreate, *, cache: CacheBackend | None = None
+) -> PurgeEvent:
     asset_id: uuid.UUID | None = None
     region_id: uuid.UUID | None = None
 
@@ -104,6 +107,9 @@ async def create_purge(session: AsyncSession, payload: PurgeCreate) -> PurgeEven
     session.add(purge)
     await session.commit()
     await session.refresh(purge)
+    # Stats only: opening a campaign moves purges_in_flight but touches no replica state, so
+    # no routing answer has changed yet.
+    await invalidate(cache, stats_scope())
     return purge
 
 
@@ -138,7 +144,11 @@ async def get_purge(session: AsyncSession, purge_id: uuid.UUID) -> PurgeEvent:
 
 
 async def acknowledge(
-    session: AsyncSession, purge_id: uuid.UUID, payload: PurgeAcknowledge
+    session: AsyncSession,
+    purge_id: uuid.UUID,
+    payload: PurgeAcknowledge,
+    *,
+    cache: CacheBackend | None = None,
 ) -> PurgeEvent:
     """Record one node's confirmation and advance the campaign.
 
@@ -205,4 +215,16 @@ async def acknowledge(
 
     await session.commit()
     await session.refresh(purge)
+
+    # A `purged` acknowledgement sets that node's replica to PURGED, so the node has gone
+    # cold for this asset and its routing score changes. The path comes from the asset row,
+    # not from purge.path_pattern: a manually created campaign can carry an arbitrary
+    # pattern, while only the asset's own origin_path is a cache identity.
+    if payload.result is PurgeResult.PURGED and purge.asset_id is not None:
+        origin_path = await session.scalar(
+            select(Asset.origin_path).where(Asset.id == purge.asset_id)
+        )
+        if origin_path is not None:
+            await invalidate(cache, route_scope(origin_path))
+    await invalidate(cache, stats_scope())
     return purge

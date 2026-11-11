@@ -1,0 +1,36 @@
+# Lab5 - the cache-disabled arm of clauses 2.6 (caching impact) and the mandatory condition of
+# the scale-out experiment.
+#
+#   docker compose -f docker-compose.yml -f docker-compose.lab3.yml -f docker-compose.lab4.yml \
+#                  -f docker-compose.lab5.yml -f docker-compose.lab5-nocache.yml \
+#                  up -d --no-deps api1 api2 api3
+#
+# CACHE_ENABLED is read once per process through an lru_cache'd Settings object, so there is no
+# runtime switch - turning the cache off means recreating the three instances, which is what
+# scripts/lab5_run.ps1 does. That is the honest way round: toggling a cache in place would
+# leave each instance's circuit breaker and cached settings in a different state, and the
+# comparison needs both arms to start from the same place.
+#
+# REDIS_URL is blanked as well as CACHE_ENABLED. app/services/cache.py returns NullCache unless
+# CACHE_ENABLED *and* REDIS_URL are both set, so either would do - but leaving a reachable URL
+# behind while claiming the cache is disabled is the kind of half-configuration that produces a
+# result nobody can reproduce. Redis itself keeps running and stays reachable; what changes is
+# that the application no longer consults it, which is the variable under test.
+#
+# Note what this arm is NOT: it is not "cold cache". A disabled cache never pays the Redis
+# round trip at all, while a cold one pays it and misses. lab5_run.ps1 measures both, because
+# reporting only disabled-vs-warm would charge the round-trip cost to the wrong side.
+
+name: cdn-control-plane
+
+x-lab5-nocache: &lab5-nocache
+  CACHE_ENABLED: "false"
+  REDIS_URL: ""
+
+services:
+  api1:
+    environment: *lab5-nocache
+  api2:
+    environment: *lab5-nocache
+  api3:
+    environment: *lab5-nocache

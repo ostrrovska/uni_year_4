@@ -32,7 +32,7 @@ __pycache__/
 *.py[cod]
 
 # Editor/IDE
-# .idea/
+.idea/
 # .vscode/
 
 # DL Lab 7: venv, datasets, trained models

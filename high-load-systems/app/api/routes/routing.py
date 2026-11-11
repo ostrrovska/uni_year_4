@@ -6,7 +6,7 @@ from app.core.config import get_settings
 from app.core.errors import UnprocessableError
 from app.schemas.routing import RouteResolution
 from app.services import routing as routing_service
-from app.services.cache import CACHE_HEADER, CacheStatus
+from app.services.cache import CACHE_HEADER
 
 router = APIRouter(prefix="/routing", tags=["routing"])
 
@@ -42,8 +42,8 @@ async def resolve_route(
             max_limit=settings.routing_max_candidates,
         )
 
-    resolution = await routing_service.resolve_route(
-        session, path=path, client_region_code=client_region, limit=limit
+    cached = await routing_service.resolve_route_cached(
+        session, cache, path=path, client_region_code=client_region, limit=limit
     )
-    response.headers[CACHE_HEADER] = CacheStatus.MISS if cache.enabled else CacheStatus.BYPASS
-    return resolution
+    response.headers[CACHE_HEADER] = cached.status
+    return cached.value

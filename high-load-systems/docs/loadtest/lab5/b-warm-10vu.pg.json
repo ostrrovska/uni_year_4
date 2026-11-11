@@ -1,0 +1,194 @@
+{
+  "label": "b-warm-10vu",
+  "generated_at": "2026-11-11T12:49:06+00:00",
+  "requests": 14814,
+  "window_seconds": 88.01,
+  "database_delta": {
+    "xact_commit": 19662,
+    "xact_rollback": 20141,
+    "tup_returned": 199058,
+    "tup_fetched": 72870,
+    "tup_inserted": 16684,
+    "tup_updated": 19668,
+    "tup_deleted": 0,
+    "blks_read": 0,
+    "blks_hit": 514969,
+    "deadlocks": 0,
+    "temp_files": 0
+  },
+  "rows_per_request": 13.44,
+  "tuples_inserted_per_request": 1.126,
+  "tuples_updated_per_request": 1.328,
+  "buffer_hit_percent": 100.0,
+  "connections_before": {
+    "active": 1,
+    "idle": 30,
+    "idle_in_transaction": 0,
+    "total": 31,
+    "max_connections": 100
+  },
+  "connections_after": {
+    "active": 1,
+    "idle": 30,
+    "idle_in_transaction": 0,
+    "total": 31,
+    "max_connections": 100
+  },
+  "waits_during": [
+    {
+      "type": "none",
+      "event": "none",
+      "backends": 1
+    }
+  ],
+  "node_heartbeat_rows_before": 12,
+  "node_heartbeat_rows_after": 16789,
+  "top_statements": [
+    {
+      "calls": 16777,
+      "total_exec_ms": 3590.3,
+      "mean_exec_ms": 0.214,
+      "rows": 16777,
+      "query": "INSERT INTO node_heartbeats (node_id, reported_at, received_at, cpu_percent, memory_percent, bandwidth_out_mbp"
+    },
+    {
+      "calls": 14825,
+      "total_exec_ms": 2097.82,
+      "mean_exec_ms": 0.142,
+      "rows": 14825,
+      "query": "UPDATE edge_nodes SET last_heartbeat_at=$1::TIMESTAMP WITH TIME ZONE, current_load_percent=$2::SMALLINT, activ"
+    },
+    {
+      "calls": 16777,
+      "total_exec_ms": 1248.92,
+      "mean_exec_ms": 0.074,
+      "rows": 16777,
+      "query": "SELECT edge_nodes.id, edge_nodes.hostname, edge_nodes.public_ipv4, edge_nodes.region_id, edge_nodes.capacity_m"
+    },
+    {
+      "calls": 16777,
+      "total_exec_ms": 769.2,
+      "mean_exec_ms": 0.046,
+      "rows": 16777,
+      "query": "SELECT $2 FROM ONLY \"public\".\"edge_nodes\" x WHERE \"id\" OPERATOR(pg_catalog.=) $1 FOR KEY SHARE OF x"
+    },
+    {
+      "calls": 2937,
+      "total_exec_ms": 393.35,
+      "mean_exec_ms": 0.134,
+      "rows": 2937,
+      "query": "INSERT INTO asset_replicas (node_id, asset_id, state, cached_version, bytes_cached, last_verified_at, updated_"
+    },
+    {
+      "calls": 2937,
+      "total_exec_ms": 216.19,
+      "mean_exec_ms": 0.074,
+      "rows": 2937,
+      "query": "SELECT edge_nodes.id FROM edge_nodes WHERE edge_nodes.id = $1::UUID"
+    },
+    {
+      "calls": 1487,
+      "total_exec_ms": 205.51,
+      "mean_exec_ms": 0.138,
+      "rows": 1487,
+      "query": "UPDATE edge_nodes SET status=$1::node_status, last_heartbeat_at=$2::TIMESTAMP WITH TIME ZONE, current_load_per"
+    },
+    {
+      "calls": 2937,
+      "total_exec_ms": 116.13,
+      "mean_exec_ms": 0.04,
+      "rows": 2937,
+      "query": "SELECT assets.id, assets.origin_path, assets.content_hash, assets.size_bytes, assets.content_type, assets.vers"
+    },
+    {
+      "calls": 440,
+      "total_exec_ms": 58.92,
+      "mean_exec_ms": 0.134,
+      "rows": 440,
+      "query": "UPDATE edge_nodes SET last_heartbeat_at=$1::TIMESTAMP WITH TIME ZONE, active_connections=$2::INTEGER, cache_hi"
+    },
+    {
+      "calls": 39890,
+      "total_exec_ms": 44.37,
+      "mean_exec_ms": 0.001,
+      "rows": 0,
+      "query": "BEGIN"
+    },
+    {
+      "calls": 19714,
+      "total_exec_ms": 27.77,
+      "mean_exec_ms": 0.001,
+      "rows": 0,
+      "query": "COMMIT"
+    },
+    {
+      "calls": 20176,
+      "total_exec_ms": 27.46,
+      "mean_exec_ms": 0.001,
+      "rows": 0,
+      "query": "ROLLBACK"
+    }
+  ],
+  "table_delta": {
+    "asset_replicas": {
+      "ins": 0,
+      "upd": 2924,
+      "seq_scan": 0,
+      "idx_scan": 3850,
+      "hot_upd": 2924,
+      "hot_update_percent": 100.0,
+      "dead_tuples_now": 499,
+      "live_tuples_now": 339
+    },
+    "node_heartbeats": {
+      "ins": 16687,
+      "upd": 0,
+      "seq_scan": 1,
+      "idx_scan": 0,
+      "hot_upd": 0,
+      "hot_update_percent": null,
+      "dead_tuples_now": 0,
+      "live_tuples_now": 16781
+    },
+    "edge_nodes": {
+      "ins": 0,
+      "upd": 16687,
+      "seq_scan": 1,
+      "idx_scan": 53215,
+      "hot_upd": 0,
+      "hot_update_percent": 0.0,
+      "dead_tuples_now": 3391,
+      "live_tuples_now": 20
+    },
+    "assets": {
+      "ins": 0,
+      "upd": 0,
+      "seq_scan": 3054,
+      "idx_scan": 17,
+      "hot_upd": 0,
+      "hot_update_percent": null,
+      "dead_tuples_now": 0,
+      "live_tuples_now": 24
+    },
+    "regions": {
+      "ins": 0,
+      "upd": 0,
+      "seq_scan": 843,
+      "idx_scan": 62,
+      "hot_upd": 0,
+      "hot_update_percent": null,
+      "dead_tuples_now": 18,
+      "live_tuples_now": 14
+    },
+    "distribution_rules": {
+      "ins": 0,
+      "upd": 0,
+      "seq_scan": 0,
+      "idx_scan": 129,
+      "hot_upd": 0,
+      "hot_update_percent": null,
+      "dead_tuples_now": 36,
+      "live_tuples_now": 1
+    }
+  }
+}

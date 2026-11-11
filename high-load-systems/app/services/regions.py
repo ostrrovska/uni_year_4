@@ -7,6 +7,7 @@ from app.core.errors import ConflictError, NotFoundError
 from app.db.integrity import translate_integrity_errors
 from app.models.region import Region
 from app.schemas.region import RegionCreate
+from app.services.cache import CacheBackend, invalidate, stats_scope
 
 
 async def list_regions(session: AsyncSession) -> Sequence[Region]:
@@ -20,7 +21,9 @@ async def get_region_by_code(session: AsyncSession, code: str) -> Region:
     return region
 
 
-async def create_region(session: AsyncSession, payload: RegionCreate) -> Region:
+async def create_region(
+    session: AsyncSession, payload: RegionCreate, *, cache: CacheBackend | None = None
+) -> Region:
     duplicate = await session.scalar(select(Region.id).where(Region.code == payload.code))
     if duplicate is not None:
         raise ConflictError(f"Region '{payload.code}' already exists.")
@@ -32,4 +35,6 @@ async def create_region(session: AsyncSession, payload: RegionCreate) -> Region:
     ):
         await session.commit()
     await session.refresh(region)
+    # Stats only: a region with no nodes in it changes no routing answer.
+    await invalidate(cache, stats_scope())
     return region

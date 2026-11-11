@@ -61,11 +61,11 @@ services:
       dockerfile: docker/Dockerfile
     restart: unless-stopped
     environment: *api-environment
-    # No container_name and no fixed host port on purpose: both would make
-    # `docker compose up --scale api=N` fail, and scaling this service is the whole
-    # point of the next two labs.
-    ports:
-      - "8000:8000"
+    # Lab3: the host port mapping was removed. No container_name and no published port, so
+    # `--scale api=N` works and no instance is reachable except through the balancer — the
+    # encapsulation requirement. The single entry point is http://localhost:8080, defined in
+    # docker-compose.lab3.yml, which runs the named pool api1/api2/api3 instead of this
+    # service. `docker-compose.lab2.yml` still publishes 8001/8002 for the Lab 2 defence.
     depends_on:
       migrate:
         condition: service_completed_successfully

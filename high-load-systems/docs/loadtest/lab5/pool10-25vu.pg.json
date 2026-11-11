@@ -1,0 +1,144 @@
+{
+  "label": "pool10-25vu",
+  "generated_at": "2026-11-10T20:07:36+00:00",
+  "requests": 33360,
+  "window_seconds": 71.61,
+  "database_delta": {
+    "xact_commit": 375,
+    "xact_rollback": 82883,
+    "tup_returned": 10259,
+    "tup_fetched": 8124,
+    "tup_inserted": 0,
+    "tup_updated": 9,
+    "tup_deleted": 0,
+    "blks_read": 0,
+    "blks_hit": 17399,
+    "deadlocks": 0,
+    "temp_files": 0
+  },
+  "rows_per_request": 0.31,
+  "tuples_inserted_per_request": 0.0,
+  "tuples_updated_per_request": 0.0,
+  "buffer_hit_percent": 100.0,
+  "connections_before": {
+    "active": 1,
+    "idle": 30,
+    "idle_in_transaction": 0,
+    "total": 31,
+    "max_connections": 100
+  },
+  "connections_after": {
+    "active": 1,
+    "idle": 30,
+    "idle_in_transaction": 0,
+    "total": 31,
+    "max_connections": 100
+  },
+  "waits_during": [
+    {
+      "type": "none",
+      "event": "none",
+      "backends": 1
+    }
+  ],
+  "node_heartbeat_rows_before": 177,
+  "node_heartbeat_rows_after": 177,
+  "top_statements": [
+    {
+      "calls": 4429,
+      "total_exec_ms": 462.91,
+      "mean_exec_ms": 0.105,
+      "rows": 88584,
+      "query": "SELECT assets.id, assets.origin_path, assets.content_hash, assets.size_bytes, assets.content_type, assets.vers"
+    },
+    {
+      "calls": 46581,
+      "total_exec_ms": 301.74,
+      "mean_exec_ms": 0.006,
+      "rows": 46581,
+      "query": "SELECT $1"
+    },
+    {
+      "calls": 1133,
+      "total_exec_ms": 232.79,
+      "mean_exec_ms": 0.205,
+      "rows": 3261,
+      "query": "SELECT edge_nodes.id, edge_nodes.hostname, edge_nodes.public_ipv4, edge_nodes.capacity_mbps, edge_nodes.curren"
+    },
+    {
+      "calls": 4429,
+      "total_exec_ms": 159.48,
+      "mean_exec_ms": 0.036,
+      "rows": 4429,
+      "query": "SELECT count(*) AS count_1 FROM assets"
+    },
+    {
+      "calls": 103875,
+      "total_exec_ms": 154.98,
+      "mean_exec_ms": 0.001,
+      "rows": 0,
+      "query": "ROLLBACK"
+    },
+    {
+      "calls": 103902,
+      "total_exec_ms": 135.35,
+      "mean_exec_ms": 0.001,
+      "rows": 0,
+      "query": "BEGIN"
+    },
+    {
+      "calls": 238,
+      "total_exec_ms": 57.93,
+      "mean_exec_ms": 0.243,
+      "rows": 347,
+      "query": "WITH RECURSIVE typeinfo_tree( oid, ns, name, kind, basetype, elemtype, elemdelim, range_subtype, attrt"
+    },
+    {
+      "calls": 1133,
+      "total_exec_ms": 55.97,
+      "mean_exec_ms": 0.049,
+      "rows": 1133,
+      "query": "SELECT assets.id, assets.origin_path, assets.content_hash, assets.size_bytes, assets.content_type, assets.vers"
+    },
+    {
+      "calls": 1133,
+      "total_exec_ms": 27.42,
+      "mean_exec_ms": 0.024,
+      "rows": 1133,
+      "query": "SELECT regions.id, regions.code, regions.name, regions.continent, regions.created_at FROM regions WHERE regi"
+    },
+    {
+      "calls": 11,
+      "total_exec_ms": 23.11,
+      "mean_exec_ms": 2.101,
+      "rows": 11,
+      "query": "SELECT count(*) AS count_1 FROM purge_events WHERE purge_events.status IN ($1::purge_status, $2::purge_statu"
+    },
+    {
+      "calls": 24,
+      "total_exec_ms": 5.8,
+      "mean_exec_ms": 0.242,
+      "rows": 24,
+      "query": "INSERT INTO node_heartbeats (node_id, reported_at, received_at, cpu_percent, memory_percent, bandwidth_out_mbp"
+    },
+    {
+      "calls": 238,
+      "total_exec_ms": 3.44,
+      "mean_exec_ms": 0.014,
+      "rows": 238,
+      "query": "SELECT current_setting('jit') AS cur, set_config('jit', 'off',"
+    }
+  ],
+  "table_delta": {
+    "node_heartbeats": {
+      "ins": 0,
+      "upd": 0,
+      "seq_scan": 1,
+      "idx_scan": 0,
+      "hot_upd": 0,
+      "hot_update_percent": null,
+      "dead_tuples_now": 0,
+      "live_tuples_now": 177
+    }
+  }
+}

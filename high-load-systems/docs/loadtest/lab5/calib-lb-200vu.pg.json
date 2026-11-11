@@ -1,0 +1,95 @@
+{
+  "label": "calib-lb-200vu",
+  "generated_at": "2026-11-11T12:37:57+00:00",
+  "requests": 476507,
+  "window_seconds": 87.84,
+  "database_delta": {
+    "xact_commit": 41,
+    "xact_rollback": 0,
+    "tup_returned": 5568,
+    "tup_fetched": 2991,
+    "tup_inserted": 0,
+    "tup_updated": 22,
+    "tup_deleted": 0,
+    "blks_read": 0,
+    "blks_hit": 5077,
+    "deadlocks": 0,
+    "temp_files": 0
+  },
+  "rows_per_request": 0.01,
+  "tuples_inserted_per_request": 0.0,
+  "tuples_updated_per_request": 0.0,
+  "buffer_hit_percent": 100.0,
+  "connections_before": {
+    "active": 1,
+    "idle": 21,
+    "idle_in_transaction": 0,
+    "total": 22,
+    "max_connections": 100
+  },
+  "connections_after": {
+    "active": 1,
+    "idle": 21,
+    "idle_in_transaction": 0,
+    "total": 22,
+    "max_connections": 100
+  },
+  "waits_during": [
+    {
+      "type": "none",
+      "event": "none",
+      "backends": 1
+    }
+  ],
+  "node_heartbeat_rows_before": 12,
+  "node_heartbeat_rows_after": 12,
+  "top_statements": [
+    {
+      "calls": 126,
+      "total_exec_ms": 0.95,
+      "mean_exec_ms": 0.008,
+      "rows": 126,
+      "query": "SELECT 1"
+    },
+    {
+      "calls": 252,
+      "total_exec_ms": 0.48,
+      "mean_exec_ms": 0.002,
+      "rows": 0,
+      "query": "ROLLBACK"
+    },
+    {
+      "calls": 252,
+      "total_exec_ms": 0.42,
+      "mean_exec_ms": 0.002,
+      "rows": 0,
+      "query": "BEGIN"
+    },
+    {
+      "calls": 1,
+      "total_exec_ms": 0.02,
+      "mean_exec_ms": 0.02,
+      "rows": 1,
+      "query": "SELECT $1 FROM pg_extension WHERE extname = $2"
+    },
+    {
+      "calls": 1,
+      "total_exec_ms": 0.02,
+      "mean_exec_ms": 0.02,
+      "rows": 1,
+      "query": "SELECT count(*) FROM node_heartbeats"
+    }
+  ],
+  "table_delta": {
+    "node_heartbeats": {
+      "ins": 0,
+      "upd": 0,
+      "seq_scan": 1,
+      "idx_scan": 0,
+      "hot_upd": 0,
+      "hot_update_percent": null,
+      "dead_tuples_now": 0,
+      "live_tuples_now": 12
+    }
+  }
+}

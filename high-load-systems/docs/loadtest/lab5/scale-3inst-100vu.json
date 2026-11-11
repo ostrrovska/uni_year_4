@@ -1,0 +1,161 @@
+{
+  "label": "scale-3inst-100vu",
+  "config": "3inst-nocache-pool10",
+  "scenario": "A-read",
+  "stage_vus": 100,
+  "measure_seconds": 45,
+  "base_url": "http://127.0.0.1:8080",
+  "generated_at": "2026-11-10T19:59:08.970Z",
+  "k6_run_duration_ms": 72156.4811,
+  "requests": 8665,
+  "errors": 2,
+  "error_rate_percent": 0.02,
+  "rps": 192.56,
+  "latency_ms": {
+    "count": 8665,
+    "min": 4.13,
+    "mean": 523.76,
+    "p50": 201.44,
+    "p90": 1405.72,
+    "p95": 2437.69,
+    "p99": 4642.75,
+    "max": 10628.82
+  },
+  "server_ms": {
+    "count": 8663,
+    "min": 4.07,
+    "mean": 469.49,
+    "p50": 163.89,
+    "p90": 1298.23,
+    "p95": 2286.16,
+    "p99": 4423.98,
+    "max": 9513.32
+  },
+  "status_counts": {
+    "200": 8663,
+    "500": 2
+  },
+  "instances": {
+    "cdn-api-2": 2890,
+    "cdn-api-3": 2889,
+    "cdn-api-1": 2884
+  },
+  "instance_share_percent": {
+    "cdn-api-2": 33.36,
+    "cdn-api-3": 33.35,
+    "cdn-api-1": 33.29
+  },
+  "latency_ms_by_instance": {
+    "cdn-api-2": {
+      "count": 2890,
+      "min": 4.13,
+      "mean": 94.13,
+      "p50": 29.4,
+      "p90": 232.31,
+      "p95": 374.11,
+      "p99": 1222.99,
+      "max": 2224.82
+    },
+    "cdn-api-3": {
+      "count": 2889,
+      "min": 8.88,
+      "mean": 237.56,
+      "p50": 159.11,
+      "p90": 459.9,
+      "p95": 652.04,
+      "p99": 1141.12,
+      "max": 2395.86
+    },
+    "cdn-api-1": {
+      "count": 2884,
+      "min": 132.1,
+      "mean": 1234.01,
+      "p50": 520.07,
+      "p90": 2973.89,
+      "p95": 4045.85,
+      "p99": 6240.54,
+      "max": 9892.86
+    }
+  },
+  "cache": {
+    "HIT": 0,
+    "MISS": 0,
+    "BYPASS": 7610
+  },
+  "cache_hit_ratio_percent": null,
+  "latency_ms_by_cache": {
+    "BYPASS": {
+      "count": 7610,
+      "min": 4.13,
+      "mean": 522.52,
+      "p50": 201.67,
+      "p90": 1418.66,
+      "p95": 2426.44,
+      "p99": 4625.59,
+      "max": 9892.86
+    }
+  },
+  "server_ms_by_cache": {
+    "BYPASS": {
+      "count": 7610,
+      "min": 6.62,
+      "mean": 470.66,
+      "p50": 165.04,
+      "p90": 1304.25,
+      "p95": 2280.07,
+      "p99": 4421.81,
+      "max": 9513.32
+    }
+  },
+  "latency_ms_by_op": {
+    "resolve": {
+      "count": 6907,
+      "min": 4.13,
+      "mean": 522.45,
+      "p50": 196.98,
+      "p90": 1411.91,
+      "p95": 2432.58,
+      "p99": 4757.23,
+      "max": 10628.82
+    },
+    "stats": {
+      "count": 705,
+      "min": 13.62,
+      "mean": 551.78,
+      "p50": 266.18,
+      "p90": 1524.3,
+      "p95": 2411.7,
+      "p99": 4484.27,
+      "max": 8737.03
+    },
+    "catalogue": {
+      "count": 1053,
+      "min": 4.56,
+      "mean": 513.61,
+      "p50": 198.92,
+      "p90": 1322.51,
+      "p95": 2461.35,
+      "p99": 4636.67,
+      "max": 7249.87
+    }
+  },
+  "server_ms_by_op": {
+    "resolve": {
+      "count": 6905,
+      "min": 6.62,
+      "mean": 467.88,
+      "p50": 158.29,
+      "p90": 1299.29,
+      "p95": 2279.48,
+      "p99": 4477.22,
+      "max": 9513.32
+    }
+  },
+  "requests_by_op": {
+    "stats": 705,
+    "catalogue": 1053,
+    "resolve": 6907
+  },
+  "thresholds_failed": [],
+  "ramp": false
+}

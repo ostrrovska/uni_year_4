@@ -1,0 +1,214 @@
+{
+  "label": "c-warm-10vu",
+  "generated_at": "2026-11-10T19:45:19+00:00",
+  "requests": 9709,
+  "window_seconds": 90.47,
+  "database_delta": {
+    "xact_commit": 7417,
+    "xact_rollback": 32875,
+    "tup_returned": 4229697,
+    "tup_fetched": 790672,
+    "tup_inserted": 7357,
+    "tup_updated": 38683,
+    "tup_deleted": 1,
+    "blks_read": 0,
+    "blks_hit": 1405608,
+    "deadlocks": 0,
+    "temp_files": 0
+  },
+  "rows_per_request": 435.65,
+  "tuples_inserted_per_request": 0.758,
+  "tuples_updated_per_request": 3.984,
+  "buffer_hit_percent": 100.0,
+  "connections_before": {
+    "active": 1,
+    "idle": 30,
+    "idle_in_transaction": 0,
+    "total": 31,
+    "max_connections": 100
+  },
+  "connections_after": {
+    "active": 1,
+    "idle": 30,
+    "idle_in_transaction": 0,
+    "total": 31,
+    "max_connections": 100
+  },
+  "waits_during": [
+    {
+      "type": "none",
+      "event": "none",
+      "backends": 1
+    }
+  ],
+  "node_heartbeat_rows_before": 12,
+  "node_heartbeat_rows_after": 12,
+  "top_statements": [
+    {
+      "calls": 20218,
+      "total_exec_ms": 1458.35,
+      "mean_exec_ms": 0.072,
+      "rows": 20218,
+      "query": "SELECT purge_events.id, purge_events.scope, purge_events.asset_id, purge_events.region_id, purge_events.path_p"
+    },
+    {
+      "calls": 5514,
+      "total_exec_ms": 1377.12,
+      "mean_exec_ms": 0.25,
+      "rows": 5514,
+      "query": "INSERT INTO purge_acknowledgements (purge_event_id, node_id, result, detail) VALUES ($1::UUID, $2::UUID, $3::p"
+    },
+    {
+      "calls": 5514,
+      "total_exec_ms": 682.65,
+      "mean_exec_ms": 0.124,
+      "rows": 5514,
+      "query": "UPDATE purge_events SET acknowledged_count=(purge_events.acknowledged_count + $1::INTEGER) WHERE purge_events."
+    },
+    {
+      "calls": 1557,
+      "total_exec_ms": 591.05,
+      "mean_exec_ms": 0.38,
+      "rows": 1557,
+      "query": "SELECT count(*) AS count_1 FROM purge_events WHERE purge_events.status IN ($1::purge_status, $2::purge_statu"
+    },
+    {
+      "calls": 5514,
+      "total_exec_ms": 509.75,
+      "mean_exec_ms": 0.092,
+      "rows": 5514,
+      "query": "UPDATE asset_replicas SET state=$1::replica_state, cached_version=$2::INTEGER, bytes_cached=$3::BIGINT, update"
+    },
+    {
+      "calls": 1959,
+      "total_exec_ms": 388.66,
+      "mean_exec_ms": 0.198,
+      "rows": 4640,
+      "query": "SELECT edge_nodes.id, edge_nodes.hostname, edge_nodes.public_ipv4, edge_nodes.capacity_mbps, edge_nodes.curren"
+    },
+    {
+      "calls": 1838,
+      "total_exec_ms": 354.35,
+      "mean_exec_ms": 0.193,
+      "rows": 31402,
+      "query": "SELECT asset_replicas.node_id FROM asset_replicas JOIN edge_nodes ON edge_nodes.id = asset_replicas.node_id "
+    },
+    {
+      "calls": 1557,
+      "total_exec_ms": 274.19,
+      "mean_exec_ms": 0.176,
+      "rows": 21798,
+      "query": "SELECT regions.code, regions.continent, count(edge_nodes.id) AS count_1, coalesce(sum(CASE WHEN (edge_nodes.st"
+    },
+    {
+      "calls": 1838,
+      "total_exec_ms": 274.18,
+      "mean_exec_ms": 0.149,
+      "rows": 1838,
+      "query": "INSERT INTO purge_events (id, scope, asset_id, region_id, path_pattern, requested_by, reason, status, target_n"
+    },
+    {
+      "calls": 5514,
+      "total_exec_ms": 272.87,
+      "mean_exec_ms": 0.049,
+      "rows": 5514,
+      "query": "SELECT edge_nodes.id FROM edge_nodes WHERE edge_nodes.id = $1::UUID"
+    },
+    {
+      "calls": 1838,
+      "total_exec_ms": 235.61,
+      "mean_exec_ms": 0.128,
+      "rows": 25918,
+      "query": "UPDATE asset_replicas SET state=$1::replica_state, updated_at=now() WHERE asset_replicas.asset_id = $2::UUID A"
+    },
+    {
+      "calls": 1557,
+      "total_exec_ms": 194.98,
+      "mean_exec_ms": 0.125,
+      "rows": 4671,
+      "query": "SELECT edge_nodes.status, count(*) AS count_1 FROM edge_nodes GROUP BY edge_nodes.status"
+    }
+  ],
+  "table_delta": {
+    "node_heartbeats": {
+      "ins": 51,
+      "upd": 0,
+      "seq_scan": 1,
+      "idx_scan": 0,
+      "hot_upd": 0,
+      "hot_update_percent": null,
+      "dead_tuples_now": 0,
+      "live_tuples_now": 12
+    },
+    "edge_nodes": {
+      "ins": 0,
+      "upd": 51,
+      "seq_scan": 4103,
+      "idx_scan": 29710,
+      "hot_upd": 0,
+      "hot_update_percent": 0.0,
+      "dead_tuples_now": 45,
+      "live_tuples_now": 20
+    },
+    "asset_replicas": {
+      "ins": 0,
+      "upd": 31270,
+      "seq_scan": 3557,
+      "idx_scan": 20881,
+      "hot_upd": 31070,
+      "hot_update_percent": 99.4,
+      "dead_tuples_now": 355,
+      "live_tuples_now": 339
+    },
+    "purge_events": {
+      "ins": 1829,
+      "upd": 5476,
+      "seq_scan": 644,
+      "idx_scan": 32823,
+      "hot_upd": 5055,
+      "hot_update_percent": 92.3,
+      "dead_tuples_now": 265,
+      "live_tuples_now": 2277
+    },
+    "purge_acknowledgements": {
+      "ins": 5476,
+      "upd": 0,
+      "seq_scan": 0,
+      "idx_scan": 5476,
+      "hot_upd": 0,
+      "hot_update_percent": null,
+      "dead_tuples_now": 0,
+      "live_tuples_now": 6694
+    },
+    "assets": {
+      "ins": 0,
+      "upd": 1829,
+      "seq_scan": 16287,
+      "idx_scan": 0,
+      "hot_upd": 1829,
+      "hot_update_percent": 100.0,
+      "dead_tuples_now": 34,
+      "live_tuples_now": 24
+    },
+    "regions": {
+      "ins": 0,
+      "upd": 0,
+      "seq_scan": 17258,
+      "idx_scan": 766,
+      "hot_upd": 0,
+      "hot_update_percent": null,
+      "dead_tuples_now": 6,
+      "live_tuples_now": 14
+    },
+    "distribution_rules": {
+      "ins": 0,
+      "upd": 0,
+      "seq_scan": 0,
+      "idx_scan": 2813,
+      "hot_upd": 0,
+      "hot_update_percent": null,
+      "dead_tuples_now": 30,
+      "live_tuples_now": 1
+    }
+  }
+}

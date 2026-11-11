@@ -8,12 +8,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.errors import ConflictError, NotFoundError
 from app.core.pagination import PageParams
 from app.db.integrity import translate_integrity_errors
+from app.db.session import release_connection
 from app.models.asset import Asset
 from app.models.asset_replica import AssetReplica
 from app.models.enums import AssetStatus, ReplicaState
 from app.models.purge_event import PurgeEvent
 from app.schemas.asset import AssetCreate, AssetVersionPublish
 from app.services import purges as purges_service
+from app.services.cache import CacheBackend, invalidate, route_scope, stats_scope
 
 
 @dataclass(frozen=True, slots=True)
@@ -54,6 +56,7 @@ async def list_assets(
             .offset(page.offset)
         )
     ).all()
+    await release_connection(session)
     return assets, total or 0
 
 
@@ -64,7 +67,9 @@ async def get_asset(session: AsyncSession, asset_id: uuid.UUID) -> Asset:
     return asset
 
 
-async def create_asset(session: AsyncSession, payload: AssetCreate) -> Asset:
+async def create_asset(
+    session: AsyncSession, payload: AssetCreate, *, cache: CacheBackend | None = None
+) -> Asset:
     duplicate = await session.scalar(
         select(Asset.id).where(Asset.origin_path == payload.origin_path)
     )
@@ -89,11 +94,17 @@ async def create_asset(session: AsyncSession, payload: AssetCreate) -> Asset:
     ):
         await session.commit()
     await session.refresh(asset)
+    # A newly published asset turns a 404 at that path into a 200, and changes assets_total.
+    await invalidate(cache, route_scope(asset.origin_path), stats_scope())
     return asset
 
 
 async def publish_version(
-    session: AsyncSession, asset_id: uuid.UUID, payload: AssetVersionPublish
+    session: AsyncSession,
+    asset_id: uuid.UUID,
+    payload: AssetVersionPublish,
+    *,
+    cache: CacheBackend | None = None,
 ) -> VersionPublishOutcome:
     """Publish new bytes under an existing path and invalidate what the edge holds.
 
@@ -134,6 +145,10 @@ async def publish_version(
     await session.commit()
     await session.refresh(asset)
     await session.refresh(purge)
+    # Every field of a cached resolution for this path has moved: version, content_hash,
+    # cache_ttl_seconds, and the cache_state of every candidate now holding stale bytes.
+    # Invalidated after the commit, so no reader can refill the key from the old row.
+    await invalidate(cache, route_scope(asset.origin_path), stats_scope())
     return VersionPublishOutcome(
         asset=asset,
         previous_version=previous_version,
@@ -143,7 +158,11 @@ async def publish_version(
 
 
 async def archive_asset(
-    session: AsyncSession, asset_id: uuid.UUID, *, requested_by: str
+    session: AsyncSession,
+    asset_id: uuid.UUID,
+    *,
+    requested_by: str,
+    cache: CacheBackend | None = None,
 ) -> PurgeEvent:
     """Retire an asset and order its removal from every edge node holding it.
 
@@ -167,6 +186,9 @@ async def archive_asset(
 
     await session.commit()
     await session.refresh(purge)
+    # The asset stops resolving entirely; serving a cached 200 for an archived asset is the
+    # worst staleness this system can produce.
+    await invalidate(cache, route_scope(asset.origin_path), stats_scope())
     return purge
 
 

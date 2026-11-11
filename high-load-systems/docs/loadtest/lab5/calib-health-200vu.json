@@ -1,0 +1,126 @@
+{
+  "label": "calib-health-200vu",
+  "config": "calibration",
+  "scenario": "calibration",
+  "stage_vus": 200,
+  "measure_seconds": 60,
+  "base_url": "http://127.0.0.1:8080",
+  "generated_at": "2026-11-11T12:39:29.691Z",
+  "k6_run_duration_ms": 85430.5886,
+  "requests": 82110,
+  "errors": 0,
+  "error_rate_percent": 0,
+  "rps": 1368.5,
+  "latency_ms": {
+    "count": 82110,
+    "min": 0,
+    "mean": 146.34,
+    "p50": 54.91,
+    "p90": 205.69,
+    "p95": 305.69,
+    "p99": 2721.23,
+    "max": 5373.79
+  },
+  "iteration_ms": {
+    "count": 82110,
+    "min": 0,
+    "mean": 146.58,
+    "p50": 55.15,
+    "p90": 205.93,
+    "p95": 305.69,
+    "p99": 2721.4,
+    "max": 5373.79
+  },
+  "server_ms": {
+    "count": 82110,
+    "min": 0.28,
+    "mean": 36.11,
+    "p50": 18.05,
+    "p90": 91.73,
+    "p95": 101.55,
+    "p99": 150.14,
+    "max": 597.09
+  },
+  "status_counts": {
+    "200": 82110
+  },
+  "instances": {
+    "cdn-api-2": 27370,
+    "cdn-api-1": 27370,
+    "cdn-api-3": 27370
+  },
+  "instance_share_percent": {
+    "cdn-api-2": 33.33,
+    "cdn-api-1": 33.33,
+    "cdn-api-3": 33.33
+  },
+  "latency_ms_by_instance": {
+    "cdn-api-2": {
+      "count": 27370,
+      "min": 0,
+      "mean": 55.63,
+      "p50": 22.54,
+      "p90": 101.61,
+      "p95": 135.01,
+      "p99": 595.47,
+      "max": 1973.54
+    },
+    "cdn-api-1": {
+      "count": 27370,
+      "min": 2.04,
+      "mean": 304.81,
+      "p50": 161.43,
+      "p90": 311.85,
+      "p95": 1319.57,
+      "p99": 3791.71,
+      "max": 5373.79
+    },
+    "cdn-api-3": {
+      "count": 27370,
+      "min": 0,
+      "mean": 78.57,
+      "p50": 33.38,
+      "p90": 121.98,
+      "p95": 159.6,
+      "p99": 1210.89,
+      "max": 3532.23
+    }
+  },
+  "cache": {
+    "HIT": 0,
+    "MISS": 0,
+    "BYPASS": 0
+  },
+  "cache_hit_ratio_percent": null,
+  "latency_ms_by_cache": {},
+  "server_ms_by_cache": {},
+  "latency_ms_by_op": {
+        "live": {
+          "count": 82110,
+          "min": 0,
+          "mean": 146.34,
+          "p50": 54.91,
+          "p90": 205.69,
+          "p95": 305.69,
+          "p99": 2721.23,
+          "max": 5373.79
+        }
+      },
+  "server_ms_by_op": {
+        "live": {
+          "count": 82110,
+          "min": 0.28,
+          "mean": 36.11,
+          "p50": 18.05,
+          "p90": 91.73,
+          "p95": 101.55,
+          "p99": 150.14,
+          "max": 597.09
+        }
+      },
+  "requests_by_op": {
+        "live": 82110
+      },
+  "thresholds_failed": [],
+  "probe": "health"
+}

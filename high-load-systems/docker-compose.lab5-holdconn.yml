@@ -1,0 +1,27 @@
+# Lab5 - the control arm for the early-connection-release experiment.
+#
+#   docker compose -f docker-compose.yml -f docker-compose.lab3.yml -f docker-compose.lab4.yml \
+#                  -f docker-compose.lab5.yml -f docker-compose.lab5-holdconn.yml \
+#                  up -d --no-deps api1 api2 api3
+#
+# Restores the original behaviour: a read-only handler never commits, so SQLAlchemy keeps the
+# connection checked out until the session closes - which, with a FastAPI `yield` dependency,
+# is after the response has been serialised. The connection is therefore held through work that
+# touches no database at all.
+#
+# This file exists because the first attempt to show the fix worked compared a fresh run against
+# figures recorded hours earlier, and `/health` - which has no database access whatsoever - was
+# 19 % slower in the later run. The host had changed, so the comparison could not support the
+# claim. Both arms now run minutes apart on the same machine.
+name: cdn-control-plane
+
+x-lab5-holdconn: &lab5-holdconn
+  DB_RELEASE_EARLY: "false"
+
+services:
+  api1:
+    environment: *lab5-holdconn
+  api2:
+    environment: *lab5-holdconn
+  api3:
+    environment: *lab5-holdconn

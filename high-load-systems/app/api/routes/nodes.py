@@ -2,7 +2,7 @@ import uuid
 
 from fastapi import APIRouter, Query, Response, status
 
-from app.api.deps import PageDep, SessionDep
+from app.api.deps import CacheDep, PageDep, SessionDep
 from app.api.responses import problems
 from app.core.config import get_settings
 from app.core.pagination import Page
@@ -45,8 +45,10 @@ async def list_nodes(
     summary="Register an edge node",
     responses=problems(404, 409),
 )
-async def register_node(payload: NodeRegister, session: SessionDep, response: Response) -> NodeRead:
-    node, region_code = await nodes_service.register_node(session, payload)
+async def register_node(
+    payload: NodeRegister, session: SessionDep, cache: CacheDep, response: Response
+) -> NodeRead:
+    node, region_code = await nodes_service.register_node(session, payload, cache=cache)
     response.headers["Location"] = f"/api/v1/nodes/{node.id}"
     return NodeRead.from_model(node, region_code)
 
@@ -62,8 +64,10 @@ async def get_node(node_id: uuid.UUID, session: SessionDep) -> NodeRead:
     summary="Update node status or capacity",
     responses=problems(404, 409, 422),
 )
-async def update_node(node_id: uuid.UUID, payload: NodeUpdate, session: SessionDep) -> NodeRead:
-    node, region_code = await nodes_service.update_node(session, node_id, payload)
+async def update_node(
+    node_id: uuid.UUID, payload: NodeUpdate, session: SessionDep, cache: CacheDep
+) -> NodeRead:
+    node, region_code = await nodes_service.update_node(session, node_id, payload, cache=cache)
     return NodeRead.from_model(node, region_code)
 
 
@@ -73,8 +77,8 @@ async def update_node(node_id: uuid.UUID, payload: NodeUpdate, session: SessionD
     summary="Decommission an edge node",
     responses=problems(404),
 )
-async def delete_node(node_id: uuid.UUID, session: SessionDep) -> None:
-    await nodes_service.delete_node(session, node_id)
+async def delete_node(node_id: uuid.UUID, session: SessionDep, cache: CacheDep) -> None:
+    await nodes_service.delete_node(session, node_id, cache=cache)
 
 
 @router.post(
@@ -84,7 +88,7 @@ async def delete_node(node_id: uuid.UUID, session: SessionDep) -> None:
     responses=problems(404),
 )
 async def report_heartbeat(
-    node_id: uuid.UUID, payload: HeartbeatReport, session: SessionDep
+    node_id: uuid.UUID, payload: HeartbeatReport, session: SessionDep, cache: CacheDep
 ) -> HeartbeatAccepted:
     """Ingest one telemetry sample.
 
@@ -92,12 +96,12 @@ async def report_heartbeat(
     consequences of it — routing weights, purge targeting — are observed by other
     endpoints, not computed and returned here.
     """
-    node, received_at = await nodes_service.record_heartbeat(session, node_id, payload)
+    outcome = await nodes_service.record_heartbeat(session, node_id, payload, cache=cache)
     return HeartbeatAccepted(
-        node_id=node.id,
-        status=node.status,
-        current_load_percent=node.current_load_percent,
-        received_at=received_at,
+        node_id=outcome.node.id,
+        status=outcome.node.status,
+        current_load_percent=outcome.node.current_load_percent,
+        received_at=outcome.received_at,
         next_heartbeat_in_seconds=get_settings().heartbeat_interval_seconds,
     )
 
@@ -123,6 +127,7 @@ async def report_replica(
     asset_id: uuid.UUID,
     payload: ReplicaReport,
     session: SessionDep,
+    cache: CacheDep,
 ) -> ReplicaRead:
     """Declare what this node holds for one asset.
 
@@ -136,5 +141,6 @@ async def report_replica(
         state=payload.state,
         cached_version=payload.cached_version,
         bytes_cached=payload.bytes_cached,
+        cache=cache,
     )
     return ReplicaRead.model_validate(replica)

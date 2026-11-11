@@ -1,0 +1,67 @@
+{
+  "label": "calib-lb-200vu",
+  "config": "calibration",
+  "scenario": "calibration",
+  "stage_vus": 200,
+  "measure_seconds": 60,
+  "base_url": "http://127.0.0.1:8080",
+  "generated_at": "2026-11-11T12:37:54.896Z",
+  "k6_run_duration_ms": 85023.3078,
+  "requests": 476507,
+  "errors": 0,
+  "error_rate_percent": 0,
+  "rps": 7941.78,
+  "latency_ms": {
+    "count": 476507,
+    "min": 0,
+    "mean": 24.77,
+    "p50": 16.08,
+    "p90": 59.42,
+    "p95": 66.58,
+    "p99": 84.08,
+    "max": 522.9
+  },
+  "iteration_ms": {
+    "count": 476507,
+    "min": 0,
+    "mean": 25.15,
+    "p50": 16.38,
+    "p90": 59.84,
+    "p95": 67.01,
+    "p99": 84.63,
+    "max": 529.83
+  },
+  "server_ms": null,
+  "status_counts": {
+    "200": 476507
+  },
+  "instances": {},
+  "instance_share_percent": {},
+  "latency_ms_by_instance": {},
+  "cache": {
+          "HIT": 0,
+          "MISS": 0,
+          "BYPASS": 0
+        },
+  "cache_hit_ratio_percent": null,
+  "latency_ms_by_cache": {},
+  "server_ms_by_cache": {},
+  "latency_ms_by_op": {
+              "lbhealth": {
+                "count": 476507,
+                "min": 0,
+                "mean": 24.77,
+                "p50": 16.08,
+                "p90": 59.42,
+                "p95": 66.58,
+                "p99": 84.08,
+                "max": 522.9
+              }
+            },
+  "server_ms_by_op": {},
+  "requests_by_op": {
+                "lbhealth": 476507
+              },
+  "thresholds_failed": [],
+  "probe": "lb"
+}

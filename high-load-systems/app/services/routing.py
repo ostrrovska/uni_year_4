@@ -6,6 +6,7 @@ from sqlalchemy.orm import aliased
 
 from app.core.config import get_settings
 from app.core.errors import NotFoundError, ServiceUnavailableError
+from app.db.session import release_connection
 from app.models.asset import Asset
 from app.models.asset_replica import AssetReplica
 from app.models.distribution_rule import DistributionRule
@@ -13,6 +14,8 @@ from app.models.edge_node import EdgeNode
 from app.models.enums import AssetStatus, NodeStatus, ReplicaState
 from app.models.region import Region
 from app.schemas.routing import RouteCandidate, RouteResolution
+from app.services.cache import ROUTE_ENTITY, CacheBackend, cache_key
+from app.services.cache_aside import CachedRead, read_through
 
 # Score weights. Lower total wins.
 # Proximity dominates load so that a lightly loaded node on another continent never
@@ -121,6 +124,9 @@ async def resolve_route(
     )
 
     rows = (await session.execute(candidates_stmt)).all()
+    # The hot read path, and the one the pool measurement is about: everything below this line
+    # is Python building a response model, so the connection must not be held through it.
+    await release_connection(session)
     if not rows:
         raise ServiceUnavailableError(
             "No edge node is currently eligible to serve this asset.",
@@ -186,3 +192,40 @@ def _explain(
         else "cold cache, will pull from origin on first request"
     )
     return f"{locality}; {freshness}; {load_percent}% loaded"
+
+
+# Lab4
+async def resolve_route_cached(
+    session: AsyncSession,
+    cache: CacheBackend,
+    *,
+    path: str,
+    client_region_code: str | None,
+    limit: int,
+) -> CachedRead[RouteResolution]:
+    """Cache-aside wrapper over `resolve_route`, the system's hottest read.
+
+    `limit` is keyed already normalised to an integer: `?limit=3` and an omitted `limit`
+    produce byte-identical responses, so keying the raw `int | None` would store the same
+    body twice and halve the hit ratio for nothing. `client_region=None` is dropped by
+    `cache_key`, which collapses absent and explicitly-null the same way.
+
+    The TTL is the asset's own `cache_ttl_seconds` capped by `CACHE_ROUTE_TTL_SECONDS`.
+    The cap is what binds: the seeded assets declare 300 s to 7 days, but the candidate list
+    is derived from heartbeats, so fleet freshness - not content freshness - decides how long
+    this answer may be reused.
+    """
+    settings = get_settings()
+    key = cache_key(ROUTE_ENTITY, path, client_region=client_region_code, limit=limit)
+
+    return await read_through(
+        cache,
+        key=key,
+        model=RouteResolution,
+        loader=lambda: resolve_route(
+            session, path=path, client_region_code=client_region_code, limit=limit
+        ),
+        ttl_seconds=lambda resolution: min(
+            resolution.cache_ttl_seconds, settings.cache_route_ttl_seconds
+        ),
+    )

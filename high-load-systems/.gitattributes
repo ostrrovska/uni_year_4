@@ -1,0 +1,6 @@
+# Lab3
+# These files are bind-mounted into Linux containers. CRLF would break the shell script and
+# can break nginx/haproxy directive parsing, so keep them LF regardless of core.autocrlf.
+*.sh   text eol=lf
+*.conf text eol=lf
+*.cfg  text eol=lf

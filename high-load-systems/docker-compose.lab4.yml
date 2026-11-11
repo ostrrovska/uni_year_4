@@ -1,0 +1,67 @@
+# Lab4 — the shared distributed cache. Additive on top of docker-compose.lab3.yml:
+#
+#   docker compose -f docker-compose.yml -f docker-compose.lab3.yml \
+#                  -f docker-compose.lab4.yml --profile demo up -d --build
+#
+# A separate file from lab3 on purpose. Lab 3's scale-out experiment has to measure a
+# database-bound compute tier: with this cache in front of /routing/resolve, going from one
+# instance to three would look near-linear, the connection pool would never be pressured, and
+# the "what becomes the next bottleneck" conclusion would have no evidence behind it. A cache
+# would hide the very limit Lab 3 exists to find. Keeping it here also leaves the Lab 1-3
+# stacks byte-for-byte reproducible.
+#
+# Compose merges map-form `environment:` key by key, so only the two cache variables appear
+# below rather than the whole base anchor.
+
+name: cdn-control-plane
+
+x-lab4-cache-environment: &lab4-cache-environment
+  CACHE_ENABLED: "true"
+  REDIS_URL: redis://redis:6379/0
+
+services:
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    # A pure cache, so no RDB snapshots and no AOF: persistence would spend I/O preserving
+    # data whose whole value is being cheap and disposable, and a cache that survives a
+    # restart full of stale entries is worse than a cold one.
+    #
+    # allkeys-lru rather than allkeys-lfu: this workload is recency-skewed. A release makes
+    # one path hot for minutes and then it cools, so LFU would keep long-dead popular paths
+    # resident while evicting a path that just became hot. `allkeys-` rather than `volatile-`
+    # because every key written here already carries a TTL, which makes the two equivalent
+    # today and keeps the policy correct if one is ever written without.
+    command:
+      - redis-server
+      - --save
+      - ""
+      - --appendonly
+      - "no"
+      - --maxmemory
+      - 256mb
+      - --maxmemory-policy
+      - allkeys-lru
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    # No published port: Lab 3's criterion is network encapsulation and publishing the cache
+    # would contradict it. Inspect with `docker compose ... exec redis redis-cli`.
+    networks: [cdn_net]
+
+  # No `depends_on: redis` on any instance, deliberately. A hard dependency would hide the
+  # fail-open design; the API not needing the cache in order to start *is* the design.
+  api1:
+    environment: *lab4-cache-environment
+  api2:
+    environment: *lab4-cache-environment
+  api3:
+    environment: *lab4-cache-environment
+
+  # The agent simulator mutates node status in-process, so it needs the same cache to
+  # invalidate against — otherwise an automatic status transition would leave cached routing
+  # answers that still list an overloaded node as eligible.
+  agents:
+    environment: *lab4-cache-environment

@@ -1,0 +1,279 @@
+/* Lab4 — report page only. Tokens, cards, tiles and tables come from styles.css; this file
+   adds the components that exist nowhere on the dashboard. */
+
+/* ---- tabs ---- */
+.tabs { display: flex; gap: 4px; }
+.tab {
+  padding: 5px 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 12.5px;
+  text-decoration: none;
+  color: var(--text-secondary);
+  background: var(--page);
+}
+.tab:hover { color: var(--text-primary); border-color: var(--text-muted); }
+.tab.current {
+  color: var(--text-primary);
+  font-weight: 600;
+  border-color: var(--text-primary);
+  background: var(--surface-1);
+}
+
+/* ---- jump nav ---- */
+.jump { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 4px; }
+.jump a {
+  font-size: 12px;
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  text-decoration: none;
+  color: var(--text-secondary);
+  background: var(--page);
+}
+.jump a:hover { color: var(--text-primary); border-color: var(--text-muted); }
+
+/* ---- hero numbers ---- */
+.hero { display: grid; grid-template-columns: repeat(auto-fit, minmax(176px, 1fr)); gap: 10px; }
+.hero .tile strong { font-size: 30px; }
+.hero .tile .tile-note { font-size: 11.5px; color: var(--text-muted); margin-top: 2px; }
+
+/* ---- comparison bars ----
+   One measure across two labelled categories, so one hue and no legend: the caption names the
+   measure and every bar carries its own value. That direct label is also the relief the
+   light-mode contrast warning on the third categorical slot requires. */
+.cmp { display: grid; gap: 10px; margin: 0 0 4px; }
+.cmp-row { display: grid; grid-template-columns: 112px 1fr auto; gap: 10px; align-items: center; }
+.cmp-name { font-size: 12.5px; color: var(--text-secondary); text-align: right; }
+.cmp-track { position: relative; height: 24px; background: var(--grid); border-radius: var(--mark-radius); }
+.cmp-fill {
+  height: 100%;
+  min-width: 4px;                            /* a 2 ms bar beside a 109 ms one must stay visible */
+  border-radius: var(--mark-radius);
+  background: var(--series-1);
+}
+.cmp-fill.hit { background: var(--good); }
+.cmp-fill.miss { background: var(--warning); }
+.cmp-value {
+  display: flex; align-items: baseline; gap: 7px;
+  font-size: 12.5px; color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.cmp-delta { color: var(--text-muted); font-size: 11.5px; }
+
+.pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(286px, 1fr)); gap: 18px 22px; }
+
+/* ---- key anatomy ---- */
+.anatomy { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 10px; }
+.seg { display: grid; gap: 4px; }
+.seg code {
+  display: block; padding: 7px 10px; font-size: 13px;
+  border: 1px solid var(--border); border-radius: 7px;
+  background: var(--page); border-bottom-width: 3px;
+}
+.seg.n1 code { border-bottom-color: var(--series-1); }
+.seg.n2 code { border-bottom-color: var(--series-2); }
+.seg.n3 code { border-bottom-color: var(--series-3); }
+.seg.n4 code { border-bottom-color: var(--text-muted); }
+.seg span { font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted); }
+
+/* ---- flow diagram ---- */
+.flow { width: 100%; height: auto; display: block; margin: 2px 0 6px; }
+.flow .box { fill: var(--page); stroke: var(--border); stroke-width: 1.5; }
+.flow .box-db { fill: var(--page); stroke: var(--series-2); stroke-width: 1.5; }
+.flow .box-cache { fill: var(--page); stroke: var(--series-1); stroke-width: 1.5; }
+.flow text { font: 12px ui-sans-serif, system-ui, "Segoe UI", sans-serif; fill: var(--text-primary); }
+.flow .lbl { font-size: 11px; fill: var(--text-muted); }
+.flow .edge { stroke: var(--text-muted); stroke-width: 1.5; fill: none; }
+.flow .edge-hit { stroke: var(--good); stroke-width: 2; fill: none; }
+.flow .edge-miss { stroke: var(--warning); stroke-width: 2; fill: none; }
+.flow .step { font-size: 10.5px; fill: var(--text-muted); font-variant-numeric: tabular-nums; }
+
+/* ---- compact fact grids ---- */
+.facts { display: grid; gap: 1px; background: var(--grid); border: 1px solid var(--grid); border-radius: 8px; overflow: hidden; }
+.fact { display: grid; grid-template-columns: 190px 1fr; gap: 12px; padding: 9px 12px; background: var(--surface-1); font-size: 13px; }
+.fact > :first-child { color: var(--text-primary); font-weight: 600; }
+.fact > :last-child { color: var(--text-secondary); }
+.fact.no > :first-child { color: var(--text-secondary); font-weight: 400; }
+
+.scopes { display: grid; grid-template-columns: repeat(auto-fit, minmax(232px, 1fr)); gap: 10px; }
+.scope { border: 1px solid var(--border); border-radius: 8px; padding: 11px 12px; background: var(--page); }
+.scope h4 { margin: 0 0 6px; font-size: 12.5px; }
+.scope code { font-size: 11.5px; color: var(--text-primary); }
+.scope ul { margin: 6px 0 0; padding-left: 17px; font-size: 12.5px; color: var(--text-secondary); }
+.scope li { margin-bottom: 2px; }
+
+.callout {
+  border-left: 3px solid var(--series-1);
+  background: var(--page);
+  border-radius: 0 7px 7px 0;
+  padding: 10px 13px;
+  margin: 12px 0 0;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+.callout strong { color: var(--text-primary); }
+.callout.warn { border-left-color: var(--warning); }
+.callout.good { border-left-color: var(--good); }
+
+/* ---- timeline ---- */
+.timeline { display: grid; gap: 0; margin: 4px 0 0; }
+.tl { display: grid; grid-template-columns: 76px 1fr; gap: 12px; padding: 0 0 14px; position: relative; }
+.tl:not(:last-child)::before {
+  content: ""; position: absolute; left: 81px; top: 15px; bottom: 0; width: 1px; background: var(--grid);
+}
+.tl-when { font-size: 11.5px; color: var(--text-muted); text-align: right; padding-top: 2px; font-variant-numeric: tabular-nums; }
+.tl-what { font-size: 13px; color: var(--text-secondary); padding-left: 16px; position: relative; }
+.tl-what::before {
+  content: ""; position: absolute; left: -4px; top: 6px;
+  width: 9px; height: 9px; border-radius: 50%;
+  background: var(--surface-1); border: 2px solid var(--text-muted);
+}
+.tl.ok .tl-what::before { border-color: var(--good); }
+.tl.bad .tl-what::before { border-color: var(--warning); }
+.tl-what strong { color: var(--text-primary); }
+
+@media (max-width: 560px) {
+  .cmp-row { grid-template-columns: 84px 1fr; }
+  .fact { grid-template-columns: 1fr; gap: 2px; }
+  .hero .tile strong { font-size: 24px; }
+}
+
+/* ---- Lab5: chart components ----
+   Built with inline SVG and no chart library: the page is served by nginx from a read-only
+   bind mount with no build step, and a CDN script would be a network dependency on a page
+   whose whole claim is that it runs beside the system it describes.
+
+   Every figure ships three things together, and the third is not optional: a legend whenever
+   two or more series are plotted, a direct label at each series' right end, and a collapsed
+   table of the same numbers. --series-3 (#1baf7a) measures 2.74:1 against the light surface,
+   below the 3:1 contrast floor, so identity may never rest on the hue alone - the direct label
+   and the table are the required relief, exactly as the comparison bars above already note. */
+
+.figure { margin: 0 0 6px; }
+.figure figcaption {
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  margin: 0 0 7px;
+}
+.figure figcaption strong { color: var(--text-primary); }
+
+.chart { width: 100%; height: auto; display: block; overflow: visible; }
+.chart text { font: 11px ui-sans-serif, system-ui, "Segoe UI", sans-serif; fill: var(--text-muted); }
+.chart .axis-line { stroke: var(--axis, var(--border)); stroke-width: 1; }
+.chart .grid-line { stroke: var(--grid); stroke-width: 1; }
+.chart .axis-title { font-size: 10.5px; fill: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; }
+.chart .tick { font-variant-numeric: tabular-nums; }
+
+/* 2px lines, >=8px markers, per marks-and-anatomy. */
+.chart .mark-line { fill: none; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.chart .mark-dot { r: 4; stroke: var(--surface-1); stroke-width: 2; }
+.chart .mark-bar { rx: var(--mark-radius); }
+/* A 2px surface gap between adjacent bars, so two fills never touch. */
+.chart .bar-group rect + rect { stroke: var(--surface-1); stroke-width: 2; }
+.chart .s1 { stroke: var(--series-1); }
+.chart .s2 { stroke: var(--series-2); }
+.chart .s3 { stroke: var(--series-3); }
+.chart .f1 { fill: var(--series-1); }
+.chart .f2 { fill: var(--series-2); }
+.chart .f3 { fill: var(--series-3); }
+.chart .f-crit { fill: var(--critical); }
+.chart .s-crit { stroke: var(--critical); }
+.chart .f-good { fill: var(--good); }
+.chart .f-muted { fill: var(--text-muted); }
+.chart .s-muted { stroke: var(--text-muted); }
+
+/* The direct label: text tokens, never the series colour - the mark beside it carries the
+   identity, and coloured text on a light surface is the contrast problem all over again. */
+.chart .direct-label { font-size: 11px; fill: var(--text-secondary); font-weight: 600; }
+.chart .value-label { font-size: 10.5px; fill: var(--text-secondary); font-variant-numeric: tabular-nums; }
+
+/* The knee marker: a dashed hairline, not a second y-axis. */
+.chart .knee-line { stroke: var(--critical); stroke-width: 1; stroke-dasharray: 3 3; }
+.chart .knee-text { font-size: 10.5px; fill: var(--critical); }
+.chart .ref-line { stroke: var(--text-muted); stroke-width: 1; stroke-dasharray: 4 4; }
+
+.chart .hit-area { fill: transparent; cursor: crosshair; }
+.chart .crosshair { stroke: var(--text-muted); stroke-width: 1; stroke-dasharray: 2 3; }
+
+.legend {
+  display: flex; flex-wrap: wrap; gap: 4px 14px;
+  margin: 0 0 8px; font-size: 12px; color: var(--text-secondary);
+}
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend i { width: 11px; height: 11px; border-radius: 3px; display: inline-block; }
+
+.chart-tip {
+  position: fixed; z-index: 20; pointer-events: none;
+  background: var(--surface-1); color: var(--text-primary);
+  border: 1px solid var(--border); border-radius: 8px;
+  padding: 7px 10px; font-size: 12px; line-height: 1.45;
+  box-shadow: 0 6px 20px rgb(0 0 0 / 14%);
+  font-variant-numeric: tabular-nums;
+  max-width: 260px;
+}
+.chart-tip[hidden] { display: none; }
+.chart-tip b { display: block; margin-bottom: 3px; font-size: 11.5px; color: var(--text-secondary); }
+.chart-tip .row { display: flex; align-items: center; gap: 7px; }
+.chart-tip .row i { width: 9px; height: 9px; border-radius: 2px; }
+.chart-tip .row em { margin-left: auto; font-style: normal; }
+
+.table-view { margin: 6px 0 0; }
+.table-view summary {
+  font-size: 11.5px; color: var(--text-muted); cursor: pointer;
+  padding: 3px 0;
+}
+.table-view summary:hover { color: var(--text-primary); }
+.table-view table { margin-top: 6px; }
+
+.panels { display: grid; gap: 14px; }
+.panels.three { grid-template-columns: repeat(auto-fit, minmax(258px, 1fr)); }
+.panels.two { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+
+.card-sub { font-size: 13px; color: var(--text-secondary); margin: 0 0 10px; }
+.baseline-card {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px; line-height: 1.7;
+  white-space: pre-wrap; word-break: break-word;
+  background: var(--page); border: 1px solid var(--border);
+  border-radius: 8px; padding: 13px 15px; margin: 10px 0 0;
+  color: var(--text-secondary);
+}
+.baseline-card b { color: var(--text-primary); }
+
+.live-bar { display: flex; flex-wrap: wrap; gap: 9px; align-items: center; margin: 0 0 10px; }
+.live-state { font-size: 12.5px; color: var(--text-secondary); }
+.live-state.on { color: var(--good); }
+.live-state.off { color: var(--warning); }
+
+.stale { opacity: 0.45; }
+
+@media (max-width: 560px) {
+  .panels.three, .panels.two { grid-template-columns: 1fr; }
+}
+
+/* ---- Lab5: the takeaway under each figure ----
+   The sentence that says what to see in the chart above it. Its text is not written here or in
+   lab5.js: it is rendered by scripts/render_lab5_results.py into ui/data/lab5.json, which is
+   the same string the Markdown reports print under the same chart. One source of prose, so the
+   page cannot drift from the document any more than the two documents drift from each other. */
+.takeaway {
+  border-left: 3px solid var(--series-1);
+  background: var(--page);
+  border-radius: 0 7px 7px 0;
+  padding: 10px 13px;
+  margin: 10px 0 2px;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--text-secondary);
+}
+.takeaway b { color: var(--text-primary); font-weight: 600; }
+.takeaway .lead {
+  display: block;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}

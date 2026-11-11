@@ -1,0 +1,136 @@
+﻿$ git.exe -C C:\uni_year_4 add -- high-load-systems/gitops/values/values-minikube.yaml
+
+$ git.exe -C C:\uni_year_4 commit -m gitops: release 1.6.0 (aborted in the Lab 6 demonstration) -- high-load-systems/gitops/values/values-minikube.yaml
+[devops-lab-6-rollouts eda063e] gitops: release 1.6.0 (aborted in the Lab 6 demonstration)
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+$ git.exe -C C:\uni_year_4 push origin devops-lab-6-rollouts
+To github.com:ostrrovska/uni_year_4.git
+   f03b16b..eda063e  devops-lab-6-rollouts -> devops-lab-6-rollouts
+
+$ kubectl-argo-rollouts.exe get rollout cdn-cdn-control-plane-api -n cdn-gitops
+Name:            cdn-cdn-control-plane-api
+Namespace:       cdn-gitops
+Status:          [0m॥[0m Paused
+Message:         CanaryPauseStep
+Strategy:        Canary
+  Step:          1/6
+  SetWeight:     20
+  ActualWeight:  20
+Images:          ghcr.io/ostrrovska/cdn-control-plane:1.5.0 ([32mstable[0m)
+                 ghcr.io/ostrrovska/cdn-control-plane:1.6.0 ([33mcanary[0m)
+Replicas:
+  Desired:       5
+  Current:       5
+  Updated:       1
+  Ready:         5
+  Available:     5
+
+NAME                                                   KIND        STATUS        AGE    INFO
+⟳ cdn-cdn-control-plane-api                            Rollout     [0m॥[0m Paused      27m    
+├──# revision:4                                                                         
+│  └──⧉ [33mcdn-cdn-control-plane-api-5d6b9d947f[0m           ReplicaSet  [32m✔[0m Healthy     17s    [33mcanary[0m
+│     └──□ cdn-cdn-control-plane-api-5d6b9d947f-wgvnh  Pod         [32m✔[0m Running     17s    ready:1/1
+├──# revision:3                                                                         
+│  └──⧉ [32mcdn-cdn-control-plane-api-855fc5997b[0m           ReplicaSet  [32m✔[0m Healthy     3m45s  [32mstable[0m
+│     ├──□ cdn-cdn-control-plane-api-855fc5997b-w6zp2  Pod         [32m✔[0m Running     3m44s  ready:1/1
+│     ├──□ cdn-cdn-control-plane-api-855fc5997b-h92pz  Pod         [32m✔[0m Running     3m24s  ready:1/1
+│     ├──□ cdn-cdn-control-plane-api-855fc5997b-zd8mz  Pod         [32m✔[0m Running     3m24s  ready:1/1
+│     └──□ cdn-cdn-control-plane-api-855fc5997b-k54x9  Pod         [32m✔[0m Running     2m42s  ready:1/1
+├──# revision:2                                                                         
+│  └──⧉ cdn-cdn-control-plane-api-65c6f69d57           ReplicaSet  [0m•[0m ScaledDown  8m45s  
+└──# revision:1                                                                         
+   └──⧉ cdn-cdn-control-plane-api-7d5598666            ReplicaSet  [0m•[0m ScaledDown  27m    
+
+$ kubectl-argo-rollouts.exe abort cdn-cdn-control-plane-api -n cdn-gitops
+rollout 'cdn-cdn-control-plane-api' aborted
+
+$ kubectl-argo-rollouts.exe get rollout cdn-cdn-control-plane-api -n cdn-gitops
+Name:            cdn-cdn-control-plane-api
+Namespace:       cdn-gitops
+Status:          [31m✖[0m Degraded
+Message:         RolloutAborted: Rollout aborted update to revision 4
+Strategy:        Canary
+  Step:          0/6
+  SetWeight:     0
+  ActualWeight:  0
+Images:          ghcr.io/ostrrovska/cdn-control-plane:1.5.0 ([32mstable[0m)
+Replicas:
+  Desired:       5
+  Current:       5
+  Updated:       0
+  Ready:         4
+  Available:     4
+
+NAME                                                   KIND        STATUS               AGE    INFO
+⟳ cdn-cdn-control-plane-api                            Rollout     [31m✖[0m Degraded           27m    
+├──# revision:4                                                                                
+│  └──⧉ [33mcdn-cdn-control-plane-api-5d6b9d947f[0m           ReplicaSet  [0m•[0m ScaledDown         18s    [33mcanary[0m
+│     └──□ cdn-cdn-control-plane-api-5d6b9d947f-wgvnh  Pod         [94m◌[0m Terminating        18s    ready:1/1
+├──# revision:3                                                                                
+│  └──⧉ [32mcdn-cdn-control-plane-api-855fc5997b[0m           ReplicaSet  [94m◌[0m Progressing        3m46s  [32mstable[0m
+│     ├──□ cdn-cdn-control-plane-api-855fc5997b-w6zp2  Pod         [32m✔[0m Running            3m45s  ready:1/1
+│     ├──□ cdn-cdn-control-plane-api-855fc5997b-h92pz  Pod         [32m✔[0m Running            3m25s  ready:1/1
+│     ├──□ cdn-cdn-control-plane-api-855fc5997b-zd8mz  Pod         [32m✔[0m Running            3m25s  ready:1/1
+│     ├──□ cdn-cdn-control-plane-api-855fc5997b-k54x9  Pod         [32m✔[0m Running            2m43s  ready:1/1
+│     └──□ cdn-cdn-control-plane-api-855fc5997b-mdjhp  Pod         [94m◌[0m ContainerCreating  1s     ready:0/1
+├──# revision:2                                                                                
+│  └──⧉ cdn-cdn-control-plane-api-65c6f69d57           ReplicaSet  [0m•[0m ScaledDown         8m46s  
+└──# revision:1                                                                                
+   └──⧉ cdn-cdn-control-plane-api-7d5598666            ReplicaSet  [0m•[0m ScaledDown         27m    
+
+$ kubectl.exe get application cdn-control-plane -n argocd
+NAME                SYNC STATUS   HEALTH STATUS
+cdn-control-plane   Synced        Degraded
+
+
+while aborted, 12 responses: 
+1.5.0=8
+$ git.exe -C C:\uni_year_4 revert --no-edit eda063e
+[devops-lab-6-rollouts 43afd42] Revert "gitops: release 1.6.0 (aborted in the Lab 6 demonstration)"
+ Date: Wed Nov 11 22:16:49 2026 +0200
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+$ git.exe -C C:\uni_year_4 push origin devops-lab-6-rollouts
+To github.com:ostrrovska/uni_year_4.git
+   eda063e..43afd42  devops-lab-6-rollouts -> devops-lab-6-rollouts
+
+$ kubectl-argo-rollouts.exe get rollout cdn-cdn-control-plane-api -n cdn-gitops
+Name:            cdn-cdn-control-plane-api
+Namespace:       cdn-gitops
+Status:          [32m✔[0m Healthy
+Strategy:        Canary
+  Step:          6/6
+  SetWeight:     100
+  ActualWeight:  100
+Images:          ghcr.io/ostrrovska/cdn-control-plane:1.5.0 ([32mstable[0m)
+Replicas:
+  Desired:       5
+  Current:       5
+  Updated:       5
+  Ready:         5
+  Available:     5
+
+NAME                                                   KIND        STATUS        AGE    INFO
+⟳ cdn-cdn-control-plane-api                            Rollout     [32m✔[0m Healthy     35m    
+├──# revision:5                                                                         
+│  └──⧉ [32mcdn-cdn-control-plane-api-855fc5997b[0m           ReplicaSet  [32m✔[0m Healthy     11m    [32mstable[0m
+│     ├──□ cdn-cdn-control-plane-api-855fc5997b-w6zp2  Pod         [32m✔[0m Running     11m    ready:1/1
+│     ├──□ cdn-cdn-control-plane-api-855fc5997b-h92pz  Pod         [32m✔[0m Running     11m    ready:1/1
+│     ├──□ cdn-cdn-control-plane-api-855fc5997b-zd8mz  Pod         [32m✔[0m Running     11m    ready:1/1
+│     ├──□ cdn-cdn-control-plane-api-855fc5997b-k54x9  Pod         [32m✔[0m Running     10m    ready:1/1
+│     └──□ cdn-cdn-control-plane-api-855fc5997b-mdjhp  Pod         [32m✔[0m Running     8m8s   ready:1/1
+├──# revision:4                                                                         
+│  └──⧉ cdn-cdn-control-plane-api-5d6b9d947f           ReplicaSet  [0m•[0m ScaledDown  8m25s  
+├──# revision:2                                                                         
+│  └──⧉ cdn-cdn-control-plane-api-65c6f69d57           ReplicaSet  [0m•[0m ScaledDown  16m    
+└──# revision:1                                                                         
+   └──⧉ cdn-cdn-control-plane-api-7d5598666            ReplicaSet  [0m•[0m ScaledDown  35m    
+
+$ git.exe -C C:\uni_year_4 log --oneline -5
+43afd42 Revert "gitops: release 1.6.0 (aborted in the Lab 6 demonstration)"
+eda063e gitops: release 1.6.0 (aborted in the Lab 6 demonstration)
+f03b16b gitops: canary release of the CDN Control Plane 1.5.0
+b4990f3 devops: lab 6 - report, plus what the live run broke on
+1120d56 gitops: canary release of the CDN Control Plane 1.4.0
+

@@ -328,6 +328,22 @@ try {
         Capture "05-abort" $git @("-C", $repo, "push", "origin", $Branch) -Silent | Out-Null
         $shaRevert = (Invoke-Native $git @("-C", $repo, "rev-parse", "--short", "HEAD")).Trim()
         $script:CommitsMade += $shaRevert
+
+        # The sync that delivered the aborted release is still Running, and it
+        # will stay that way: a wave sync waits for every resource in the wave to
+        # become healthy, and an aborted Rollout reports Degraded by definition.
+        # Argo CD starts no new sync while one is in flight, so the revert would
+        # sit in Git, already observed, until the controller's own timeout -
+        # measured here as `Retrying attempt #5`, minutes away.
+        #
+        # Same lock, same release valve as Lab 5 §7.4. Doing it only when an
+        # operation is actually running keeps it honest: this is an operator
+        # action, not part of the GitOps loop.
+        if ((Get-AppField $App ".status.operationState.phase") -eq "Running") {
+            Note "the aborted release's sync is still running and holds the application lock"
+            Capture "05-abort" $argocd (@("app", "terminate-op", $App) + $argoFlags) -Silent | Out-Null
+            Start-Sleep -Seconds 10
+        }
         Request-Refresh
         Wait-For {
             ((Get-AppField $App ".status.health.status") -eq "Healthy") -and

@@ -1,0 +1,10 @@
+﻿$ kubectl.exe get rollout -n cdn-gitops
+NAME                        DESIRED   CURRENT   UP-TO-DATE   AVAILABLE   AGE
+cdn-cdn-control-plane-api   5         5         5            5           21m
+
+$ kubectl.exe get deployment -n cdn-gitops
+NAME                               READY   UP-TO-DATE   AVAILABLE   AGE
+cdn-cdn-control-plane-agents       1/1     1            1           91m
+cdn-cdn-control-plane-postgresql   1/1     1            1           91m
+cdn-cdn-control-plane-redis        1/1     1            1           91m
+

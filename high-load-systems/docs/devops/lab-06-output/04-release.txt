@@ -1,0 +1,90 @@
+﻿$ git.exe -C C:\uni_year_4 add -- high-load-systems/gitops/values/values-minikube.yaml
+
+$ git.exe -C C:\uni_year_4 commit -m gitops: canary release of the CDN Control Plane 1.5.0 -- high-load-systems/gitops/values/values-minikube.yaml
+[devops-lab-6-rollouts f03b16b] gitops: canary release of the CDN Control Plane 1.5.0
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+$ git.exe -C C:\uni_year_4 push origin devops-lab-6-rollouts
+To github.com:ostrrovska/uni_year_4.git
+   b4990f3..f03b16b  devops-lab-6-rollouts -> devops-lab-6-rollouts
+
+$ kubectl-argo-rollouts.exe get rollout cdn-cdn-control-plane-api -n cdn-gitops
+Name:            cdn-cdn-control-plane-api
+Namespace:       cdn-gitops
+Status:          [0m॥[0m Paused
+Message:         CanaryPauseStep
+Strategy:        Canary
+  Step:          1/6
+  SetWeight:     20
+  ActualWeight:  20
+Images:          ghcr.io/ostrrovska/cdn-control-plane:1.4.0 ([32mstable[0m)
+                 ghcr.io/ostrrovska/cdn-control-plane:1.5.0 ([33mcanary[0m)
+Replicas:
+  Desired:       5
+  Current:       5
+  Updated:       1
+  Ready:         5
+  Available:     5
+
+NAME                                                   KIND        STATUS        AGE    INFO
+⟳ cdn-cdn-control-plane-api                            Rollout     [0m॥[0m Paused      23m    
+├──# revision:3                                                                         
+│  └──⧉ [33mcdn-cdn-control-plane-api-855fc5997b[0m           ReplicaSet  [32m✔[0m Healthy     17s    [33mcanary[0m
+│     └──□ cdn-cdn-control-plane-api-855fc5997b-w6zp2  Pod         [32m✔[0m Running     16s    ready:1/1
+├──# revision:2                                                                         
+│  └──⧉ [32mcdn-cdn-control-plane-api-65c6f69d57[0m           ReplicaSet  [32m✔[0m Healthy     5m17s  [32mstable[0m
+│     ├──□ cdn-cdn-control-plane-api-65c6f69d57-w7462  Pod         [32m✔[0m Running     5m17s  ready:1/1
+│     ├──□ cdn-cdn-control-plane-api-65c6f69d57-d6jqv  Pod         [32m✔[0m Running     4m21s  ready:1/1
+│     ├──□ cdn-cdn-control-plane-api-65c6f69d57-9vzrk  Pod         [32m✔[0m Running     3m41s  ready:1/1
+│     └──□ cdn-cdn-control-plane-api-65c6f69d57-nwrns  Pod         [32m✔[0m Running     2m55s  ready:1/1
+└──# revision:1                                                                         
+   └──⧉ cdn-cdn-control-plane-api-7d5598666            ReplicaSet  [0m•[0m ScaledDown  23m    
+
+$ kubectl.exe get application cdn-control-plane -n argocd
+NAME                SYNC STATUS   HEALTH STATUS
+cdn-control-plane   Synced        Suspended
+
+
+traffic split sampled from a pod inside the cluster, 32 responses:
+  1.4.0   24 responses
+  1.5.0    8 responses  (25%)
+
+Sampled through the Service from inside the cluster on purpose: a
+port-forward attaches to one pod and would report 100% of whichever
+version that pod happens to run.
+$ kubectl-argo-rollouts.exe promote cdn-cdn-control-plane-api -n cdn-gitops
+rollout 'cdn-cdn-control-plane-api' promoted
+
+$ kubectl-argo-rollouts.exe get rollout cdn-cdn-control-plane-api -n cdn-gitops
+Name:            cdn-cdn-control-plane-api
+Namespace:       cdn-gitops
+Status:          [32m✔[0m Healthy
+Strategy:        Canary
+  Step:          6/6
+  SetWeight:     100
+  ActualWeight:  100
+Images:          ghcr.io/ostrrovska/cdn-control-plane:1.5.0 ([32mstable[0m)
+Replicas:
+  Desired:       5
+  Current:       5
+  Updated:       5
+  Ready:         5
+  Available:     5
+
+NAME                                                   KIND        STATUS        AGE    INFO
+⟳ cdn-cdn-control-plane-api                            Rollout     [32m✔[0m Healthy     25m    
+├──# revision:3                                                                         
+│  └──⧉ [32mcdn-cdn-control-plane-api-855fc5997b[0m           ReplicaSet  [32m✔[0m Healthy     112s   [32mstable[0m
+│     ├──□ cdn-cdn-control-plane-api-855fc5997b-w6zp2  Pod         [32m✔[0m Running     111s   ready:1/1
+│     ├──□ cdn-cdn-control-plane-api-855fc5997b-h92pz  Pod         [32m✔[0m Running     91s    ready:1/1
+│     ├──□ cdn-cdn-control-plane-api-855fc5997b-zd8mz  Pod         [32m✔[0m Running     91s    ready:1/1
+│     ├──□ cdn-cdn-control-plane-api-855fc5997b-k54x9  Pod         [32m✔[0m Running     49s    ready:1/1
+│     └──□ cdn-cdn-control-plane-api-855fc5997b-97ldm  Pod         [32m✔[0m Running     10s    ready:1/1
+├──# revision:2                                                                         
+│  └──⧉ cdn-cdn-control-plane-api-65c6f69d57           ReplicaSet  [0m•[0m ScaledDown  6m52s  
+└──# revision:1                                                                         
+   └──⧉ cdn-cdn-control-plane-api-7d5598666            ReplicaSet  [0m•[0m ScaledDown  25m    
+
+
+after promote, 12 responses: 
+1.5.0=7

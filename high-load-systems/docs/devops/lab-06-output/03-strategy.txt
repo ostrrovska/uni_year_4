@@ -1,0 +1,5 @@
+﻿$ kubectl.exe get rollout cdn-cdn-control-plane-api -n cdn-gitops -o jsonpath={.spec.strategy}
+{"canary":{"steps":[{"setWeight":20},{"pause":{}},{"setWeight":60},{"pause":{"duration":"30s"}},{"setWeight":80},{"pause":{"duration":"30s"}}]}}
+
+
+steps: [{"setWeight":20},{"pause":{}},{"setWeight":60},{"pause":{"duration":"30s"}},{"setWeight":80},{"pause":{"duration":"30s"}}]

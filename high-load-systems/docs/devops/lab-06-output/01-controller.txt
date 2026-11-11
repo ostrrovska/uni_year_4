@@ -1,0 +1,30 @@
+﻿$ kubectl.exe get application argo-rollouts -n argocd
+NAME            SYNC STATUS   HEALTH STATUS
+argo-rollouts   Synced        Healthy
+
+$ kubectl.exe get pods -n argo-rollouts
+NAME                                       READY   STATUS    RESTARTS       AGE
+argo-rollouts-75cb5c95c5-mmx6l             1/1     Running   4 (5m7s ago)   22m
+argo-rollouts-dashboard-79999f8d8f-9fcgc   1/1     Running   0              24m
+
+$ kubectl.exe get crd -o name
+customresourcedefinition.apiextensions.k8s.io/analysisruns.argoproj.io
+customresourcedefinition.apiextensions.k8s.io/analysistemplates.argoproj.io
+customresourcedefinition.apiextensions.k8s.io/applications.argoproj.io
+customresourcedefinition.apiextensions.k8s.io/applicationsets.argoproj.io
+customresourcedefinition.apiextensions.k8s.io/appprojects.argoproj.io
+customresourcedefinition.apiextensions.k8s.io/clusteranalysistemplates.argoproj.io
+customresourcedefinition.apiextensions.k8s.io/experiments.argoproj.io
+customresourcedefinition.apiextensions.k8s.io/rollouts.argoproj.io
+
+
+CRDs present: rollouts, analysistemplates, analysisruns, experiments, clusteranalysistemplates
+$ kubectl-argo-rollouts.exe version
+kubectl-argo-rollouts: v1.10.2+be8a622
+  BuildDate: 2026-11-04T15:25:11Z
+  GitCommit: be8a6221c6c9751cd14497f31a2cb3c33690375a
+  GitTreeState: clean
+  GoVersion: go1.26.10
+  Compiler: gc
+  Platform: windows/amd64
+

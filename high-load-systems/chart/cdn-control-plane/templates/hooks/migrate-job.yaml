@@ -46,6 +46,28 @@ metadata:
     "helm.sh/hook": post-install,pre-upgrade
     "helm.sh/hook-weight": "-5"
     "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+    # DevOps Lab5 - Argo CD reads these and ignores the Helm hook above.
+    #
+    # Helm has install and upgrade; Argo CD has only "sync", so
+    # post-install,pre-upgrade collapses to PreSync - which runs before any of
+    # the release's own objects exist, and the migration dials a PostgreSQL
+    # Service that is not there yet. That is not a hypothetical: it is how the
+    # first sync of this application failed, with getaddrinfo "Name or service
+    # not known".
+    #
+    # Sync + wave 1 restores the order the Helm hook expressed: wave 0 (the
+    # database and the config) must be Healthy first, this Job runs and must
+    # complete, and only then does wave 2 roll the API and the agents. The
+    # schema is therefore applied strictly before any pod that depends on it,
+    # on a first install and on every sync after it alike.
+    #
+    # BeforeHookCreation rather than HookSucceeded: a Job is immutable, so the
+    # old one must go before the next sync can create it - and keeping the
+    # finished Job until then leaves its logs available for exactly as long as
+    # they are useful.
+    "argocd.argoproj.io/hook": Sync
+    "argocd.argoproj.io/hook-delete-policy": BeforeHookCreation
+    "argocd.argoproj.io/sync-wave": "1"
 spec:
   backoffLimit: 6
   template:

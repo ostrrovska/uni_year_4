@@ -24,6 +24,9 @@ spec:
         # every replica running on the old values indefinitely.
         checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
         checksum/secret: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}
+        # DevOps Lab5 - wave 2: the API rolls only after the database is
+        # Healthy (wave 0) and the migration has completed (wave 1).
+        "argocd.argoproj.io/sync-wave": "2"
     spec:
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}

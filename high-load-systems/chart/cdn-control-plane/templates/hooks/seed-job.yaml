@@ -17,6 +17,11 @@ metadata:
     "helm.sh/hook": post-install,post-upgrade
     "helm.sh/hook-weight": "5"
     "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+    # DevOps Lab5 - wave 3: after the API is up, as the Helm weight intended.
+    # Idempotent (UUIDv5 keys), so re-running it on every sync is a no-op.
+    "argocd.argoproj.io/hook": Sync
+    "argocd.argoproj.io/hook-delete-policy": BeforeHookCreation
+    "argocd.argoproj.io/sync-wave": "3"
 spec:
   backoffLimit: 6
   template:

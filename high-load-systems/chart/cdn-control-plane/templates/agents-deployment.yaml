@@ -26,6 +26,10 @@ spec:
       labels:
         {{- include "cdn.labels" (dict "ctx" $ "component" "agents") | nindent 8 }}
       annotations:
+        # DevOps Lab5 - wave 2: nothing here starts until the database (wave 0)
+        # is Healthy and the migration (wave 1) has completed.
+        "argocd.argoproj.io/sync-wave": "2"
+      annotations:
         checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
     spec:
       securityContext:

@@ -22,27 +22,31 @@ metadata:
 spec:
   project: default
 
-  # Two sources, because the chart and the values that configure it live in
-  # different directories of this monorepo. The first contributes no manifests -
-  # `ref: cfg` only gives the second a name to reach the repository by, which is
-  # what lets valueFiles point outside the chart directory.
+  # One source. The chart stays where Lab 4 put it and the values file lives
+  # here, so valueFiles climbs out of the chart directory with a relative path -
+  # Argo CD resolves those against the chart and allows anything inside the same
+  # repository.
   #
-  # The alternative was to copy the Lab 4 chart into gitops/charts/. A second
-  # copy of a chart in the same repository is a copy that will drift, and the
-  # first time the two disagree the cluster follows the one nobody edited. One
-  # chart, referenced from here, keeps Lab 4 and Lab 5 on the same templates.
-  sources:
-    - repoURL: https://github.com/ostrrovska/uni_year_4.git
-      targetRevision: devops-lab-5-gitops
-      ref: cfg
-
-    - repoURL: https://github.com/ostrrovska/uni_year_4.git
-      targetRevision: devops-lab-5-gitops
-      path: high-load-systems/chart/cdn-control-plane
-      helm:
-        releaseName: cdn
-        valueFiles:
-          - $cfg/high-load-systems/gitops/values/values-minikube.yaml
+  # This started as a two-source Application (`ref: cfg` plus `$cfg/...`), which
+  # is the documented way to combine a chart and values from different places.
+  # With both sources on the same repository and branch it is the wrong tool:
+  # Argo CD resolves each source's revision separately and then refuses the pair
+  # with "cannot reference a different revision of the same repository" whenever
+  # a commit lands between the two resolutions. It recovers on the next refresh,
+  # but a sync that intermittently fails for no reason the manifests can explain
+  # is not something to take into a live demonstration.
+  #
+  # The chart is also not copied into gitops/charts/. A second copy of a chart in
+  # the same repository is a copy that will drift, and the first time the two
+  # disagree the cluster follows the one nobody edited.
+  source:
+    repoURL: https://github.com/ostrrovska/uni_year_4.git
+    targetRevision: devops-lab-5-gitops
+    path: high-load-systems/chart/cdn-control-plane
+    helm:
+      releaseName: cdn
+      valueFiles:
+        - ../../gitops/values/values-minikube.yaml
 
   destination:
     # The cluster Argo CD itself runs in. An in-cluster destination is named by

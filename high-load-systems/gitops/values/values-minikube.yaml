@@ -1,4 +1,4 @@
-# DevOps Lab5
+﻿# DevOps Lab5
 # The desired state of the CDN Control Plane on the local minikube cluster.
 #
 # Nothing applies this file by hand. Argo CD reads it straight from Git
@@ -21,10 +21,10 @@
 
 image:
   # The one line that releases a new version. Changing it, committing and pushing
-  # is the entire deployment procedure in Lab 5 - see docs/devops/lab-05.md §5.
+  # is the entire deployment procedure in Lab 5 - see docs/devops/lab-05.md Â§5.
   # Must be an immutable tag: `latest` would make Git stop describing the cluster,
   # because the same commit would mean a different image on different days.
-  tag: "1.2.1"
+  tag: "1.3.0"
   # Always, not IfNotPresent. Under GitOps a pod may be rescheduled onto a node
   # that already holds a stale layer under the same name; Always makes the
   # registry the authority. It also makes a wrong tag fail loudly and quickly

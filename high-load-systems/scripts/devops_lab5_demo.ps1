@@ -189,7 +189,7 @@ function Set-SelfHeal([bool]$Enabled) {
 
 # ---------------------------------------------------------------- argo helpers
 
-function Argo([string[]]$ArgoArgs) { return (Invoke-Native $argocd ($ArgoArgs + @("--grpc-web"))) }
+function Argo([string[]]$ArgoArgs) { return (Invoke-Native $argocd ($ArgoArgs + @("--port-forward", "--port-forward-namespace", $ArgoNamespace, "--insecure"))) }
 
 function Get-AppField([string]$Name, [string]$JsonPath) {
     return (& $kubectl get application $Name -n $ArgoNamespace -o "jsonpath={$JsonPath}")
@@ -339,7 +339,7 @@ try {
     if (-not $changed) {
         throw "argocd-initial-admin-secret still exists - change the admin password and delete it (see scripts/devops_lab5_setup.ps1)"
     }
-    $whoami = Capture "03-argocd" $argocd @("account", "get-user-info", "--grpc-web")
+    $whoami = Capture "03-argocd" $argocd @("account", "get-user-info", "--port-forward", "--port-forward-namespace", $ArgoNamespace, "--insecure")
     if ($whoami -notmatch "Logged In: true") { throw "the argocd CLI is not logged in" }
     Pass "the initial admin password is no longer in use" "argocd-initial-admin-secret deleted; CLI logged in as admin"
 
@@ -357,8 +357,8 @@ try {
     Section "clause 4" "the application is Synced and Healthy, and its object tree is visible"
     Request-Refresh
     $state = Wait-AppState "Synced" "Healthy" 420
-    $tree = Capture "04-app-of-apps" $argocd @("app", "resources", $App, "--grpc-web")
-    $appGet = Capture "04-app-of-apps" $argocd @("app", "get", $App, "--grpc-web")
+    $tree = Capture "04-app-of-apps" $argocd @("app", "resources", $App, "--port-forward", "--port-forward-namespace", $ArgoNamespace, "--insecure")
+    $appGet = Capture "04-app-of-apps" $argocd @("app", "get", $App, "--port-forward", "--port-forward-namespace", $ArgoNamespace, "--insecure")
     $objects = Capture "04-app-of-apps" $kubectl @("get", "all", "-n", $Namespace)
     if ($objects -notmatch "deployment.apps/") { throw "the application deployed no workloads" }
     $startTag = Get-DeployedTag
@@ -385,7 +385,7 @@ try {
         $servedNow = Get-ServedVersion
         Write-Transcript "05-release" @("", "GET /version -> $servedNow", "deployment image tag -> $newTag")
         if ($servedNow -ne $ToVersion) { throw "/version still reports $servedNow after the rollout" }
-        Capture "05-release" $argocd @("app", "history", $App, "--grpc-web") | Out-Null
+        Capture "05-release" $argocd @("app", "history", $App, "--port-forward", "--port-forward-namespace", $ArgoNamespace, "--insecure") | Out-Null
         Note "the visible change is in the response itself, not only in the manifest:"
         Note "/version is read from values baked into the image, so it can only report the"
         Note "build the pod was actually made from."
@@ -400,7 +400,7 @@ try {
     Capture "06a-drift" $kubectl @("scale", "deployment/$deployment", "-n", $Namespace, "--replicas=3") | Out-Null
     Request-Refresh
     $drift = Wait-AppState "OutOfSync" "" 240
-    $diff = Capture "06a-drift" $argocd @("app", "diff", $App, "--grpc-web")
+    $diff = Capture "06a-drift" $argocd @("app", "diff", $App, "--port-forward", "--port-forward-namespace", $ArgoNamespace, "--insecure")
     $scaled = Get-ApiReplicas
     if ($scaled -ne 3) { throw "the manual scale did not take effect" }
     Note "Argo CD saw the difference immediately and left it alone: detecting drift and"
@@ -444,7 +444,7 @@ try {
         $bad = Wait-AppState "Synced" "Degraded" 420
         $pods = Capture "06b-degraded" $kubectl @("get", "pods", "-n", $Namespace)
         Capture "06b-degraded" $kubectl @("get", "events", "-n", $Namespace, "--sort-by=.lastTimestamp") -Silent | Out-Null
-        Capture "06b-degraded" $argocd @("app", "get", $App, "--grpc-web") | Out-Null
+        Capture "06b-degraded" $argocd @("app", "get", $App, "--port-forward", "--port-forward-namespace", $ArgoNamespace, "--insecure") | Out-Null
         if ($pods -notmatch "ImagePullBackOff|ErrImagePull") { throw "no pod is failing to pull the bad image" }
         Note "Synced and Degraded at once is the useful distinction: Synced means the cluster"
         Note "matches Git, Degraded means what Git asked for does not work. Argo CD did its"
@@ -469,7 +469,7 @@ try {
         if ($tagBack -ne $ToVersion) { throw "the revert did not restore $ToVersion, found $tagBack" }
         $servedBack = Get-ServedVersion
         $log = Capture "06c-revert" $git @("-C", $repo, "log", "--oneline", "-6")
-        $history = Capture "06c-revert" $argocd @("app", "history", $App, "--grpc-web")
+        $history = Capture "06c-revert" $argocd @("app", "history", $App, "--port-forward", "--port-forward-namespace", $ArgoNamespace, "--insecure")
         if ($log -notmatch "Revert") { throw "git log does not show the revert" }
         Write-Transcript "06c-revert" @("", "GET /version -> $servedBack")
         Note "git revert adds a commit rather than deleting one, and argocd app history"

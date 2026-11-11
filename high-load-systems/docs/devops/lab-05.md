@@ -429,6 +429,56 @@ git push
 Після відкату застосунок повертається до `Synced / Healthy`, а `/version` знову
 відповідає `1.3.0`.
 
+#### Чому самого коміту тут не досить — і це найцінніше, що дав живий прогін
+
+Перший прогін демо **упав саме на цьому кроці**, і причина виявилась не
+тривіальною. Argo CD **не починає нову синхронізацію, поки триває попередня**, а
+синхронізація з хвилями чекає, доки кожен Deployment хвилі стане здоровим. Отже
+відкат лежав у Git — Argo CD його вже *бачив* (`.status.sync.revision` дорівнював
+коміту відкату) — і не застосовувався:
+
+```
+phase=Running
+msg=waiting for healthy state of apps/Deployment/cdn-cdn-control-plane-agents
+```
+
+Чому чекання не закінчувалось, видно з умов двох Deployment-ів. Обидва мають
+`progressDeadlineSeconds: 120`:
+
+| | `api` | `agents` |
+|---|---|---|
+| стратегія | `RollingUpdate`, `maxUnavailable: 0` | `Recreate` |
+| `Progressing` | `False`, **`ProgressDeadlineExceeded`** | `True`, `NewReplicaSetAvailable` |
+| як це читає Argo CD | **Degraded** | **Progressing** (нескінченно) |
+
+У `api` старий под лишається `Available`, новий ReplicaSet не просувається —
+Kubernetes вчасно виставляє `ProgressDeadlineExceeded`, і Argo CD називає це
+Degraded. У `agents` зі стратегією `Recreate` Kubernetes лишив умову
+`Progressing` на **застарілому** `NewReplicaSetAvailable` від попереднього
+викочування, тож дедлайн не спрацював узагалі, і Argo CD нескінченно читає под
+як «ще запускається».
+
+Це міряно, а не припущено: `pdl=120` на обох, різні `reason`.
+
+Наслідок практичний: застрягла синхронізація тримає **замок** застосунку.
+Виходів два — дочекатися власного тайм-ауту контролера (близько 10 хвилин,
+`application controller sync timeout. Retrying attempt #4`) або зняти операцію:
+
+```bash
+argocd app terminate-op cdn-control-plane
+```
+
+Заміряно: після `terminate-op` відкат застосувався і застосунок повернувся до
+`Synced / Healthy` на `1.3.0` за **~35 секунд** замість ~10 хвилин. Демо робить
+це автоматично — але тільки якщо операція справді ще `Running`, і з поясненням у
+виводі, бо це дія оператора, а не частина GitOps-циклу.
+
+**Що з цього варто винести.** «Git — джерело правди» не означає «коміт діє
+миттєво». Між комітом і кластером стоїть контролер зі своїм станом, і зламаний
+реліз здатен заблокувати власне виправлення. Це аргумент за короткий
+`progressDeadlineSeconds` на **кожному** Deployment і за те, щоб знати, де в
+Argo CD кнопка, яка знімає операцію.
+
 ---
 
 ## 8. Що саме перевіряє демо
@@ -448,7 +498,7 @@ git push
 | 07 | 6a | після `kubectl scale` — `OutOfSync`, у кластері 3 репліки |
 | 08 | 6a | після коміту `selfHeal: true` репліки самі повертаються до 1 |
 | 09 | 6b | `Synced` + `Degraded`, у подах `ImagePullBackOff` |
-| 10 | 6c | `git log` містить `Revert`, застосунок знову `Synced`/`Healthy`, `/version` = `1.3.0` |
+| 10 | 6c | знімає застряглу операцію, якщо вона ще `Running`; `git log` містить `Revert`, застосунок знову `Synced`/`Healthy`, `/version` = `1.3.0` |
 
 Демо **комітить і пушить** — це не недогляд, а суть: під GitOps єдиний спосіб
 змінити кластер — змінити Git, і демонстрація, яка щось довела б не чіпаючи Git,
@@ -469,7 +519,9 @@ git push
    selfHeal — повертається само.
 4. **Synced + Degraded.** Вписати неіснуючий тег, показати обидва статуси поряд і
    `ImagePullBackOff`, наголосити, що старі поди ще обслуговують.
-5. **Відкат.** `git revert`, `git log`, `argocd app history`.
+5. **Відкат.** `git revert`, `git log`, `argocd app history`. Якщо попередня
+   синхронізація ще `Running` — спершу `argocd app terminate-op cdn-control-plane`,
+   інакше відкат чекатиме тайм-ауту контролера; чому саме так — §7.4.
 
 **«Змініть будь-яке значення в Git».** Найшвидша відповідь на цю просьбу —
 `config.logLevel` у `values-minikube.yaml`: коміт → Argo CD оновлює ConfigMap →

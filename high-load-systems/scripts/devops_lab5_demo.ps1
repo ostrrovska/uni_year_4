@@ -468,6 +468,30 @@ try {
         $revert = Capture "06c-revert" $git @("-C", $repo, "revert", "--no-edit", $shaBad)
         if ($revert -notmatch "Revert") { throw "the revert did not produce a commit: $revert" }
         Capture "06c-revert" $git @("-C", $repo, "push", "origin", $Branch) -Silent | Out-Null
+
+        # The bad-tag sync is very likely still Running, and Argo CD starts no
+        # new sync while one is in flight - so the revert would sit in Git,
+        # observed and unapplied, until the controller's own timeout.
+        #
+        # It hangs on the agents Deployment specifically. The API uses
+        # RollingUpdate with maxUnavailable: 0, so its old pod stays Available
+        # while the new ReplicaSet never progresses, and Kubernetes raises
+        # ProgressDeadlineExceeded on schedule - Argo CD calls that Degraded.
+        # The agents Deployment uses strategy: Recreate, and Kubernetes leaves
+        # its Progressing condition on a stale "NewReplicaSetAvailable" from the
+        # previous rollout, so the deadline never fires and Argo CD keeps
+        # reading it as Progressing. Measured, not assumed: pdl=120 on both,
+        # ProgressDeadlineExceeded on the API, NewReplicaSetAvailable on agents.
+        #
+        # Terminating the operation is what an operator does here, and it is
+        # honest about the cause: the previous attempt is waiting for an image
+        # that will never exist.
+        if ((Get-AppField $App ".status.operationState.phase") -eq "Running") {
+            Note "the bad-tag sync is still running and holds the application's sync lock"
+            Capture "06c-revert" $argocd @("app", "terminate-op", $App,
+                "--port-forward", "--port-forward-namespace", $ArgoNamespace, "--insecure") -Silent | Out-Null
+            Start-Sleep -Seconds 10
+        }
         $shaRevert = (Invoke-Native $git @("-C", $repo, "rev-parse", "--short", "HEAD")).Trim()
         $script:CommitsMade += $shaRevert
         Request-Refresh

@@ -23,7 +23,7 @@ spec:
 
   source:
     repoURL: https://github.com/ostrrovska/uni_year_4.git
-    targetRevision: devops-lab-5-gitops
+    targetRevision: devops-lab-6-rollouts
     path: high-load-systems/gitops/argocd-apps
     directory:
       # Pick up every manifest in the directory, including any added later.

@@ -1,0 +1,61 @@
+# DevOps Lab6
+# The Argo Rollouts controller, installed the same way everything else is: as a
+# manifest in this directory that the root Application picks up. Nothing here is
+# applied by hand, including the thing that installs the CRDs.
+#
+# This is the first Application in the repository whose source is a third-party
+# Helm repository rather than this one - which is the point of the Application
+# abstraction: Argo CD does not care where a chart comes from.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: argo-rollouts
+  namespace: argocd
+  annotations:
+    # Before the applications that need it. The controller owns the Rollout CRD,
+    # and an application whose manifests include `kind: Rollout` cannot sync
+    # until that CRD exists - it fails with `no matches for kind "Rollout"`.
+    # A negative wave puts this ahead of cdn-control-plane, which has no
+    # annotation and therefore sits at the default wave 0.
+    argocd.argoproj.io/sync-wave: "-1"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://argoproj.github.io/argo-helm
+    chart: argo-rollouts
+    # Pinned, not a range: the whole premise is that Git describes the cluster,
+    # and "whatever the chart repository serves today" describes nothing.
+    # Chart 2.43.12 carries Argo Rollouts v1.10.2.
+    targetRevision: 2.43.12
+    helm:
+      valuesObject:
+        # The dashboard is how the rollout is watched during the defence, and
+        # it is off by default in this chart.
+        dashboard:
+          enabled: true
+        controller:
+          # Small on purpose: this cluster has 3 GB in total and the controller
+          # is watching exactly one Rollout.
+          resources:
+            requests:
+              cpu: 50m
+              memory: 96Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argo-rollouts
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      # The chart ships the Rollout CRDs. Without this, a CRD large enough to
+      # exceed the 262144-byte annotation limit fails to apply, because Argo CD
+      # defaults to kubectl apply and that stores the whole manifest in
+      # last-applied-configuration. Server-side apply has no such limit.
+      - ServerSideApply=true

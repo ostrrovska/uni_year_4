@@ -41,7 +41,7 @@ spec:
   # disagree the cluster follows the one nobody edited.
   source:
     repoURL: https://github.com/ostrrovska/uni_year_4.git
-    targetRevision: devops-lab-5-gitops
+    targetRevision: devops-lab-6-rollouts
     path: high-load-systems/chart/cdn-control-plane
     helm:
       releaseName: cdn
@@ -89,3 +89,17 @@ spec:
       kind: Job
       jsonPointers:
         - /spec/template/metadata/labels
+
+    # DevOps Lab6 - Argo Rollouts writes a rollouts-pod-template-hash into the
+    # selector of the Services it manages, to point them at one ReplicaSet.
+    # Git cannot contain that value: it is derived from the pod template and
+    # changes with every revision. Without this, Argo CD sees the controller's
+    # edit as drift, selfHeal reverts it, the controller writes it back, and the
+    # application sits in a permanent OutOfSync loop with the two of them
+    # fighting. It matters for blue-green; it is declared here because the
+    # strategy is a values-level choice and this must not depend on which one is
+    # selected.
+    - group: ""
+      kind: Service
+      jsonPointers:
+        - /spec/selector

@@ -66,7 +66,7 @@ spec:
       # drift without touching it; flipping this to true - by a commit, not by a
       # click - makes it revert the change instead. Doing it in that order shows
       # that detection and correction are two separate settings.
-      selfHeal: true
+      selfHeal: false
     syncOptions:
       # Argo CD creates the destination namespace. Nothing is applied manually,
       # so there is no earlier step in which a namespace could have been made.

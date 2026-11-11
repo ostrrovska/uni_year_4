@@ -20,7 +20,7 @@
 | Вимога | Як виконано |
 |---|---|
 | **1.** Репозиторій конфігурації, варіант (a) або (b) | Варіант **(b)**: [`gitops/`](../../gitops/) з `bootstrap/`, `argocd-apps/` і `values/` — §2 |
-| **1.** Перенести чарт із ЛР-4 і файл значень для minikube | Файл значень — [`gitops/values/values-minikube.yaml`](../../gitops/values/values-minikube.yaml). Чарт **свідомо не копіювався**: Application посилається на нього за шляхом через multi-source — §2, рядок «про `charts/`» |
+| **1.** Перенести чарт із ЛР-4 і файл значень для minikube | Файл значень — [`gitops/values/values-minikube.yaml`](../../gitops/values/values-minikube.yaml). Чарт **свідомо не копіювався**: Application посилається на нього за шляхом, а файл значень підключений відносним `valueFiles` — §2.2 |
 | **1.** Паролі й токени відкритим текстом у Git не зберігати | Жодного пароля в Git: чарт отримав значення `existingSecret`, і при ньому не рендерить власний Secret. Перевірка — §2.3 |
 | **2a.** Образ у реєстрі з конкретним тегом (не `latest`), доступний з кластера | `ghcr.io/ostrrovska/cdn-control-plane:1.2.0` і `:1.3.0`, публікує CI по git-тегу `cdn-v*` — §3 |
 | **2b.** Застосунок показує свою версію | Ендпоінт **`/version`** + поле `version` у `/health`; значення вшите в образ через `ARG`/`ENV` у [`docker/Dockerfile`](../../docker/Dockerfile) — §3.2 |
@@ -78,23 +78,36 @@ high-load-systems/
 Мета вимоги — «опис розгортання лежить у Git, а не в командах» — досягнута
 повністю: у Git лежить і чарт, і значення, і сам Application.
 
-Технічно це робиться multi-source Application: перше джерело не дає жодного
-маніфесту, воно лише дає імʼя `cfg`, через яке друге джерело дістає файл значень
-поза каталогом чарта.
+Технічно це одне джерело: `valueFiles` Argo CD розвʼязує **відносно каталогу
+чарта** і дозволяє будь-який шлях у тому ж репозиторії.
 
 ```yaml
-sources:
-  - repoURL: https://github.com/ostrrovska/uni_year_4.git
-    targetRevision: devops-lab-5-gitops
-    ref: cfg
-  - repoURL: https://github.com/ostrrovska/uni_year_4.git
-    targetRevision: devops-lab-5-gitops
-    path: high-load-systems/chart/cdn-control-plane
-    helm:
-      releaseName: cdn
-      valueFiles:
-        - $cfg/high-load-systems/gitops/values/values-minikube.yaml
+source:
+  repoURL: https://github.com/ostrrovska/uni_year_4.git
+  targetRevision: devops-lab-5-gitops
+  path: high-load-systems/chart/cdn-control-plane
+  helm:
+    releaseName: cdn
+    valueFiles:
+      - ../../gitops/values/values-minikube.yaml
 ```
+
+**Спершу тут був multi-source Application** (`ref: cfg` і `$cfg/...`) — саме так
+документація радить поєднувати чарт і значення з різних місць. На живому кластері
+він почав падати:
+
+```
+ComparisonError: cannot reference a different revision of the same repository
+($cfg references "devops-lab-5-gitops" which resolves to "e261a13…"
+ while the application references "5016d77…")
+```
+
+Обидва джерела вказували на **той самий** репозиторій і ту саму гілку, а Argo CD
+розвʼязує ревізію кожного джерела окремо. Якщо між двома розвʼязаннями встигає
+лягти коміт — а під час розробки лягає постійно — пара відхиляється. Воно саме
+відновлюється на наступному refresh, але синхронізація, яка час від часу падає з
+причини, якої не видно в маніфестах, — не те, з чим варто виходити на захист.
+Одне джерело цієї проблеми не має взагалі.
 
 > Якщо викладач наполягатиме на буквальному `gitops/charts/`, це одна команда
 > `git mv` плюс один рядок `path:` — але звіт свідомо показує кращий варіант.
@@ -272,8 +285,46 @@ Argo CD про них забуває, а Kubernetes ні.
 | `automated.selfHeal` (кореневий) | `true` | кореневий існує, щоб Git керував самим переліком застосунків; дозволити видалити дочірній Application через `kubectl` і лишити його видаленим — означало б скасувати єдину його функцію |
 | `syncOptions: CreateNamespace=true` | | namespace створює Argo CD: ручних кроків раніше немає, тож іншого місця його створити не існує |
 | `retry.backoff` | 10s, ×2, до 3m | синхронізація, що впала через ще не готову базу, має повторитись, а не лишити застосунок у помилці |
+| анотації sync-wave у чарті | §5.3 | без них хук міграції виконується до створення PostgreSQL |
 
-### 5.3 Дерево об'єктів
+### 5.3 Хуки Helm під Argo CD — і чому їх довелося перевизначити
+
+Це найцікавіше, що виявив перший реальний sync: **у Argo CD немає поділу на
+install і upgrade**. Є лише sync. Тому хук міграції з Лаби 4 —
+`helm.sh/hook: post-install,pre-upgrade` — згорнувся у фазу **PreSync**, яка
+виконується *перед* усіма обʼєктами релізу. Job запустився в порожньому
+namespace і помер:
+
+```
+socket.gaierror: [Errno -2] Name or service not known
+```
+
+Жодного PostgreSQL ще не існувало. У Лабі 4 цю пастку було обійдено свідомо
+(`post-install`, а не `pre-install` — див. коментар у `hooks/migrate-job.yaml`),
+але те рішення спиралося на поняття «install», якого тут просто немає.
+
+Правильний механізм у Argo CD — **sync-хвилі**. Чарт отримав анотації, які Helm
+ігнорує, а Argo CD виконує:
+
+| Хвиля | Обʼєкти | Умова переходу далі |
+|---|---|---|
+| 0 | ConfigMap, PVC, PostgreSQL, Redis, Service-и | усі Healthy |
+| 1 | Job міграції (`argocd.argoproj.io/hook: Sync`) | Job завершився |
+| 2 | Deployment `api` і `agents` | усі Healthy |
+| 3 | Job seed | Job завершився |
+
+Argo CD чекає, поки хвиля стане здоровою, і лише тоді береться за наступну. Це
+відновлює рівно той порядок, який виражав хук Helm, але вже в термінах, які має
+Argo CD: схема накочується строго до того, як стартує будь-який под, що від неї
+залежить — і на першому встановленні, і на кожному наступному sync.
+
+`hook-delete-policy: BeforeHookCreation`, а не `HookSucceeded`: Job незмінний,
+тож старий треба прибрати перед створенням нового, а доти його логи лишаються
+доступними — саме тоді, коли вони потрібні.
+
+Анотації інертні для звичайного Helm, тож Лаба 4 поводиться точно як раніше.
+
+### 5.4 Дерево об'єктів
 
 `argocd app resources cdn-control-plane` показує те саме дерево, що й вкладка
 застосунку у вебі: Application → 4 Deployment (`api`, `agents`, `postgresql`,
@@ -455,7 +506,20 @@ git push
 | `chart/.../templates/_helpers.tpl` | `+ cdn.secretName` | одне місце, що знає ім'я секрета |
 | `chart/.../templates/secret.yaml` | рендериться лише коли чарт володіє секретом | там само |
 | `chart/.../templates/*.yaml` (5 файлів) | посилання на секрет через `cdn.secretName` | там само |
+| `chart/.../templates/hooks/*.yaml` | `argocd.argoproj.io/hook: Sync` + хвилі 1 і 3 | §5.3 — у Argo CD немає install/upgrade |
+| `chart/.../templates/api-deployment.yaml`, `agents-deployment.yaml` | `argocd.argoproj.io/sync-wave: "2"` | там само |
+| `scripts/check_chart_render.py` | новий — рендер усіх наборів значень + заборона дубльованих ключів | `helm lint` цього класу помилок не ловить |
 
-Чарт лишився сумісним із Лабою 4: без `existingSecret` він поводиться точно як
-раніше, і `helm lint` та `helm template` для `values-dev.yaml` / `values-prod.yaml`
-дають той самий результат.
+Чарт лишився сумісним із Лабою 4. Без `existingSecret` він рендерить той самий
+Secret, що й раніше (перевірено порівнянням рендерів — байт у байт), а додані
+анотації `argocd.argoproj.io/*` для Helm інертні: він їх просто переносить в
+обʼєкт і ніяк на них не реагує. Єдина різниця у виводі `helm template` для
+`values-dev.yaml` / `values-prod.yaml` — ці зайві рядки анотацій.
+
+Перевірку автоматизовано: `python -I scripts/check_chart_render.py` рендерить
+усі чотири набори значень (дефолти, dev, prod, minikube) і розбирає результат
+завантажувачем, який **відхиляє дубльовані ключі**. Це не теорія — саме так було
+знайдено помилку, коли анотація хвилі додалася другим блоком `annotations:` у
+шаблоні `agents`, і наступний блок `checksum/config` мовчки її затер. `helm lint`
+розбирає шаблони, а не YAML, який вони дають, і не сказав нічого. Той самий
+скрипт стверджує, що GitOps-набір значень не рендерить жодного Secret.

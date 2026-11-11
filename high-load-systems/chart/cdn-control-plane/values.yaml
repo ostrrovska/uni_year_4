@@ -82,6 +82,22 @@ api:
       cpu: "1"
       memory: 384Mi
 
+# DevOps Lab6 - progressive delivery. Off by default: a chart whose default
+# needs a CRD installed first is a chart that fails to install on a clean
+# cluster, and Labs 3-5 are all defined by their plain Deployment.
+#
+# With it on, templates/rollout.yaml renders an Argo Rollout from the same pod
+# template and templates/api-deployment.yaml renders nothing. strategy is
+# passed through verbatim, so either canary or blueGreen can be selected from a
+# values file without touching a template - see
+# gitops/values/values-minikube.yaml.
+rollout:
+  enabled: false
+  revisionHistoryLimit: 3
+  # Per step, not per rollout.
+  progressDeadlineSeconds: 120
+  strategy: {}
+
 # The edge-agent simulator. One replica is a correctness constraint, not a
 # resource decision: it rewrites the same heartbeat rows on a timer.
 agents:

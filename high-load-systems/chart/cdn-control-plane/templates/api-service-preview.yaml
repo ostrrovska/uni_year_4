@@ -1,0 +1,35 @@
+{{- /*
+DevOps Lab6 - the preview Service, for the blue-green strategy only.
+
+Blue-green needs two Services that select the same pods by label but are
+pointed at different ReplicaSets by the controller: `activeService` keeps
+serving the old version while `previewService` is switched to the new one the
+moment it is ready. That is the whole difference from canary, where one Service
+fronts both versions and the split comes from how many pods each has.
+
+Argo Rollouts writes a `rollouts-pod-template-hash` selector into both Services
+itself. The Application therefore ignores differences on Service selectors -
+otherwise Argo CD would see the controller's edit as drift and fight it on
+every sync, which is the "eternal OutOfSync" this strategy is known for.
+
+Renders only under blueGreen, so the canary setup carries no stray object.
+*/ -}}
+{{- if and .Values.rollout.enabled .Values.rollout.strategy.blueGreen }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "cdn.fullname" . }}-api-preview
+  labels:
+    {{- include "cdn.labels" (dict "ctx" $ "component" "api") | nindent 4 }}
+spec:
+  # ClusterIP regardless of what the active Service is: the preview is reached
+  # with a port-forward during a release, not published to the node.
+  type: ClusterIP
+  selector:
+    {{- include "cdn.selectorLabels" (dict "ctx" $ "component" "api") | nindent 4 }}
+  ports:
+    - name: http
+      port: {{ .Values.api.service.port }}
+      targetPort: http
+      protocol: TCP
+{{- end }}

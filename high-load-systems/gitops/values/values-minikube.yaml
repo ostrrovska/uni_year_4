@@ -43,9 +43,12 @@ config:
   logLevel: INFO
 
 api:
-  # One replica is enough to show a rollout on a laptop, and point 6a scales it
-  # by hand to 3 to create the drift that Argo CD then reports and reverts.
-  replicaCount: 1
+  # DevOps Lab6 - five, not one. Without a service mesh, Argo Rollouts expresses
+  # a canary weight as a share of the replica count, and one Service fronts both
+  # versions. Five replicas make setWeight: 20 mean exactly one canary pod, so
+  # roughly every fifth response carries the new version - which is the thing
+  # the demonstration has to actually show, not assert.
+  replicaCount: 5
   # 120s rather than the 600s default: point 6b of the assignment puts a tag in
   # Git that cannot be pulled, and the release has to be *seen* to go Degraded.
   # Ten minutes of "Progressing" would be a correct status and a useless one.
@@ -63,6 +66,28 @@ api:
 
 # On: an empty control plane makes a poor demonstration, and the seed hook is
 # idempotent, so Argo CD re-running it on a sync changes nothing.
+# DevOps Lab6 - progressive delivery, variant (a): canary.
+#
+# The chart supports blue-green too; switching is a values change and nothing
+# else, because templates/rollout.yaml passes this block through verbatim. The
+# blue-green equivalent is kept at the bottom of this file, commented out.
+rollout:
+  enabled: true
+  strategy:
+    canary:
+      steps:
+        # 20% - one pod of five. Then stop and wait for a human: `pause: {}`
+        # with no duration is the step that makes this progressive delivery
+        # rather than a slower rolling update. Argo CD reports the application
+        # as Suspended while it waits.
+        - setWeight: 20
+        - pause: {}
+        # Past the manual gate the rest is automatic, on a timer.
+        - setWeight: 60
+        - pause: {duration: 30s}
+        - setWeight: 80
+        - pause: {duration: 30s}
+
 # The agents Deployment needs the deadline as much as the API does: a sync waits
 # for every Deployment it touched, and Argo CD starts no new sync until the
 # previous one ends. Without this, a `git revert` of a bad tag waits ten minutes
@@ -96,3 +121,20 @@ redis:
 # keeps the demonstration to one moving part.
 ingress:
   enabled: false
+
+# ---------------------------------------------------------------------------
+# Variant (b), blue-green - the same chart, a different strategy block. Swap it
+# for the canary block above and lower replicaCount to 4; nothing else changes,
+# and templates/api-service-preview.yaml starts rendering on its own.
+#
+# rollout:
+#   enabled: true
+#   strategy:
+#     blueGreen:
+#       activeService: cdn-cdn-control-plane-api
+#       previewService: cdn-cdn-control-plane-api-preview
+#       # False on purpose: the point of blue-green here is that the new version
+#       # is fully up and reachable on the preview Service while every user is
+#       # still served by the old one, until a human promotes it.
+#       autoPromotionEnabled: false
+#       scaleDownDelaySeconds: 30

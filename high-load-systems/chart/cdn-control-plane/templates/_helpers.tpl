@@ -55,6 +55,87 @@ app.kubernetes.io/part-of: cdn-control-plane
 {{- end -}}
 
 {{/*
+DevOps Lab6 - the API pod template, defined once.
+
+Lab 6 needs the same pod in two kinds of object: a Deployment when
+rollout.enabled is false, and an Argo Rollout when it is true. The obvious move
+is to copy the block into rollout.yaml, and it is the wrong one - two copies of
+a pod spec drift, and the first time they disagree only one of them is the
+object actually running. Everything that describes the pod lives here; the two
+callers differ only in their kind and their update strategy.
+
+Call as: {{- include "cdn.apiPodTemplate" . | nindent 4 }} under `template:`.
+*/}}
+{{- define "cdn.apiPodTemplate" -}}
+metadata:
+  labels:
+    {{- include "cdn.labels" (dict "ctx" $ "component" "api") | nindent 8 }}
+  annotations:
+    # Roll the pods when configuration changes but the image does not.
+    # Without this, an upgrade that only edits the ConfigMap would leave
+    # every replica running on the old values indefinitely.
+    checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+    checksum/secret: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}
+    # DevOps Lab5 - wave 2: the API rolls only after the database is
+    # Healthy (wave 0) and the migration has completed (wave 1).
+    "argocd.argoproj.io/sync-wave": "2"
+spec:
+  securityContext:
+    {{- toYaml .Values.podSecurityContext | nindent 8 }}
+  containers:
+    - name: api
+      image: {{ include "cdn.image" . | quote }}
+      imagePullPolicy: {{ .Values.image.pullPolicy }}
+      ports:
+        - name: http
+          containerPort: 8000
+      # See k8s/50-api-deployment.yaml: endpoint removal and SIGTERM race,
+      # and without this a rolling update drops a request or two. The sleep
+      # delays SIGTERM while the removal propagates; it does not extend the
+      # shutdown itself.
+      lifecycle:
+        preStop:
+          exec:
+            command: ["sleep", {{ .Values.api.preStopSleepSeconds | quote }}]
+      envFrom:
+        - configMapRef:
+            name: {{ include "cdn.fullname" . }}-config
+        - secretRef:
+            name: {{ include "cdn.secretName" . }}
+      # INSTANCE_ID stays unset so the app falls back to the hostname, which
+      # here is the pod name - making /health self-identifying.
+      livenessProbe:
+        httpGet:
+          path: /health
+          port: http
+        periodSeconds: 10
+        timeoutSeconds: 3
+        failureThreshold: 3
+      # Reproduces the HAProxy check: inter 2s, fall 2, rise 2.
+      # failureThreshold is 2 rather than 1 on the strength of a measured
+      # run - one-strike ejection cost 190 to 110 req/s, because a
+      # momentarily saturated instance is not a dead one.
+      readinessProbe:
+        httpGet:
+          path: /health/ready
+          port: http
+        periodSeconds: 2
+        timeoutSeconds: 2
+        failureThreshold: 2
+        successThreshold: 2
+      # The schema is applied by the migrate hook, so first boot gets a
+      # generous window without loosening the steady-state probes above.
+      startupProbe:
+        httpGet:
+          path: /health
+          port: http
+        periodSeconds: 3
+        failureThreshold: 30
+      resources:
+        {{- toYaml .Values.api.resources | nindent 12 }}
+{{- end -}}
+
+{{/*
 DevOps Lab5 - the name of the Secret holding DATABASE_URL and POSTGRES_PASSWORD.
 
 Default: the Secret this chart renders itself, from .Values (Lab 4 behaviour).

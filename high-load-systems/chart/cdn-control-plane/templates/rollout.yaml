@@ -1,0 +1,49 @@
+{{- /*
+DevOps Lab6 - the API as an Argo Rollout instead of a Deployment.
+
+Same pod, same selector, same Service. The only thing that changes is who
+drives the replica sets and by what schedule: a Deployment replaces pods as
+fast as its rolling-update settings allow, while a Rollout advances through
+declared steps and will stop and wait for a human at a `pause`.
+
+The pod template is included, not copied - see cdn.apiPodTemplate in
+_helpers.tpl for why.
+
+Note what is deliberately absent: no progressDeadlineSeconds and no
+strategy.rollingUpdate. A Rollout has its own progressDeadlineSeconds field and
+its own strategy, both of which come from .Values.rollout, and leaving the
+Deployment's settings here would silently do nothing.
+*/ -}}
+{{- if .Values.rollout.enabled }}
+{{- if not .Values.rollout.strategy }}
+{{- fail "rollout.enabled is true, so rollout.strategy must set either canary or blueGreen" }}
+{{- end }}
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: {{ include "cdn.fullname" . }}-api
+  labels:
+    {{- include "cdn.labels" (dict "ctx" $ "component" "api") | nindent 4 }}
+  annotations:
+    # The same wave the Deployment carried: the API rolls only after the
+    # database is Healthy (wave 0) and the migration has completed (wave 1).
+    "argocd.argoproj.io/sync-wave": "2"
+spec:
+  replicas: {{ .Values.api.replicaCount }}
+  # Three, not the default ten: each kept revision is a ReplicaSet object, and
+  # on a laptop cluster the history is read from `kubectl argo rollouts get`
+  # rather than from the API.
+  revisionHistoryLimit: {{ .Values.rollout.revisionHistoryLimit | default 3 }}
+  {{- if .Values.rollout.progressDeadlineSeconds }}
+  # Counted per step, not per rollout: a canary that cannot pull its image
+  # fails this quickly rather than sitting in Progressing.
+  progressDeadlineSeconds: {{ .Values.rollout.progressDeadlineSeconds }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "cdn.selectorLabels" (dict "ctx" $ "component" "api") | nindent 6 }}
+  template:
+    {{- include "cdn.apiPodTemplate" . | nindent 4 }}
+  strategy:
+    {{- toYaml .Values.rollout.strategy | nindent 4 }}
+{{- end }}

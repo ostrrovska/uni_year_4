@@ -63,6 +63,13 @@ api:
 
 # On: an empty control plane makes a poor demonstration, and the seed hook is
 # idempotent, so Argo CD re-running it on a sync changes nothing.
+# The agents Deployment needs the deadline as much as the API does: a sync waits
+# for every Deployment it touched, and Argo CD starts no new sync until the
+# previous one ends. Without this, a `git revert` of a bad tag waits ten minutes
+# for the old sync to give up before it can be applied.
+agents:
+  progressDeadlineSeconds: 120
+
 seed:
   enabled: true
 

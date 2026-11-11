@@ -201,9 +201,17 @@ function Get-HealthStatus([string]$Name = $App) { return (Get-AppField $Name ".s
 # Argo CD polls the repository every three minutes by default. Waiting that out
 # at every step would make the demo unwatchable, so each Git change is followed
 # by an explicit refresh - the same thing the "Refresh" button in the UI does.
+# `kubectl annotate`, not `kubectl patch -p '<json>'`: PowerShell does not pass a
+# single-quoted JSON argument through to a native process the way a POSIX shell
+# does - the inner double quotes are lost and the API server answers
+# "BadRequest: invalid JSON patch" on every call. The failure is silent enough
+# that the demo still finished, just three minutes slower per step, waiting for
+# Argo CD's own polling instead of the refresh it thought it had requested.
 function Request-Refresh([string]$Name = $App) {
-    & $kubectl patch application $Name -n $ArgoNamespace --type merge `
-        -p '{"metadata":{"annotations":{"argocd.argoproj.io/refresh":"hard"}}}' | Out-Null
+    Invoke-Native $kubectl @(
+        "annotate", "application", $Name, "-n", $ArgoNamespace,
+        "argocd.argoproj.io/refresh=hard", "--overwrite"
+    ) | Out-Null
 }
 
 function Wait-AppState([string]$Sync, [string]$Health, [int]$TimeoutSeconds = 300, [string]$Name = $App) {

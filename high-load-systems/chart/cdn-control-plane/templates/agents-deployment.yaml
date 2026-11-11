@@ -16,6 +16,16 @@ spec:
   # One replica is a correctness constraint: the worker rewrites the same
   # heartbeat rows on a timer, so a second copy adds contention and no coverage.
   replicas: 1
+  {{- if .Values.agents.progressDeadlineSeconds }}
+  # DevOps Lab5 - the same deadline as the API, and for a sharper reason.
+  # Argo CD will not begin a new sync while the previous one is still running,
+  # and a sync waits for every Deployment it touched to become healthy. With the
+  # default 600s, a release that cannot pull its image holds the lock for ten
+  # minutes - so the `git revert` that fixes it sits in Git, observed and
+  # unapplied, until this Deployment finally admits defeat. Measured: that is
+  # exactly what blocked the first recovery run.
+  progressDeadlineSeconds: {{ .Values.agents.progressDeadlineSeconds }}
+  {{- end }}
   strategy:
     type: Recreate
   selector:

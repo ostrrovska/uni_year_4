@@ -87,6 +87,8 @@ api:
 agents:
   enabled: true
   watchIntervalSeconds: 10
+  # Empty means Kubernetes' own default of 600s. See api.progressDeadlineSeconds.
+  progressDeadlineSeconds: ""
   resources:
     requests:
       cpu: 50m

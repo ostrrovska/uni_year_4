@@ -24,7 +24,7 @@ image:
   # is the entire deployment procedure in Lab 5 - see docs/devops/lab-05.md Â§5.
   # Must be an immutable tag: `latest` would make Git stop describing the cluster,
   # because the same commit would mean a different image on different days.
-  tag: "1.3.0"
+  tag: "0.0.0-does-not-exist"
   # Always, not IfNotPresent. Under GitOps a pod may be rescheduled onto a node
   # that already holds a stale layer under the same name; Always makes the
   # registry the authority. It also makes a wrong tag fail loudly and quickly

@@ -62,6 +62,9 @@ api:
     # cluster-wide, so two releases of this chart with the same value would
     # collide and the second install would fail.
     nodePort: ""
+  # Empty means Kubernetes' own default of 600s. Set it to notice a stuck
+  # rollout sooner; gitops/values/values-minikube.yaml does.
+  progressDeadlineSeconds: ""
   # maxUnavailable: 0 is what makes a zero-downtime upgrade a guarantee rather
   # than a probability - a new pod must pass readiness before an old one goes.
   rollingUpdate:

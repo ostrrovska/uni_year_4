@@ -46,6 +46,10 @@ api:
   # One replica is enough to show a rollout on a laptop, and point 6a scales it
   # by hand to 3 to create the drift that Argo CD then reports and reverts.
   replicaCount: 1
+  # 120s rather than the 600s default: point 6b of the assignment puts a tag in
+  # Git that cannot be pulled, and the release has to be *seen* to go Degraded.
+  # Ten minutes of "Progressing" would be a correct status and a useless one.
+  progressDeadlineSeconds: 120
   service:
     type: NodePort
     nodePort: 30082

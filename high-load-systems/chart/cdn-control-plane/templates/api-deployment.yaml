@@ -7,6 +7,13 @@ metadata:
     {{- include "cdn.labels" (dict "ctx" $ "component" "api") | nindent 4 }}
 spec:
   replicas: {{ .Values.api.replicaCount }}
+  {{- if .Values.api.progressDeadlineSeconds }}
+  # DevOps Lab5 - how long a rollout may make no progress before Kubernetes
+  # marks the Deployment failed, which is what Argo CD reports as Degraded.
+  # The default is 600s; under GitOps that is ten minutes of a broken release
+  # looking merely "Progressing" before anyone is told it is broken.
+  progressDeadlineSeconds: {{ .Values.api.progressDeadlineSeconds }}
+  {{- end }}
   strategy:
     type: RollingUpdate
     rollingUpdate:

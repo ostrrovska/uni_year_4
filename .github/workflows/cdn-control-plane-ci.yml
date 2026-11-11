@@ -8,13 +8,6 @@ on:
     paths:
       - 'high-load-systems/**'
       - '.github/workflows/cdn-control-plane-ci.yml'
-    # DevOps Lab5 - a release tag publishes an immutable, semver-tagged image.
-    # GitOps needs a tag that names one specific build forever: Argo CD deploys
-    # whatever Git says, so if the tag's meaning can change, Git stops describing
-    # the cluster. `cdn-v` prefixes it because this is a monorepo and the other
-    # courses tag their own work.
-    tags:
-      - 'cdn-v*'
   pull_request:
     paths:
       - 'high-load-systems/**'
@@ -103,10 +96,6 @@ jobs:
           tags: |
             type=sha
             type=raw,value=latest,enable={{is_default_branch}}
-            # cdn-v1.2.0 -> :1.2.0 and :1.2 . The bare version is what
-            # gitops/values/values-minikube.yaml pins.
-            type=semver,pattern={{version}},prefix=
-            type=semver,pattern={{major}}.{{minor}},prefix=
 
       - uses: docker/setup-buildx-action@v3
 
@@ -161,16 +150,6 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # Push exactly the tags metadata-action computed for this event, rather
-      # than --all-tags: on a tag build the local daemon still holds `latest`
-      # from the cache, and --all-tags would republish it and silently move the
-      # floating tag backwards.
       - name: Push image
         if: github.event_name != 'pull_request'
-        run: |
-          for tag in ${{ steps.meta.outputs.tags }}; do
-            case "$tag" in
-              cdn-control-plane:ci) continue ;;
-            esac
-            docker push "$tag"
-          done
+        run: docker push ${{ env.IMAGE }} --all-tags

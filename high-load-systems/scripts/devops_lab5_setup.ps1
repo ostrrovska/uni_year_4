@@ -104,9 +104,12 @@ Step "minikube"
 $status = Invoke-Native $minikube @("status")
 if ($status -notmatch "host: Running") {
     Write-Host "     starting minikube (this takes a few minutes the first time)" -ForegroundColor DarkGray
-    # 4 CPUs and 6 GB: Argo CD's five controllers plus the application's four
-    # workloads do not fit comfortably in the 2 CPU / 2 GB default.
-    & $minikube start --cpus=4 --memory=6144 --driver=docker
+    # 3 GB, not the 2 GB default and not more: this host has 7.3 GB in total, so
+    # a larger VM starves Docker Desktop and the editor instead of helping. It
+    # fits because every request in the chart is small - the whole application
+    # asks for about 420 MiB - and Argo CD's controllers are the larger half of
+    # the budget.
+    & $minikube start --cpus=4 --memory=3072 --driver=docker
 }
 Record "minikube status" (Invoke-Native $minikube @("status"))
 Record "kubectl version --short" (Invoke-Native $kubectl @("version", "--output=yaml"))

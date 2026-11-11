@@ -28,7 +28,7 @@
       - images ghcr.io/ostrrovska/cdn-control-plane:1.2.0 and :1.3.0 published
 
 .PARAMETER FromVersion
-    The image tag the cluster is expected to be on when the demo starts (default 1.2.0).
+    The image tag the cluster is expected to be on when the demo starts (default 1.2.1).
 
 .PARAMETER ToVersion
     The image tag the demo rolls out through Git (default 1.3.0).
@@ -45,7 +45,7 @@ param(
     [string]$RootApp = "root",
     [string]$ArgoNamespace = "argocd",
     [string]$Namespace = "cdn-gitops",
-    [string]$FromVersion = "1.2.0",
+    [string]$FromVersion = "1.2.1",
     [string]$ToVersion = "1.3.0",
     [string]$BadVersion = "0.0.0-does-not-exist",
     [string]$Branch = "devops-lab-5-gitops",

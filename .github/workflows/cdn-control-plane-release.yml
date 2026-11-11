@@ -128,9 +128,14 @@ jobs:
       # Exactly the tags metadata-action computed - never --all-tags, which
       # would also republish whatever `latest` the build cache left in the
       # local daemon and silently move the floating tag backwards.
+      #
+      # The output is newline-separated, so it has to be piped into the loop
+      # rather than word-split by `for`: unquoted, the second line lands outside
+      # the loop header and the step dies on a shell syntax error.
       - name: Push image
         run: |
-          for tag in ${{ steps.meta.outputs.tags }}; do
+          printf '%s\n' "${{ steps.meta.outputs.tags }}" | while IFS= read -r tag; do
+            [ -n "$tag" ] || continue
             echo "pushing $tag"
             docker push "$tag"
           done

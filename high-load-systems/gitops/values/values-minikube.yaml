@@ -1,0 +1,87 @@
+# DevOps Lab5
+# The desired state of the CDN Control Plane on the local minikube cluster.
+#
+# Nothing applies this file by hand. Argo CD reads it straight from Git
+# (gitops/argocd-apps/cdn-control-plane.yaml names it) and reconciles the
+# cluster against it, so every line here is a fact about the cluster rather than
+# an argument to a command somebody has to remember to type.
+#
+# It is the Lab 4 development overlay with three changes, each forced by the move
+# to GitOps:
+#
+#   1. image.tag is pinned to an exact published version. Lab 4 could side-load
+#      an image with `minikube image load`; a GitOps cluster pulls what Git says
+#      and nothing else, so the tag has to name a real artefact in GHCR.
+#   2. existingSecret replaces the in-chart password. There is no `--set` in a
+#      GitOps flow - Argo CD renders the chart itself - so a committed values
+#      file is the only input, and a committed values file must not hold a
+#      credential.
+#   3. The node port moves again, to 30082, so this release can run beside the
+#      Lab 3 manifests (30080) and the Lab 4 release (30081).
+
+image:
+  # The one line that releases a new version. Changing it, committing and pushing
+  # is the entire deployment procedure in Lab 5 - see docs/devops/lab-05.md §5.
+  # Must be an immutable tag: `latest` would make Git stop describing the cluster,
+  # because the same commit would mean a different image on different days.
+  tag: "1.2.0"
+  # Always, not IfNotPresent. Under GitOps a pod may be rescheduled onto a node
+  # that already holds a stale layer under the same name; Always makes the
+  # registry the authority. It also makes a wrong tag fail loudly and quickly
+  # with ImagePullBackOff, which is what the Degraded demonstration needs.
+  pullPolicy: Always
+
+# Created in the cluster out of band, never in Git:
+#   kubectl create secret generic cdn-db -n cdn-gitops \
+#     --from-literal=POSTGRES_PASSWORD='<password>' \
+#     --from-literal=DATABASE_URL='postgresql+asyncpg://cdn:<password>@cdn-cdn-control-plane-postgresql:5432/cdn_control_plane'
+# The chart then renders no Secret of its own - see templates/secret.yaml.
+existingSecret: cdn-db
+
+config:
+  appEnv: development
+  logLevel: INFO
+
+api:
+  # One replica is enough to show a rollout on a laptop, and point 6a scales it
+  # by hand to 3 to create the drift that Argo CD then reports and reverts.
+  replicaCount: 1
+  service:
+    type: NodePort
+    nodePort: 30082
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 256Mi
+
+# On: an empty control plane makes a poor demonstration, and the seed hook is
+# idempotent, so Argo CD re-running it on a sync changes nothing.
+seed:
+  enabled: true
+
+postgresql:
+  # The password is not here. auth.username and auth.database are not secret and
+  # the container needs them as plain environment variables.
+  auth:
+    username: cdn
+    database: cdn_control_plane
+  persistence:
+    size: 1Gi
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 384Mi
+
+redis:
+  maxmemory: 64mb
+
+# Off: minikube has no ingress controller enabled by default, and a NodePort
+# keeps the demonstration to one moving part.
+ingress:
+  enabled: false

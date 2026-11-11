@@ -46,7 +46,7 @@ spec:
             - configMapRef:
                 name: {{ include "cdn.fullname" . }}-config
             - secretRef:
-                name: {{ include "cdn.fullname" . }}-secrets
+                name: {{ include "cdn.secretName" . }}
           # INSTANCE_ID stays unset so the app falls back to the hostname, which
           # here is the pod name - making /health self-identifying.
           livenessProbe:

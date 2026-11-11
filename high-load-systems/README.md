@@ -1396,6 +1396,51 @@ Schema migration runs as a `post-install,pre-upgrade` hook, and `helm test` exer
 release through its Service. Both are explained in
 [`docs/devops/lab-04.md`](docs/devops/lab-04.md).
 
+The chart also accepts `existingSecret`, which names a Secret already present in the target
+namespace instead of rendering one. That is what the GitOps path below uses: Argo CD has no
+`--set`, so the committed values file is the only input and must not contain a password.
+
+### GitOps — Argo CD
+
+`gitops/` is the desired state of this service on the local cluster. Lab 4 deployed it by
+typing `helm upgrade --install`; here the cluster reads `gitops/` and converges on it by
+itself. [`docs/devops/lab-05.md`](docs/devops/lab-05.md) is the full report.
+
+```
+gitops/bootstrap/root-app.yaml              the only object ever applied by hand
+gitops/argocd-apps/cdn-control-plane.yaml   the application, created by the root
+gitops/values/values-minikube.yaml          how it is configured on minikube
+```
+
+```bash
+# once per cluster: minikube, Argo CD, the admin password, the cdn-db Secret, the root app
+./scripts/devops_lab5_setup.ps1
+
+# the one manual apply, if you prefer to do it yourself
+kubectl apply -n argocd -f gitops/bootstrap/root-app.yaml
+
+# the whole defence demo, asserted step by step
+./scripts/devops_lab5_demo.ps1
+```
+
+Releasing a new version is two commits and no commands against the cluster:
+
+```bash
+git tag cdn-v1.3.0 && git push origin cdn-v1.3.0   # CI publishes ghcr.io/...:1.3.0
+# then edit image.tag in gitops/values/values-minikube.yaml, commit, push
+curl http://$(minikube ip):30082/version           # reports what actually landed
+```
+
+`/version` and the `version` field in `/health` are baked into the image by
+`docker/Dockerfile` (`ARG APP_VERSION`, `ARG GIT_SHA`), so a pod can only report the build
+it was made from — a values file can claim any version, an image cannot.
+
+| Port | Owner |
+|---|---|
+| 30080 | the hand-written manifests in `k8s/` (Lab 3) |
+| 30081 | the Helm release (Lab 4) |
+| 30082 | the Argo CD application (Lab 5) |
+
 ---
 
 ## Roadmap — and what Lab 1 already built for it

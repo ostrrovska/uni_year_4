@@ -1,0 +1,48 @@
+# DevOps Lab5
+# The root Application - the single object in this repository that is ever
+# applied by hand:
+#
+#   kubectl apply -n argocd -f high-load-systems/gitops/bootstrap/root-app.yaml
+#
+# It watches gitops/argocd-apps/ and creates whatever Application manifests it
+# finds there. From that moment on, adding an application to the cluster is a
+# commit, not a command, and this file never needs to be applied again.
+#
+# This is the App-of-Apps pattern: the root Application's "workload" happens to
+# be other Applications. Argo CD treats them like any other manifests - which is
+# why a child Application deleted from Git is pruned from the cluster too.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: root
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+
+  source:
+    repoURL: https://github.com/ostrrovska/uni_year_4.git
+    targetRevision: devops-lab-5-gitops
+    path: high-load-systems/gitops/argocd-apps
+    directory:
+      # Pick up every manifest in the directory, including any added later.
+      include: "*.yaml"
+      recurse: true
+
+  destination:
+    server: https://kubernetes.default.svc
+    # Application objects are read by Argo CD from its own namespace, so the
+    # root Application deploys *into* argocd. The applications it creates deploy
+    # elsewhere - cdn-control-plane.yaml targets cdn-gitops.
+    namespace: argocd
+
+  syncPolicy:
+    automated:
+      prune: true
+      # True here, unlike the child application. The root exists to make Git the
+      # authority over which applications exist at all; letting someone delete a
+      # child Application with kubectl and have it stay deleted would defeat the
+      # one job this object has. Point 6a's drift demonstration happens one level
+      # down, inside cdn-control-plane, where selfHeal starts false on purpose.
+      selfHeal: true

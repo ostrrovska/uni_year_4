@@ -16,6 +16,12 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
     instance_id: str | None = None
 
+    # DevOps Lab5 - baked into the image at build time (docker/Dockerfile ARGs) and
+    # reported by /version. GitOps changes the deployed version by changing the image
+    # tag in Git, so the running pods must be able to say which build they are.
+    app_version: str = "0.0.0-dev"
+    git_sha: str = "unknown"
+
     database_url: str = "postgresql+asyncpg://cdn:cdn@localhost:5434/cdn_control_plane"
     db_pool_size: int = 10
     db_max_overflow: int = 10

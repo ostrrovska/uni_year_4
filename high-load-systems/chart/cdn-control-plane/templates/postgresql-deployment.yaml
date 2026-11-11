@@ -39,7 +39,7 @@ spec:
             - name: POSTGRES_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "cdn.fullname" . }}-secrets
+                  name: {{ include "cdn.secretName" . }}
                   key: POSTGRES_PASSWORD
             # A subdirectory, so a provisioner that leaves lost+found in the
             # mount root cannot make initdb refuse the data directory.

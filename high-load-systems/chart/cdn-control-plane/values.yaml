@@ -7,6 +7,13 @@
 nameOverride: ""
 fullnameOverride: ""
 
+# DevOps Lab5 - name of a Secret that already exists in the target namespace and
+# holds DATABASE_URL and POSTGRES_PASSWORD. Empty (the default) keeps Lab 4
+# behaviour: the chart renders its own Secret from the values below. Set it and
+# the chart renders none, which is how the Argo CD path avoids committing a
+# password - nothing in Git ever sees the value, only the name.
+existingSecret: ""
+
 image:
   repository: ghcr.io/ostrrovska/cdn-control-plane
   # Empty means "use Chart.appVersion". Set explicitly to pin a release, which

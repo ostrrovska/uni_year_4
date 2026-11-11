@@ -54,6 +54,20 @@ app.kubernetes.io/managed-by: {{ .ctx.Release.Service }}
 app.kubernetes.io/part-of: cdn-control-plane
 {{- end -}}
 
+{{/*
+DevOps Lab5 - the name of the Secret holding DATABASE_URL and POSTGRES_PASSWORD.
+
+Default: the Secret this chart renders itself, from .Values (Lab 4 behaviour).
+When existingSecret is set, the chart renders no Secret at all and every
+workload reads the named one instead. That is what lets the GitOps values file
+be committed: under Argo CD there is no `--set` to pass a password through, so
+the only way to keep the credential out of Git is for the manifest to name a
+Secret that was created in the cluster out of band.
+*/}}
+{{- define "cdn.secretName" -}}
+{{- .Values.existingSecret | default (printf "%s-secrets" (include "cdn.fullname" .)) -}}
+{{- end -}}
+
 {{/* The image reference, with appVersion as the tag's default. */}}
 {{- define "cdn.image" -}}
 {{- printf "%s:%s" .Values.image.repository (.Values.image.tag | default .Chart.AppVersion) -}}

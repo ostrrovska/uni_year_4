@@ -1,0 +1,87 @@
+# DevOps Lab5
+# The CDN Control Plane as an Argo CD Application (assignment point 4).
+#
+# Nobody applies this file either. The root Application in
+# gitops/bootstrap/root-app.yaml watches the directory this file sits in, so
+# adding a manifest here is how a new application joins the cluster - that is
+# the whole of the App-of-Apps pattern, and the reason only one object in this
+# repository is ever applied by hand.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: cdn-control-plane
+  # Applications live in the namespace Argo CD runs in, not in the namespace
+  # they deploy to.
+  namespace: argocd
+  finalizers:
+    # Without this, deleting the Application leaves its workloads running in the
+    # cluster: Argo CD forgets them but Kubernetes does not. The finalizer makes
+    # a delete cascade, so "remove it from Git" and "remove it from the cluster"
+    # stay the same statement.
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+
+  # Two sources, because the chart and the values that configure it live in
+  # different directories of this monorepo. The first contributes no manifests -
+  # `ref: cfg` only gives the second a name to reach the repository by, which is
+  # what lets valueFiles point outside the chart directory.
+  #
+  # The alternative was to copy the Lab 4 chart into gitops/charts/. A second
+  # copy of a chart in the same repository is a copy that will drift, and the
+  # first time the two disagree the cluster follows the one nobody edited. One
+  # chart, referenced from here, keeps Lab 4 and Lab 5 on the same templates.
+  sources:
+    - repoURL: https://github.com/ostrrovska/uni_year_4.git
+      targetRevision: devops-lab-5-gitops
+      ref: cfg
+
+    - repoURL: https://github.com/ostrrovska/uni_year_4.git
+      targetRevision: devops-lab-5-gitops
+      path: high-load-systems/chart/cdn-control-plane
+      helm:
+        releaseName: cdn
+        valueFiles:
+          - $cfg/high-load-systems/gitops/values/values-minikube.yaml
+
+  destination:
+    # The cluster Argo CD itself runs in. An in-cluster destination is named by
+    # this URL, not by the kubeconfig context name.
+    server: https://kubernetes.default.svc
+    namespace: cdn-gitops
+
+  syncPolicy:
+    automated:
+      # Delete objects that Git no longer declares. Without prune, removing a
+      # template leaves its object orphaned in the cluster and Git quietly stops
+      # being a complete description of what is running.
+      prune: true
+
+      # Point 6a starts here, deliberately false. With selfHeal off, a manual
+      # `kubectl scale` leaves the Application OutOfSync and Argo CD reports the
+      # drift without touching it; flipping this to true - by a commit, not by a
+      # click - makes it revert the change instead. Doing it in that order shows
+      # that detection and correction are two separate settings.
+      selfHeal: false
+    syncOptions:
+      # Argo CD creates the destination namespace. Nothing is applied manually,
+      # so there is no earlier step in which a namespace could have been made.
+      - CreateNamespace=true
+      # Keeps the diff readable: without it every defaulted field the API server
+      # fills in shows up as a difference against Git.
+      - RespectIgnoreDifferences=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 10s
+        factor: 2
+        maxDuration: 3m
+
+  # The migrate and seed Jobs are Helm hooks. Argo CD runs them as its own hooks
+  # and their pods finish and stay Completed, which is a healthy outcome for a
+  # Job but reads as "not running" if the pods are assessed like Deployments.
+  ignoreDifferences:
+    - group: batch
+      kind: Job
+      jsonPointers:
+        - /spec/template/metadata/labels

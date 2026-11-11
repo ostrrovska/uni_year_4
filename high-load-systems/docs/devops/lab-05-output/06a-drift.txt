@@ -1,0 +1,32 @@
+﻿$ kubectl.exe scale deployment/cdn-cdn-control-plane-api -n cdn-gitops --replicas=3
+deployment.apps/cdn-cdn-control-plane-api scaled
+
+$ argocd.exe app diff cdn-control-plane --port-forward --port-forward-namespace argocd --insecure
+{"error":"error copying from remote stream to local connection: readfrom tcp4 127.0.0.1:55292-\u003e127.0.0.1:55295: write tcp4 127.0.0.1:55292-\u003e127.0.0.1:55295: wsasend: An established connection was aborted by the software in your host machine.","level":"error","logger":"UnhandledError","msg":"Unhandled Error","time":"2026-11-11T21:28:43+02:00"}
+
+===== apps/Deployment cdn-gitops/cdn-cdn-control-plane-api ======
+190c190
+<   replicas: 3
+---
+>   replicas: 1
+
+$ git.exe -C C:\uni_year_4 add -- high-load-systems/gitops/argocd-apps/cdn-control-plane.yaml
+warning: in the working copy of 'high-load-systems/gitops/argocd-apps/cdn-control-plane.yaml', LF will be replaced by CRLF the next time Git touches it
+
+$ git.exe -C C:\uni_year_4 commit -m gitops: enable selfHeal for cdn-control-plane -- high-load-systems/gitops/argocd-apps/cdn-control-plane.yaml
+warning: in the working copy of 'high-load-systems/gitops/argocd-apps/cdn-control-plane.yaml', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'high-load-systems/gitops/argocd-apps/cdn-control-plane.yaml', LF will be replaced by CRLF the next time Git touches it
+[devops-lab-5-gitops c729905] gitops: enable selfHeal for cdn-control-plane
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+$ git.exe -C C:\uni_year_4 push origin devops-lab-5-gitops
+To github.com:ostrrovska/uni_year_4.git
+   e49f1ec..c729905  devops-lab-5-gitops -> devops-lab-5-gitops
+
+$ kubectl.exe scale deployment/cdn-cdn-control-plane-api -n cdn-gitops --replicas=3
+deployment.apps/cdn-cdn-control-plane-api scaled
+
+$ kubectl.exe get deployment cdn-cdn-control-plane-api -n cdn-gitops
+NAME                        READY   UP-TO-DATE   AVAILABLE   AGE
+cdn-cdn-control-plane-api   1/1     1            1           49m
+

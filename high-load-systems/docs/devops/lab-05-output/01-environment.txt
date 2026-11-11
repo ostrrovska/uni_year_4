@@ -1,0 +1,53 @@
+# DevOps Lab 5 - environment. Captured from the live cluster the demo ran on.
+# Bootstrap was performed by hand in the order scripts/devops_lab5_setup.ps1 performs it.
+
+$ minikube status
+minikube
+type: Control Plane
+host: Running
+kubelet: Running
+apiserver: Running
+kubeconfig: Configured
+
+
+$ kubectl version
+Client Version: v1.36.1
+Kustomize Version: v5.8.1
+Server Version: v1.37.0
+
+$ argocd version --client --short
+argocd: v3.1.9+8665140
+
+$ kubectl get pods -n argocd
+NAME                                                READY   STATUS    RESTARTS   AGE
+argocd-application-controller-0                     1/1     Running   0          87m
+argocd-applicationset-controller-7dcb76f859-ks4js   1/1     Running   0          87m
+argocd-dex-server-5b849f66c7-n77pp                  1/1     Running   0          87m
+argocd-notifications-controller-7976cfc8b8-bd6zw    1/1     Running   0          87m
+argocd-redis-6544b975c5-2dw27                       1/1     Running   0          87m
+argocd-repo-server-675b49c78b-6lr9g                 1/1     Running   0          87m
+argocd-server-59c68dfbcf-ckt2f                      1/1     Running   0          87m
+
+$ kubectl get secret argocd-initial-admin-secret -n argocd
+Error from server (NotFound): secrets "argocd-initial-admin-secret" not found
+# Absent by design: the admin password was changed and this bootstrap secret deleted.
+
+$ kubectl describe secret cdn-db -n cdn-gitops   (keys and byte counts only - never the values)
+Annotations:  <none>
+
+Type:  Opaque
+
+Data
+====
+DATABASE_URL:       98 bytes
+POSTGRES_PASSWORD:  17 bytes
+
+$ kubectl get applications -n argocd
+NAME                SYNC STATUS   HEALTH STATUS
+cdn-control-plane   Synced        Healthy
+root                Synced        Healthy
+
+# Port ownership across the labs:
+#   30080  k8s/ manifests        (Lab 3)
+#   30081  Helm release          (Lab 4)
+#   30082  Argo CD application   (Lab 5)

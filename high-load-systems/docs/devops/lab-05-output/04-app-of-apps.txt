@@ -1,0 +1,83 @@
+﻿$ kubectl.exe get application root -n argocd -o jsonpath={.spec.source.path}{'\n'}{.spec.source.repoURL}{'\n'}{.spec.source.targetRevision}
+high-load-systems/gitops/argocd-apps
+https://github.com/ostrrovska/uni_year_4.git
+devops-lab-5-gitops
+
+$ kubectl.exe get applications -n argocd
+NAME                SYNC STATUS   HEALTH STATUS
+cdn-control-plane   Synced        Healthy
+root                Synced        Healthy
+
+$ argocd.exe app resources cdn-control-plane --port-forward --port-forward-namespace argocd --insecure
+{"error":"error copying from remote stream to local connection: readfrom tcp4 127.0.0.1:55199-\u003e127.0.0.1:55201: write tcp4 127.0.0.1:55199-\u003e127.0.0.1:55201: wsasend: An established connection was aborted by the software in your host machine.","level":"error","logger":"UnhandledError","msg":"Unhandled Error","time":"2026-11-11T21:27:25+02:00"}
+GROUP  KIND                   NAMESPACE   NAME                              ORPHANED
+       ConfigMap              cdn-gitops  cdn-cdn-control-plane-config      No
+       PersistentVolumeClaim  cdn-gitops  cdn-cdn-control-plane-postgresql  No
+       Service                cdn-gitops  cdn-cdn-control-plane-api         No
+       Service                cdn-gitops  cdn-cdn-control-plane-postgresql  No
+       Service                cdn-gitops  cdn-cdn-control-plane-redis       No
+apps   Deployment             cdn-gitops  cdn-cdn-control-plane-agents      No
+apps   Deployment             cdn-gitops  cdn-cdn-control-plane-api         No
+apps   Deployment             cdn-gitops  cdn-cdn-control-plane-postgresql  No
+apps   Deployment             cdn-gitops  cdn-cdn-control-plane-redis       No
+
+$ argocd.exe app get cdn-control-plane --port-forward --port-forward-namespace argocd --insecure
+{"error":"error copying from remote stream to local connection: readfrom tcp4 127.0.0.1:55204-\u003e127.0.0.1:55206: write tcp4 127.0.0.1:55204-\u003e127.0.0.1:55206: wsasend: An established connection was aborted by the software in your host machine.","level":"error","logger":"UnhandledError","msg":"Unhandled Error","time":"2026-11-11T21:27:25+02:00"}
+Name:               argocd/cdn-control-plane
+Project:            default
+Server:             https://kubernetes.default.svc
+Namespace:          cdn-gitops
+URL:                https://127.0.0.1:55204/applications/cdn-control-plane
+Source:
+- Repo:             https://github.com/ostrrovska/uni_year_4.git
+  Target:           devops-lab-5-gitops
+  Path:             high-load-systems/chart/cdn-control-plane
+  Helm Values:      ../../gitops/values/values-minikube.yaml
+SyncWindow:         Sync Allowed
+Sync Policy:        Automated (Prune)
+Sync Status:        Synced to devops-lab-5-gitops (d5e1c97)
+Health Status:      Healthy
+
+GROUP  KIND                   NAMESPACE   NAME                              STATUS     HEALTH   HOOK  MESSAGE
+       ConfigMap              cdn-gitops  cdn-cdn-control-plane-config      Synced                    configmap/cdn-cdn-control-plane-config unchanged
+       PersistentVolumeClaim  cdn-gitops  cdn-cdn-control-plane-postgresql  Synced     Healthy        persistentvolumeclaim/cdn-cdn-control-plane-postgresql unchanged
+       Service                cdn-gitops  cdn-cdn-control-plane-api         Synced     Healthy        service/cdn-cdn-control-plane-api unchanged
+       Service                cdn-gitops  cdn-cdn-control-plane-redis       Synced     Healthy        service/cdn-cdn-control-plane-redis unchanged
+       Service                cdn-gitops  cdn-cdn-control-plane-postgresql  Synced     Healthy        service/cdn-cdn-control-plane-postgresql unchanged
+apps   Deployment             cdn-gitops  cdn-cdn-control-plane-agents      Synced     Healthy        deployment.apps/cdn-cdn-control-plane-agents configured
+apps   Deployment             cdn-gitops  cdn-cdn-control-plane-postgresql  Synced     Healthy        deployment.apps/cdn-cdn-control-plane-postgresql configured
+apps   Deployment             cdn-gitops  cdn-cdn-control-plane-api         Synced     Healthy        deployment.apps/cdn-cdn-control-plane-api configured
+apps   Deployment             cdn-gitops  cdn-cdn-control-plane-redis       Synced     Healthy        deployment.apps/cdn-cdn-control-plane-redis configured
+batch  Job                    cdn-gitops  cdn-cdn-control-plane-migrate     Succeeded           Sync  Reached expected number of succeeded pods
+batch  Job                    cdn-gitops  cdn-cdn-control-plane-seed        Succeeded           Sync  Reached expected number of succeeded pods
+
+$ kubectl.exe get all -n cdn-gitops
+NAME                                                    READY   STATUS    RESTARTS   AGE
+pod/cdn-cdn-control-plane-agents-78c47cc4bf-9vlb5       1/1     Running   0          18s
+pod/cdn-cdn-control-plane-api-6cc96d77c5-86hwp          1/1     Running   0          48s
+pod/cdn-cdn-control-plane-postgresql-5c8556bdd4-c9kbk   1/1     Running   0          47m
+pod/cdn-cdn-control-plane-redis-5ffd86d578-cgnfb        1/1     Running   0          47m
+
+NAME                                       TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)        AGE
+service/cdn-cdn-control-plane-api          NodePort    10.102.225.221   <none>        80:30082/TCP   47m
+service/cdn-cdn-control-plane-postgresql   ClusterIP   10.96.24.38      <none>        5432/TCP       47m
+service/cdn-cdn-control-plane-redis        ClusterIP   10.99.233.51     <none>        6379/TCP       47m
+
+NAME                                               READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/cdn-cdn-control-plane-agents       1/1     1            1           47m
+deployment.apps/cdn-cdn-control-plane-api          1/1     1            1           47m
+deployment.apps/cdn-cdn-control-plane-postgresql   1/1     1            1           47m
+deployment.apps/cdn-cdn-control-plane-redis        1/1     1            1           47m
+
+NAME                                                          DESIRED   CURRENT   READY   AGE
+replicaset.apps/cdn-cdn-control-plane-agents-78c47cc4bf       1         1         1       47m
+replicaset.apps/cdn-cdn-control-plane-agents-7ccd8db8b9       0         0         0       40m
+replicaset.apps/cdn-cdn-control-plane-agents-8f4bff549        0         0         0       35m
+replicaset.apps/cdn-cdn-control-plane-api-6cc96d77c5          1         1         1       47m
+replicaset.apps/cdn-cdn-control-plane-api-7f8dbbcbf5          0         0         0       35m
+replicaset.apps/cdn-cdn-control-plane-api-c544d66cf           0         0         0       41m
+replicaset.apps/cdn-cdn-control-plane-postgresql-5c8556bdd4   1         1         1       47m
+replicaset.apps/cdn-cdn-control-plane-redis-5ffd86d578        1         1         1       47m
+
+
+GET /version -> 1.2.1

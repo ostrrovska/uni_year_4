@@ -1,0 +1,42 @@
+﻿$ git.exe -C C:\uni_year_4 diff -- high-load-systems/gitops/values/values-minikube.yaml
+diff --git a/high-load-systems/gitops/values/values-minikube.yaml b/high-load-systems/gitops/values/values-minikube.yaml
+index 7ee9a3b..1662874 100644
+--- a/high-load-systems/gitops/values/values-minikube.yaml
++++ b/high-load-systems/gitops/values/values-minikube.yaml
+@@ -24,7 +24,7 @@ image:
+   # is the entire deployment procedure in Lab 5 - see docs/devops/lab-05.md Â§5.
+   # Must be an immutable tag: `latest` would make Git stop describing the cluster,
+   # because the same commit would mean a different image on different days.
+-  tag: "1.2.1"
++  tag: "1.3.0"
+   # Always, not IfNotPresent. Under GitOps a pod may be rescheduled onto a node
+   # that already holds a stale layer under the same name; Always makes the
+   # registry the authority. It also makes a wrong tag fail loudly and quickly
+
+$ git.exe -C C:\uni_year_4 add -- high-load-systems/gitops/values/values-minikube.yaml
+
+$ git.exe -C C:\uni_year_4 commit -m gitops: roll the CDN Control Plane to 1.3.0 -- high-load-systems/gitops/values/values-minikube.yaml
+[devops-lab-5-gitops e49f1ec] gitops: roll the CDN Control Plane to 1.3.0
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+$ git.exe -C C:\uni_year_4 push origin devops-lab-5-gitops
+To github.com:ostrrovska/uni_year_4.git
+   d5e1c97..e49f1ec  devops-lab-5-gitops -> devops-lab-5-gitops
+
+
+GET /version -> 1.3.0
+deployment image tag -> 1.3.0
+$ argocd.exe app history cdn-control-plane --port-forward --port-forward-namespace argocd --insecure
+{"error":"error copying from remote stream to local connection: readfrom tcp4 127.0.0.1:55273-\u003e127.0.0.1:55275: write tcp4 127.0.0.1:55273-\u003e127.0.0.1:55275: wsasend: An established connection was aborted by the software in your host machine.","level":"error","logger":"UnhandledError","msg":"Unhandled Error","time":"2026-11-11T21:28:42+02:00"}
+SOURCE  https://github.com/ostrrovska/uni_year_4.git
+ID      DATE                           REVISION
+0       2026-11-11 20:41:04 +0200 EET  devops-lab-5-gitops (5200add)
+1       2026-11-11 20:47:12 +0200 EET  devops-lab-5-gitops (1ad834f)
+2       2026-11-11 20:47:39 +0200 EET  devops-lab-5-gitops (988471a)
+3       2026-11-11 21:10:51 +0200 EET  devops-lab-5-gitops (1244fcb)
+4       2026-11-11 21:12:11 +0200 EET  devops-lab-5-gitops (71171a8)
+5       2026-11-11 21:13:22 +0200 EET  devops-lab-5-gitops (b2bec10)
+6       2026-11-11 21:13:40 +0200 EET  devops-lab-5-gitops (eb1b59e)
+7       2026-11-11 21:25:03 +0200 EET  devops-lab-5-gitops (801511c)
+8       2026-11-11 21:27:24 +0200 EET  devops-lab-5-gitops (d5e1c97)
+

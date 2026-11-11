@@ -1,0 +1,496 @@
+﻿$ git.exe -C C:\uni_year_4 add -- high-load-systems/gitops/values/values-minikube.yaml
+
+$ git.exe -C C:\uni_year_4 commit -m gitops: point the image at a tag that does not exist (Lab 5 point 6b) -- high-load-systems/gitops/values/values-minikube.yaml
+[devops-lab-5-gitops 2af3b25] gitops: point the image at a tag that does not exist (Lab 5 point 6b)
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+$ git.exe -C C:\uni_year_4 push origin devops-lab-5-gitops
+To github.com:ostrrovska/uni_year_4.git
+   c729905..2af3b25  devops-lab-5-gitops -> devops-lab-5-gitops
+
+$ kubectl.exe get pods -n cdn-gitops
+NAME                                                READY   STATUS             RESTARTS   AGE
+cdn-cdn-control-plane-agents-8f4bff549-pqmwq        0/1     ImagePullBackOff   0          96s
+cdn-cdn-control-plane-api-7f8dbbcbf5-fq9pv          0/1     ImagePullBackOff   0          2m6s
+cdn-cdn-control-plane-api-c544d66cf-ww4kj           1/1     Running            0          3m14s
+cdn-cdn-control-plane-postgresql-5c8556bdd4-c9kbk   1/1     Running            0          51m
+cdn-cdn-control-plane-redis-5ffd86d578-cgnfb        1/1     Running            0          51m
+
+$ kubectl.exe get events -n cdn-gitops --sort-by=.lastTimestamp
+LAST SEEN   TYPE      REASON                  OBJECT                                                   MESSAGE
+60m         Warning   BackOff                 pod/cdn-cdn-control-plane-migrate-fn4sm                  Back-off restarting failed container migrate in pod cdn-cdn-control-plane-migrate-fn4sm_cdn-gitops(6816da7f-33af-41af-bb45-f755e54b0832)
+60m         Normal    SuccessfulDelete        job/cdn-cdn-control-plane-migrate                        Deleted pod: cdn-cdn-control-plane-migrate-fn4sm
+60m         Warning   BackoffLimitExceeded    job/cdn-cdn-control-plane-migrate                        Job has reached the specified backoff limit
+59m         Normal    Scheduled               pod/cdn-cdn-control-plane-migrate-q594f                  Successfully assigned cdn-gitops/cdn-cdn-control-plane-migrate-q594f to minikube
+59m         Normal    SuccessfulCreate        job/cdn-cdn-control-plane-migrate                        Created pod: cdn-cdn-control-plane-migrate-q594f
+59m         Normal    Pulled                  pod/cdn-cdn-control-plane-migrate-q594f                  Successfully pulled image "ghcr.io/ostrrovska/cdn-control-plane:1.2.1" in 648ms (648ms including waiting). Image size: 94211628 bytes.
+59m         Normal    Pulled                  pod/cdn-cdn-control-plane-migrate-q594f                  Successfully pulled image "ghcr.io/ostrrovska/cdn-control-plane:1.2.1" in 843ms (843ms including waiting). Image size: 94211628 bytes.
+59m         Normal    Pulled                  pod/cdn-cdn-control-plane-migrate-q594f                  Successfully pulled image "ghcr.io/ostrrovska/cdn-control-plane:1.2.1" in 1.009s (1.009s including waiting). Image size: 94211628 bytes.
+58m         Normal    Pulled                  pod/cdn-cdn-control-plane-migrate-q594f                  Successfully pulled image "ghcr.io/ostrrovska/cdn-control-plane:1.2.1" in 729ms (729ms including waiting). Image size: 94211628 bytes.
+57m         Normal    Pulled                  pod/cdn-cdn-control-plane-migrate-q594f                  Successfully pulled image "ghcr.io/ostrrovska/cdn-control-plane:1.2.1" in 676ms (676ms including waiting). Image size: 94211628 bytes.
+56m         Normal    Created                 pod/cdn-cdn-control-plane-migrate-q594f                  Container created
+56m         Normal    Started                 pod/cdn-cdn-control-plane-migrate-q594f                  Container started
+56m         Normal    Pulled                  pod/cdn-cdn-control-plane-migrate-q594f                  Successfully pulled image "ghcr.io/ostrrovska/cdn-control-plane:1.2.1" in 637ms (637ms including waiting). Image size: 94211628 bytes.
+55m         Warning   BackOff                 pod/cdn-cdn-control-plane-migrate-q594f                  Back-off restarting failed container migrate in pod cdn-cdn-control-plane-migrate-q594f_cdn-gitops(4cf5c05b-8899-4f5e-8ecd-06556d773d5a)
+53m         Normal    Pulling                 pod/cdn-cdn-control-plane-migrate-q594f                  Pulling image "ghcr.io/ostrrovska/cdn-control-plane:1.2.1"
+53m         Normal    Pulled                  pod/cdn-cdn-control-plane-migrate-q594f                  Successfully pulled image "ghcr.io/ostrrovska/cdn-control-plane:1.2.1" in 916ms (916ms including waiting). Image size: 94211628 bytes.
+53m         Normal    SuccessfulDelete        job/cdn-cdn-control-plane-migrate                        Deleted pod: cdn-cdn-control-plane-migrate-q594f
+53m         Warning   BackoffLimitExceeded    job/cdn-cdn-control-plane-migrate                        Job has reached the specified backoff limit
+51m         Normal    Provisioning            persistentvolumeclaim/cdn-cdn-control-plane-postgresql   External provisioner is provisioning volume for claim "cdn-gitops/cdn-cdn-control-plane-postgresql"
+51m         Normal    ScalingReplicaSet       deployment/cdn-cdn-control-plane-redis                   Scaled up replica set cdn-cdn-control-plane-redis-5ffd86d578 from 0 to 1
+51m         Normal    ExternalProvisioning    persistentvolumeclaim/cdn-cdn-control-plane-postgresql   Waiting for a volume to be created either by the external provisioner 'k8s.io/minikube-hostpath' or manually by the system administrator. If volume creation is delayed, please verify that the provisioner is running and correctly registered.
+51m         Normal    ProvisioningSucceeded   persistentvolumeclaim/cdn-cdn-control-plane-postgresql   Successfully provisioned volume pvc-3037343a-42d7-4cce-8811-25f37f8ee370
+51m         Normal    ScalingReplicaSet       deployment/cdn-cdn-control-plane-postgresql              Scaled up replica set cdn-cdn-control-plane-postgresql-5c8556bdd4 from 0 to 1
+51m         Normal    SuccessfulCreate        replicaset/cdn-cdn-control-plane-postgresql-5c8556bdd4   Created pod: cdn-cdn-control-plane-postgresql-5c8556bdd4-c9kbk
+51m         Normal    Scheduled               pod/cdn-cdn-control-plane-agents-78c47cc4bf-zlcx2        Successfully assigned cdn-gitops/cdn-cdn-control-plane-agents-78c47cc4bf-zlcx2 to minikube
+51m         Normal    SuccessfulCreate        replicaset/cdn-cdn-control-plane-agents-78c47cc4bf       Created pod: cdn-cdn-control-plane-agents-78c47cc4bf-zlcx2
+51m         Normal    Scheduled               pod/cdn-cdn-control-plane-api-6cc96d77c5-7ltbt           Successfully assigned cdn-gitops/cdn-cdn-control-plane-api-6cc96d77c5-7ltbt to minikube
+51m         Normal    SuccessfulCreate        replicaset/cdn-cdn-control-plane-api-6cc96d77c5          Created pod: cdn-cdn-control-plane-api-6cc96d77c5-7ltbt
+51m         Normal    Scheduled               pod/cdn-cdn-control-plane-postgresql-5c8556bdd4-c9kbk    Successfully assigned cdn-gitops/cdn-cdn-control-plane-postgresql-5c8556bdd4-c9kbk to minikube
+51m         Normal    Scheduled               pod/cdn-cdn-control-plane-redis-5ffd86d578-cgnfb         Successfully assigned cdn-gitops/cdn-cdn-control-plane-redis-5ffd86d578-cgnfb to minikube
+51m         Normal    SuccessfulCreate        replicaset/cdn-cdn-control-plane-redis-5ffd86d578        Created pod: cdn-cdn-control-plane-redis-5ffd86d578-cgnfb
+51m         Normal    Pulling                 pod/cdn-cdn-control-plane-redis-5ffd86d578-cgnfb         Pulling image "redis:7-alpine"
+51m         Normal    Pulling                 pod/cdn-cdn-control-plane-agents-78c47cc4bf-zlcx2        Pulling image "ghcr.io/ostrrovska/cdn-control-plane:1.2.1"
+51m         Normal    Pulling                 pod/cdn-cdn-control-plane-postgresql-5c8556bdd4-c9kbk    Pulling image "postgres:16-alpine"
+51m         Normal    Pulling                 pod/cdn-cdn-control-plane-api-6cc96d77c5-7ltbt           Pulling image "ghcr.io/ostrrovska/cdn-control-plane:1.2.1"
+51m         Normal    Pulled                  pod/cdn-cdn-control-plane-agents-78c47cc4bf-zlcx2        Successfully pulled image "ghcr.io/ostrrovska/cdn-control-plane:1.2.1" in 703ms (703ms including waiting). Image size: 94211628 bytes.
+51m         Normal    Created                 pod/cdn-cdn-control-plane-agents-78c47cc4bf-zlcx2        Container created
+51m         Normal    Started                 pod/cdn-cdn-control-plane-agents-78c47cc4bf-zlcx2        Container started
+50m         Normal    Pulled                  pod/cdn-cdn-control-plane-postgresql-5c8556bdd4-c9kbk    Successfully pulled image "postgres:16-alpine" in 45.239s (45.93s including waiting). Image size: 116087053 bytes.
+50m         Normal    Created                 pod/cdn-cdn-control-plane-postgresql-5c8556bdd4-c9kbk    Container created
+50m         Normal    Started                 pod/cdn-cdn-control-plane-postgresql-5c8556bdd4-c9kbk    Container started
+50m         Normal    Pulled                  pod/cdn-cdn-control-plane-api-6cc96d77c5-7ltbt           Successfully pulled image "ghcr.io/ostrrovska/cdn-control-plane:1.2.1" in 586ms (46.422s including waiting). Image size: 94211628 bytes.
+50m         Normal    Created                 pod/cdn-cdn-control-plane-api-6cc96d77c5-7ltbt           Container created
+50m         Normal    Started                 pod/cdn-cdn-control-plane-api-6cc96d77c5-7ltbt           Container started
+50m         Warning   Unhealthy               pod/cdn-cdn-control-plane-postgresql-5c8556bdd4-c9kbk    Startup probe failed: /var/run/postgresql:5432 - no response
+50m         Warning   Unhealthy               pod/cdn-cdn-control-plane-api-6cc96d77c5-7ltbt           Startup probe failed: Get "http://10.244.0.19:8000/health": dial tcp 10.244.0.19:8000: connect: connection refused
+50m         Warning   Unhealthy               pod/cdn-cdn-control-plane-api-6cc96d77c5-7ltbt           Readiness probe failed: HTTP probe failed with statuscode: 503
+50m         Normal    Started                 pod/cdn-cdn-control-plane-redis-5ffd86d578-cgnfb         Container started
+50m         Normal    Pulled                  pod/cdn-cdn-control-plane-redis-5ffd86d578-cgnfb         Successfully pulled image "redis:7-alpine" in 13.844s (1m0.216s including waiting). Image size: 16432706 bytes.
+50m         Normal    Created                 pod/cdn-cdn-control-plane-redis-5ffd86d578-cgnfb         Container created
+50m         Normal    Pulling                 pod/cdn-cdn-control-plane-migrate-vsj4h                  Pulling image "ghcr.io/ostrrovska/cdn-control-plane:1.2.1"
+50m         Normal    SuccessfulCreate        job/cdn-cdn-control-plane-migrate                        Created pod: cdn-cdn-control-plane-migrate-vsj4h
+50m         Normal    Scheduled               pod/cdn-cdn-control-plane-migrate-vsj4h                  Successfully assigned cdn-gitops/cdn-cdn-control-plane-migrate-vsj4h to minikube
+50m         Normal    Started                 pod/cdn-cdn-control-plane-migrate-vsj4h                  Container started
+50m         Normal    Pulled                  pod/cdn-cdn-control-plane-migrate-vsj4h                  Successfully pulled image "ghcr.io/ostrrovska/cdn-control-plane:1.2.1" in 998ms (998ms including waiting). Image size: 94211628 bytes.
+50m         Normal    Created                 pod/cdn-cdn-control-plane-migrate-vsj4h                  Container created
+50m         Normal    Completed               job/cdn-cdn-control-plane-migrate                        Job completed
+50m         Normal    SuccessfulCreate        job/cdn-cdn-control-plane-seed                           Created pod: cdn-cdn-control-plane-seed-98k9d
+50m         Normal    Scheduled               pod/cdn-cdn-control-plane-seed-98k9d                     Successfully assigned cdn-gitops/cdn-cdn-control-plane-seed-98k9d to minikube
+50m         Normal    Pulling                 pod/cdn-cdn-control-plane-seed-98k9d                     Pulling image "ghcr.io/ostrrovska/cdn-control-plane:1.2.1"
+50m         Normal    Pulled                  pod/cdn-cdn-control-plane-seed-98k9d                     Successfully pulled image "ghcr.io/ostrrovska/cdn-control-plane:1.2.1" in 1.066s (1.066s including waiting). Image size: 94211628 bytes.
+50m         Normal    Started                 pod/cdn-cdn-control-plane-seed-98k9d                     Container started
+50m         Normal    Created                 pod/cdn-cdn-control-plane-seed-98k9d                     Container created
+50m         Normal    Completed               job/cdn-cdn-control-plane-seed                           Job completed
+45m         Normal    Scheduled               pod/cdn-cdn-control-plane-api-c544d66cf-gftsk            Successfully assigned cdn-gitops/cdn-cdn-control-plane-api-c544d66cf-gftsk to minikube
+45m         Normal    SuccessfulDelete        replicaset/cdn-cdn-control-plane-agents-78c47cc4bf       Deleted pod: cdn-cdn-control-plane-agents-78c47cc4bf-zlcx2
+45m         Normal    Killing                 pod/cdn-cdn-control-plane-agents-78c47cc4bf-zlcx2        Stopping container agents
+45m         Normal    SuccessfulCreate        replicaset/cdn-cdn-control-plane-api-c544d66cf           Created pod: cdn-cdn-control-plane-api-c544d66cf-gftsk
+45m         Normal    Pulling                 pod/cdn-cdn-control-plane-api-c544d66cf-gftsk            Pulling image "ghcr.io/ostrrovska/cdn-control-plane:1.3.0"
+44m         Normal    Scheduled               pod/cdn-cdn-control-plane-agents-7ccd8db8b9-rmk8d        Successfully assigned cdn-gitops/cdn-cdn-control-plane-agents-7ccd8db8b9-rmk8d to minikube
+44m         Normal    Pulling                 pod/cdn-cdn-control-plane-agents-7ccd8db8b9-rmk8d        Pulling image "ghcr.io/ostrrovska/cdn-control-plane:1.3.0"
+44m         Normal    SuccessfulCreate        replicaset/cdn-cdn-control-plane-agents-7ccd8db8b9       Created pod: cdn-cdn-control-plane-agents-7ccd8db8b9-rmk8d
+44m         Normal    Started                 pod/cdn-cdn-control-plane-agents-7ccd8db8b9-rmk8d        Container started
+44m         Normal    Created                 pod/cdn-cdn-control-plane-api-c544d66cf-gftsk            Container created
+44m         Normal    Pulled                  pod/cdn-cdn-control-plane-api-c544d66cf-gftsk            Successfully pulled image "ghcr.io/ostrrovska/cdn-control-plane:1.3.0" in 45.617s (45.617s including waiting). Image size: 94213446 bytes.
+44m         Normal    Started                 pod/cdn-cdn-control-plane-api-c544d66cf-gftsk            Container started
+44m         Normal    Pulled                  pod/cdn-cdn-control-plane-agents-7ccd8db8b9-rmk8d        Successfully pulled image "ghcr.io/ostrrovska/cdn-control-plane:1.3.0" in 624ms (15.801s including waiting). Image size: 94213446 bytes.
+44m         Normal    Created                 pod/cdn-cdn-control-plane-agents-7ccd8db8b9-rmk8d        Container created
+44m         Warning   Unhealthy               pod/cdn-cdn-control-plane-api-c544d66cf-gftsk            Startup probe failed: Get "http://10.244.0.25:8000/health": dial tcp 10.244.0.25:8000: connect: connection refused
+44m         Normal    Scheduled               pod/cdn-cdn-control-plane-migrate-gt5j7                  Successfully assigned cdn-gitops/cdn-cdn-control-plane-migrate-gt5j7 to minikube
+44m         Normal    Pulling                 pod/cdn-cdn-control-plane-migrate-gt5j7                  Pulling image "ghcr.io/ostrrovska/cdn-control-plane:1.3.0"
+44m         Normal    Killing                 pod/cdn-cdn-control-plane-api-6cc96d77c5-7ltbt           Stopping container api
+44m         Normal    SuccessfulCreate        job/cdn-cdn-control-plane-migrate                        Created pod: cdn-cdn-control-plane-migrate-gt5j7
+44m         Normal    SuccessfulDelete        replicaset/cdn-cdn-control-plane-api-6cc96d77c5          Deleted pod: cdn-cdn-control-plane-api-6cc96d77c5-7ltbt
+44m         Normal    Started                 pod/cdn-cdn-control-plane-migrate-gt5j7                  Container started
+44m         Normal    Pulled                  pod/cdn-cdn-control-plane-migrate-gt5j7                  Successfully pulled image "ghcr.io/ostrrovska/cdn-control-plane:1.3.0" in 699ms (699ms including waiting). Image size: 94213446 bytes.
+44m         Normal    Created                 pod/cdn-cdn-control-plane-migrate-gt5j7                  Container created
+44m         Normal    SuccessfulCreate        replicaset/cdn-cdn-control-plane-api-c544d66cf           Created pod: cdn-cdn-control-plane-api-c544d66cf-d5s5g
+44m         Normal    Scheduled               pod/cdn-cdn-control-plane-api-c544d66cf-d5s5g            Successfully assigned cdn-gitops/cdn-cdn-control-plane-api-c544d66cf-d5s5g to minikube
+44m         Normal    SuccessfulCreate        replicaset/cdn-cdn-control-plane-api-c544d66cf           Created pod: cdn-cdn-control-plane-api-c544d66cf-zdb5g
+44m         Normal    Scheduled               pod/cdn-cdn-control-plane-api-c544d66cf-zdb5g            Successfully assigned cdn-gitops/cdn-cdn-control-plane-api-c544d66cf-zdb5g to minikube
+44m         Normal    Pulling                 pod/cdn-cdn-control-plane-api-c544d66cf-zdb5g            Pulling image "ghcr.io/ostrrovska/cdn-control-plane:1.3.0"
+44m         Normal    Pulling                 pod/cdn-cdn-control-plane-api-c544d66cf-d5s5g            Pulling image "ghcr.io/ostrrovska/cdn-control-plane:1.3.0"
+44m         Normal    Pulled                  pod/cdn-cdn-control-plane-api-c544d66cf-d5s5g            Successfully pulled image "ghcr.io/ostrrovska/cdn-control-plane:1.3.0" in 564ms (1.256s including waiting). Image size: 94213446 bytes.
+44m         Normal    Created                 pod/cdn-cdn-control-plane-api-c544d66cf-zdb5g            Container created
+44m         Normal    Pulled                  pod/cdn-cdn-control-plane-api-c544d66cf-zdb5g            Successfully pulled image "ghcr.io/ostrrovska/cdn-control-plane:1.3.0" in 764ms (764ms including waiting). Image size: 94213446 bytes.
+44m         Normal    Started                 pod/cdn-cdn-control-plane-api-c544d66cf-zdb5g            Container started
+44m         Normal    Created                 pod/cdn-cdn-control-plane-api-c544d66cf-d5s5g            Container created
+44m         Normal    Started                 pod/cdn-cdn-control-plane-api-c544d66cf-d5s5g            Container started
+44m         Warning   Unhealthy               pod/cdn-cdn-control-plane-api-c544d66cf-zdb5g            Startup probe failed: Get "http://10.244.0.28:8000/health": dial tcp 10.244.0.28:8000: connect: connection refused
+44m         Warning   Unhealthy               pod/cdn-cdn-control-plane-api-c544d66cf-d5s5g            Startup probe failed: Get "http://10.244.0.29:8000/health": dial tcp 10.244.0.29:8000: connect: connection refused
+44m         Normal    SuccessfulCreate        job/cdn-cdn-control-plane-seed                           Created pod: cdn-cdn-control-plane-seed-d7v2w
+44m         Warning   Unhealthy               pod/cdn-cdn-control-plane-api-6cc96d77c5-7ltbt           Readiness probe failed: Get "http://10.244.0.19:8000/health/ready": dial tcp 10.244.0.19:8000: connect: connection refused
+44m         Normal    Completed               job/cdn-cdn-control-plane-migrate                        Job completed
+44m         Normal    Scheduled               pod/cdn-cdn-control-plane-seed-d7v2w                     Successfully assigned cdn-gitops/cdn-cdn-control-plane-seed-d7v2w to minikube
+44m         Normal    Pulling                 pod/cdn-cdn-control-plane-seed-d7v2w                     Pulling image "ghcr.io/ostrrovska/cdn-control-plane:1.3.0"
+44m         Normal    Created                 pod/cdn-cdn-control-plane-seed-d7v2w                     Container created
+44m         Normal    Pulled                  pod/cdn-cdn-control-plane-seed-d7v2w                     Successfully pulled image "ghcr.io/ostrrovska/cdn-control-plane:1.3.0" in 984ms (984ms including waiting). Image size: 94213446 bytes.
+44m         Normal    Started                 pod/cdn-cdn-control-plane-seed-d7v2w                     Container started
+44m         Normal    Completed               job/cdn-cdn-control-plane-seed                           Job completed
+44m         Normal    SuccessfulDelete        replicaset/cdn-cdn-control-plane-api-c544d66cf           Deleted pod: cdn-cdn-control-plane-api-c544d66cf-zdb5g
+44m         Normal    SuccessfulDelete        replicaset/cdn-cdn-control-plane-api-c544d66cf           Deleted pod: cdn-cdn-control-plane-api-c544d66cf-d5s5g
+44m         Normal    Killing                 pod/cdn-cdn-control-plane-api-c544d66cf-d5s5g            Stopping container api
+44m         Normal    Killing                 pod/cdn-cdn-control-plane-api-c544d66cf-zdb5g            Stopping container api
+44m         Normal    Scheduled               pod/cdn-cdn-control-plane-api-c544d66cf-4rrls            Successfully assigned cdn-gitops/cdn-cdn-control-plane-api-c544d66cf-4rrls to minikube
+44m         Normal    SuccessfulCreate        replicaset/cdn-cdn-control-plane-api-c544d66cf           Created pod: cdn-cdn-control-plane-api-c544d66cf-vn2td
+44m         Normal    SuccessfulCreate        replicaset/cdn-cdn-control-plane-api-c544d66cf           Created pod: cdn-cdn-control-plane-api-c544d66cf-4rrls
+44m         Normal    Scheduled               pod/cdn-cdn-control-plane-api-c544d66cf-vn2td            Successfully assigned cdn-gitops/cdn-cdn-control-plane-api-c544d66cf-vn2td to minikube
+44m         Normal    Pulling                 pod/cdn-cdn-control-plane-api-c544d66cf-vn2td            Pulling image "ghcr.io/ostrrovska/cdn-control-plane:1.3.0"
+44m         Normal    Created                 pod/cdn-cdn-control-plane-api-c544d66cf-vn2td            Container created
+44m         Normal    Pulling                 pod/cdn-cdn-control-plane-api-c544d66cf-4rrls            Pulling image "ghcr.io/ostrrovska/cdn-control-plane:1.3.0"
+44m         Normal    Pulled                  pod/cdn-cdn-control-plane-api-c544d66cf-vn2td            Successfully pulled image "ghcr.io/ostrrovska/cdn-control-plane:1.3.0" in 667ms (668ms including waiting). Image size: 94213446 bytes.
+44m         Normal    Pulled                  pod/cdn-cdn-control-plane-api-c544d66cf-4rrls            Successfully pulled image "ghcr.io/ostrrovska/cdn-control-plane:1.3.0" in 897ms (1.562s including waiting). Image size: 94213446 bytes.
+44m         Normal    Created                 pod/cdn-cdn-control-plane-api-c544d66cf-4rrls            Container created
+44m         Normal    Started                 pod/cdn-cdn-control-plane-api-c544d66cf-4rrls            Container started
+44m         Normal    Started                 pod/cdn-cdn-control-plane-api-c544d66cf-vn2td            Container started
+43m         Warning   Unhealthy               pod/cdn-cdn-control-plane-api-c544d66cf-4rrls            Startup probe failed: Get "http://10.244.0.32:8000/health": dial tcp 10.244.0.32:8000: connect: connection refused
+43m         Warning   Unhealthy               pod/cdn-cdn-control-plane-api-c544d66cf-vn2td            Startup probe failed: Get "http://10.244.0.31:8000/health": dial tcp 10.244.0.31:8000: connect: connection refused
+43m         Normal    SuccessfulCreate        job/cdn-cdn-control-plane-migrate                        Created pod: cdn-cdn-control-plane-migrate-8hbqw
+43m         Normal    Scheduled               pod/cdn-cdn-control-plane-migrate-8hbqw                  Successfully assigned cdn-gitops/cdn-cdn-control-plane-migrate-8hbqw to minikube
+43m         Normal    Started                 pod/cdn-cdn-control-plane-migrate-8hbqw                  Container started
+43m         Normal    Created                 pod/cdn-cdn-control-plane-migrate-8hbqw                  Container created
+43m         Normal    Pulled                  pod/cdn-cdn-control-plane-migrate-8hbqw                  Successfully pulled image "ghcr.io/ostrrovska/cdn-control-plane:1.3.0" in 605ms (605ms including waiting). Image size: 94213446 bytes.
+43m         Normal    Pulling                 pod/cdn-cdn-control-plane-migrate-8hbqw                  Pulling image "ghcr.io/ostrrovska/cdn-control-plane:1.3.0"
+43m         Normal    Completed               job/cdn-cdn-control-plane-migrate                        Job completed
+43m         Normal    Scheduled               pod/cdn-cdn-control-plane-seed-pl4wc                     Successfully assigned cdn-gitops/cdn-cdn-control-plane-seed-pl4wc to minikube
+43m         Normal    SuccessfulCreate        job/cdn-cdn-control-plane-seed                           Created pod: cdn-cdn-control-plane-seed-pl4wc
+43m         Normal    Pulling                 pod/cdn-cdn-control-plane-seed-pl4wc                     Pulling image "ghcr.io/ostrrovska/cdn-control-plane:1.3.0"
+43m         Normal    Pulled                  pod/cdn-cdn-control-plane-seed-pl4wc                     Successfully pulled image "ghcr.io/ostrrovska/cdn-control-plane:1.3.0" in 751ms (751ms including waiting). Image size: 94213446 bytes.
+43m         Normal    Created                 pod/cdn-cdn-control-plane-seed-pl4wc                     Container created
+43m         Normal    Started                 pod/cdn-cdn-control-plane-seed-pl4wc                     Container started
+43m         Normal    Completed               job/cdn-cdn-control-plane-seed                           Job completed
+43m         Normal    Killing                 pod/cdn-cdn-control-plane-api-c544d66cf-vn2td            Stopping container api
+43m         Normal    SuccessfulDelete        replicaset/cdn-cdn-control-plane-api-c544d66cf           Deleted pod: cdn-cdn-control-plane-api-c544d66cf-4rrls
+43m         Normal    SuccessfulDelete        replicaset/cdn-cdn-control-plane-api-c544d66cf           Deleted pod: cdn-cdn-control-plane-api-c544d66cf-vn2td
+43m         Normal    Killing                 pod/cdn-cdn-control-plane-api-c544d66cf-4rrls            Stopping container api
+39m         Normal    Killing                 pod/cdn-cdn-control-plane-agents-7ccd8db8b9-rmk8d        Stopping container agents
+39m         Normal    SuccessfulDelete        replicaset/cdn-cdn-control-plane-agents-7ccd8db8b9       Deleted pod: cdn-cdn-control-plane-agents-7ccd8db8b9-rmk8d
+39m         Normal    SuccessfulCreate        replicaset/cdn-cdn-control-plane-api-7f8dbbcbf5          Created pod: cdn-cdn-control-plane-api-7f8dbbcbf5-xvvgc
+39m         Normal    Scheduled               pod/cdn-cdn-control-plane-api-7f8dbbcbf5-xvvgc           Successfully assigned cdn-gitops/cdn-cdn-control-plane-api-7f8dbbcbf5-xvvgc to minikube
+39m         Normal    Scheduled               pod/cdn-cdn-control-plane-agents-8f4bff549-k65jf         Successfully assigned cdn-gitops/cdn-cdn-control-plane-agents-8f4bff549-k65jf to minikube
+39m         Normal    SuccessfulCreate        replicaset/cdn-cdn-control-plane-agents-8f4bff549        Created pod: cdn-cdn-control-plane-agents-8f4bff549-k65jf
+36m         Normal    Pulling                 pod/cdn-cdn-control-plane-api-7f8dbbcbf5-xvvgc           Pulling image "ghcr.io/ostrrovska/cdn-control-plane:0.0.0-does-not-exist"
+36m         Warning   Failed                  pod/cdn-cdn-control-plane-api-7f8dbbcbf5-xvvgc           Failed to pull image "ghcr.io/ostrrovska/cdn-control-plane:0.0.0-does-not-exist": rpc error: code = NotFound desc = failed to pull and unpack image "ghcr.io/ostrrovska/cdn-control-plane:0.0.0-does-not-exist": failed to resolve reference "ghcr.io/ostrrovska/cdn-control-plane:0.0.0-does-not-exist": ghcr.io/ostrrovska/cdn-control-plane:0.0.0-does-not-exist: not found
+36m         Warning   Failed                  pod/cdn-cdn-control-plane-api-7f8dbbcbf5-xvvgc           Error: ErrImagePull
+35m         Normal    Pulling                 pod/cdn-cdn-control-plane-agents-8f4bff549-k65jf         Pulling image "ghcr.io/ostrrovska/cdn-control-plane:0.0.0-does-not-exist"
+35m         Warning   Failed                  pod/cdn-cdn-control-plane-agents-8f4bff549-k65jf         Failed to pull image "ghcr.io/ostrrovska/cdn-control-plane:0.0.0-does-not-exist": rpc error: code = NotFound desc = failed to pull and unpack image "ghcr.io/ostrrovska/cdn-control-plane:0.0.0-does-not-exist": failed to resolve reference "ghcr.io/ostrrovska/cdn-control-plane:0.0.0-does-not-exist": ghcr.io/ostrrovska/cdn-control-plane:0.0.0-does-not-exist: not found
+35m         Warning   Failed                  pod/cdn-cdn-control-plane-agents-8f4bff549-k65jf         Error: ErrImagePull
+24m         Normal    BackOff                 pod/cdn-cdn-control-plane-api-7f8dbbcbf5-xvvgc           Back-off pulling image "ghcr.io/ostrrovska/cdn-control-plane:0.0.0-does-not-exist"
+24m         Warning   Failed                  pod/cdn-cdn-control-plane-api-7f8dbbcbf5-xvvgc           Error: ImagePullBackOff
+23m         Warning   Failed                  pod/cdn-cdn-control-plane-agents-8f4bff549-k65jf         Error: ImagePullBackOff
+23m         Normal    BackOff                 pod/cdn-cdn-control-plane-agents-8f4bff549-k65jf         Back-off pulling image "ghcr.io/ostrrovska/cdn-control-plane:0.0.0-does-not-exist"
+20m         Normal    SuccessfulDelete        replicaset/cdn-cdn-control-plane-api-7f8dbbcbf5          Deleted pod: cdn-cdn-control-plane-api-7f8dbbcbf5-xvvgc
+20m         Normal    SuccessfulDelete        replicaset/cdn-cdn-control-plane-agents-8f4bff549        Deleted pod: cdn-cdn-control-plane-agents-8f4bff549-k65jf
+20m         Normal    Scheduled               pod/cdn-cdn-control-plane-agents-7ccd8db8b9-r48q9        Successfully assigned cdn-gitops/cdn-cdn-control-plane-agents-7ccd8db8b9-r48q9 to minikube
+20m         Normal    SuccessfulCreate        replicaset/cdn-cdn-control-plane-agents-7ccd8db8b9       Created pod: cdn-cdn-control-plane-agents-7ccd8db8b9-r48q9
+20m         Normal    Pulling                 pod/cdn-cdn-control-plane-agents-7ccd8db8b9-r48q9        Pulling image "ghcr.io/ostrrovska/cdn-control-plane:1.3.0"
+20m         Normal    Started                 pod/cdn-cdn-control-plane-agents-7ccd8db8b9-r48q9        Container started
+20m         Normal    Scheduled               pod/cdn-cdn-control-plane-migrate-6xx9j                  Successfully assigned cdn-gitops/cdn-cdn-control-plane-migrate-6xx9j to minikube
+20m         Normal    Pulled                  pod/cdn-cdn-control-plane-agents-7ccd8db8b9-r48q9        Successfully pulled image "ghcr.io/ostrrovska/cdn-control-plane:1.3.0" in 787ms (787ms including waiting). Image size: 94213446 bytes.
+20m         Normal    SuccessfulCreate        job/cdn-cdn-control-plane-migrate                        Created pod: cdn-cdn-control-plane-migrate-6xx9j
+20m         Normal    Created                 pod/cdn-cdn-control-plane-agents-7ccd8db8b9-r48q9        Container created
+20m         Normal    Created                 pod/cdn-cdn-control-plane-migrate-6xx9j                  Container created
+20m         Normal    Pulled                  pod/cdn-cdn-control-plane-migrate-6xx9j                  Successfully pulled image "ghcr.io/ostrrovska/cdn-control-plane:1.3.0" in 583ms (583ms including waiting). Image size: 94213446 bytes.
+20m         Normal    Pulling                 pod/cdn-cdn-control-plane-migrate-6xx9j                  Pulling image "ghcr.io/ostrrovska/cdn-control-plane:1.3.0"
+20m         Normal    Started                 pod/cdn-cdn-control-plane-migrate-6xx9j                  Container started
+20m         Normal    SuccessfulCreate        job/cdn-cdn-control-plane-seed                           Created pod: cdn-cdn-control-plane-seed-6bv27
+20m         Normal    Scheduled               pod/cdn-cdn-control-plane-seed-6bv27                     Successfully assigned cdn-gitops/cdn-cdn-control-plane-seed-6bv27 to minikube
+20m         Normal    Completed               job/cdn-cdn-control-plane-migrate                        Job completed
+20m         Normal    Pulling                 pod/cdn-cdn-control-plane-seed-6bv27                     Pulling image "ghcr.io/ostrrovska/cdn-control-plane:1.3.0"
+20m         Normal    Started                 pod/cdn-cdn-control-plane-seed-6bv27                     Container started
+20m         Normal    Pulled                  pod/cdn-cdn-control-plane-seed-6bv27                     Successfully pulled image "ghcr.io/ostrrovska/cdn-control-plane:1.3.0" in 817ms (817ms including waiting). Image size: 94213446 bytes.
+20m         Normal    Created                 pod/cdn-cdn-control-plane-seed-6bv27                     Container created
+20m         Normal    Completed               job/cdn-cdn-control-plane-seed                           Job completed
+19m         Normal    Scheduled               pod/cdn-cdn-control-plane-api-6cc96d77c5-xbd2t           Successfully assigned cdn-gitops/cdn-cdn-control-plane-api-6cc96d77c5-xbd2t to minikube
+19m         Normal    Killing                 pod/cdn-cdn-control-plane-agents-7ccd8db8b9-r48q9        Stopping container agents
+19m         Normal    SuccessfulDelete        replicaset/cdn-cdn-control-plane-agents-7ccd8db8b9       Deleted pod: cdn-cdn-control-plane-agents-7ccd8db8b9-r48q9
+19m         Normal    SuccessfulCreate        replicaset/cdn-cdn-control-plane-api-6cc96d77c5          Created pod: cdn-cdn-control-plane-api-6cc96d77c5-xbd2t
+19m         Normal    Pulling                 pod/cdn-cdn-control-plane-api-6cc96d77c5-xbd2t           Pulling image "ghcr.io/ostrrovska/cdn-control-plane:1.2.1"
+19m         Normal    Pulled                  pod/cdn-cdn-control-plane-api-6cc96d77c5-xbd2t           Successfully pulled image "ghcr.io/ostrrovska/cdn-control-plane:1.2.1" in 926ms (926ms including waiting). Image size: 94211628 bytes.
+19m         Normal    Started                 pod/cdn-cdn-control-plane-api-6cc96d77c5-xbd2t           Container started
+19m         Normal    Created                 pod/cdn-cdn-control-plane-api-6cc96d77c5-xbd2t           Container created
+19m         Warning   Unhealthy               pod/cdn-cdn-control-plane-api-6cc96d77c5-xbd2t           Startup probe failed: Get "http://10.244.0.40:8000/health": dial tcp 10.244.0.40:8000: connect: connection refused
+19m         Normal    Killing                 pod/cdn-cdn-control-plane-api-c544d66cf-gftsk            Stopping container api
+19m         Normal    SuccessfulDelete        replicaset/cdn-cdn-control-plane-api-c544d66cf           Deleted pod: cdn-cdn-control-plane-api-c544d66cf-gftsk
+19m         Warning   Unhealthy               pod/cdn-cdn-control-plane-api-c544d66cf-gftsk            Readiness probe failed: Get "http://10.244.0.25:8000/health/ready": dial tcp 10.244.0.25:8000: connect: connection refused
+19m         Normal    SuccessfulCreate        replicaset/cdn-cdn-control-plane-agents-78c47cc4bf       Created pod: cdn-cdn-control-plane-agents-78c47cc4bf-88927
+19m         Normal    Scheduled               pod/cdn-cdn-control-plane-agents-78c47cc4bf-88927        Successfully assigned cdn-gitops/cdn-cdn-control-plane-agents-78c47cc4bf-88927 to minikube
+19m         Normal    Pulling                 pod/cdn-cdn-control-plane-agents-78c47cc4bf-88927        Pulling image "ghcr.io/ostrrovska/cdn-control-plane:1.2.1"
+19m         Normal    SuccessfulCreate        job/cdn-cdn-control-plane-migrate                        Created pod: cdn-cdn-control-plane-migrate-jzkzt
+19m         Normal    Created                 pod/cdn-cdn-control-plane-agents-78c47cc4bf-88927        Container created
+19m         Normal    Pulling                 pod/cdn-cdn-control-plane-migrate-jzkzt                  Pulling image "ghcr.io/ostrrovska/cdn-control-plane:1.2.1"
+19m         Normal    Scheduled               pod/cdn-cdn-control-plane-migrate-jzkzt                  Successfully assigned cdn-gitops/cdn-cdn-control-plane-migrate-jzkzt to minikube
+19m         Normal    Pulled                  pod/cdn-cdn-control-plane-agents-78c47cc4bf-88927        Successfully pulled image "ghcr.io/ostrrovska/cdn-control-plane:1.2.1" in 600ms (600ms including waiting). Image size: 94211628 bytes.
+19m         Normal    Started                 pod/cdn-cdn-control-plane-agents-78c47cc4bf-88927        Container started
+19m         Normal    Pulled                  pod/cdn-cdn-control-plane-migrate-jzkzt                  Successfully pulled image "ghcr.io/ostrrovska/cdn-control-plane:1.2.1" in 582ms (582ms including waiting). Image size: 94211628 bytes.
+19m         Normal    Created                 pod/cdn-cdn-control-plane-migrate-jzkzt                  Container created
+19m         Normal    Started                 pod/cdn-cdn-control-plane-migrate-jzkzt                  Container started
+19m         Normal    Scheduled               pod/cdn-cdn-control-plane-seed-d5z24                     Successfully assigned cdn-gitops/cdn-cdn-control-plane-seed-d5z24 to minikube
+19m         Normal    Completed               job/cdn-cdn-control-plane-migrate                        Job completed
+19m         Normal    SuccessfulCreate        job/cdn-cdn-control-plane-seed                           Created pod: cdn-cdn-control-plane-seed-d5z24
+19m         Normal    Pulling                 pod/cdn-cdn-control-plane-seed-d5z24                     Pulling image "ghcr.io/ostrrovska/cdn-control-plane:1.2.1"
+19m         Normal    Created                 pod/cdn-cdn-control-plane-seed-d5z24                     Container created
+19m         Normal    Started                 pod/cdn-cdn-control-plane-seed-d5z24                     Container started
+19m         Normal    Pulled                  pod/cdn-cdn-control-plane-seed-d5z24                     Successfully pulled image "ghcr.io/ostrrovska/cdn-control-plane:1.2.1" in 832ms (832ms including waiting). Image size: 94211628 bytes.
+19m         Normal    Completed               job/cdn-cdn-control-plane-seed                           Job completed
+18m         Normal    Pulling                 pod/cdn-cdn-control-plane-api-c544d66cf-qk5kb            Pulling image "ghcr.io/ostrrovska/cdn-control-plane:1.3.0"
+18m         Normal    Scheduled               pod/cdn-cdn-control-plane-api-c544d66cf-qk5kb            Successfully assigned cdn-gitops/cdn-cdn-control-plane-api-c544d66cf-qk5kb to minikube
+18m         Normal    Killing                 pod/cdn-cdn-control-plane-agents-78c47cc4bf-88927        Stopping container agents
+18m         Normal    SuccessfulCreate        replicaset/cdn-cdn-control-plane-api-c544d66cf           Created pod: cdn-cdn-control-plane-api-c544d66cf-qk5kb
+18m         Normal    SuccessfulDelete        replicaset/cdn-cdn-control-plane-agents-78c47cc4bf       Deleted pod: cdn-cdn-control-plane-agents-78c47cc4bf-88927
+18m         Normal    Pulled                  pod/cdn-cdn-control-plane-api-c544d66cf-qk5kb            Successfully pulled image "ghcr.io/ostrrovska/cdn-control-plane:1.3.0" in 749ms (749ms including waiting). Image size: 94213446 bytes.
+18m         Normal    Created                 pod/cdn-cdn-control-plane-api-c544d66cf-qk5kb            Container created
+18m         Normal    Started                 pod/cdn-cdn-control-plane-api-c544d66cf-qk5kb            Container started
+18m         Warning   Unhealthy               pod/cdn-cdn-control-plane-api-c544d66cf-qk5kb            Startup probe failed: Get "http://10.244.0.44:8000/health": dial tcp 10.244.0.44:8000: connect: connection refused
+18m         Normal    Killing                 pod/cdn-cdn-control-plane-api-6cc96d77c5-xbd2t           Stopping container api
+18m         Normal    SuccessfulDelete        replicaset/cdn-cdn-control-plane-api-6cc96d77c5          Deleted pod: cdn-cdn-control-plane-api-6cc96d77c5-xbd2t
+18m         Warning   Unhealthy               pod/cdn-cdn-control-plane-api-6cc96d77c5-xbd2t           Readiness probe failed: Get "http://10.244.0.40:8000/health/ready": dial tcp 10.244.0.40:8000: connect: connection refused
+18m         Normal    Scheduled               pod/cdn-cdn-control-plane-agents-7ccd8db8b9-wmcj7        Successfully assigned cdn-gitops/cdn-cdn-control-plane-agents-7ccd8db8b9-wmcj7 to minikube
+18m         Normal    SuccessfulCreate        replicaset/cdn-cdn-control-plane-agents-7ccd8db8b9       Created pod: cdn-cdn-control-plane-agents-7ccd8db8b9-wmcj7
+18m         Normal    Pulling                 pod/cdn-cdn-control-plane-agents-7ccd8db8b9-wmcj7        Pulling image "ghcr.io/ostrrovska/cdn-control-plane:1.3.0"
+18m         Normal    Pulled                  pod/cdn-cdn-control-plane-agents-7ccd8db8b9-wmcj7        Successfully pulled image "ghcr.io/ostrrovska/cdn-control-plane:1.3.0" in 649ms (649ms including waiting). Image size: 94213446 bytes.
+18m         Normal    Created                 pod/cdn-cdn-control-plane-agents-7ccd8db8b9-wmcj7        Container created
+18m         Normal    Started                 pod/cdn-cdn-control-plane-agents-7ccd8db8b9-wmcj7        Container started
+18m         Normal    SuccessfulCreate        job/cdn-cdn-control-plane-migrate                        Created pod: cdn-cdn-control-plane-migrate-r22dw
+18m         Normal    Scheduled               pod/cdn-cdn-control-plane-migrate-r22dw                  Successfully assigned cdn-gitops/cdn-cdn-control-plane-migrate-r22dw to minikube
+18m         Normal    Pulling                 pod/cdn-cdn-control-plane-migrate-r22dw                  Pulling image "ghcr.io/ostrrovska/cdn-control-plane:1.3.0"
+18m         Normal    Pulled                  pod/cdn-cdn-control-plane-migrate-r22dw                  Successfully pulled image "ghcr.io/ostrrovska/cdn-control-plane:1.3.0" in 636ms (636ms including waiting). Image size: 94213446 bytes.
+18m         Normal    Created                 pod/cdn-cdn-control-plane-migrate-r22dw                  Container created
+18m         Normal    Started                 pod/cdn-cdn-control-plane-migrate-r22dw                  Container started
+18m         Normal    SuccessfulCreate        replicaset/cdn-cdn-control-plane-api-c544d66cf           Created pod: cdn-cdn-control-plane-api-c544d66cf-txfm4
+18m         Normal    SuccessfulCreate        replicaset/cdn-cdn-control-plane-api-c544d66cf           Created pod: cdn-cdn-control-plane-api-c544d66cf-9lbnq
+18m         Normal    Scheduled               pod/cdn-cdn-control-plane-api-c544d66cf-txfm4            Successfully assigned cdn-gitops/cdn-cdn-control-plane-api-c544d66cf-txfm4 to minikube
+18m         Normal    Scheduled               pod/cdn-cdn-control-plane-api-c544d66cf-9lbnq            Successfully assigned cdn-gitops/cdn-cdn-control-plane-api-c544d66cf-9lbnq to minikube
+18m         Normal    Pulling                 pod/cdn-cdn-control-plane-api-c544d66cf-9lbnq            Pulling image "ghcr.io/ostrrovska/cdn-control-plane:1.3.0"
+18m         Normal    Pulling                 pod/cdn-cdn-control-plane-api-c544d66cf-txfm4            Pulling image "ghcr.io/ostrrovska/cdn-control-plane:1.3.0"
+18m         Normal    Started                 pod/cdn-cdn-control-plane-api-c544d66cf-9lbnq            Container started
+18m         Normal    Created                 pod/cdn-cdn-control-plane-api-c544d66cf-9lbnq            Container created
+18m         Normal    Pulled                  pod/cdn-cdn-control-plane-api-c544d66cf-9lbnq            Successfully pulled image "ghcr.io/ostrrovska/cdn-control-plane:1.3.0" in 1.35s (1.35s including waiting). Image size: 94213446 bytes.
+18m         Normal    Created                 pod/cdn-cdn-control-plane-api-c544d66cf-txfm4            Container created
+18m         Normal    Pulled                  pod/cdn-cdn-control-plane-api-c544d66cf-txfm4            Successfully pulled image "ghcr.io/ostrrovska/cdn-control-plane:1.3.0" in 748ms (1.982s including waiting). Image size: 94213446 bytes.
+18m         Normal    Started                 pod/cdn-cdn-control-plane-api-c544d66cf-txfm4            Container started
+18m         Warning   Unhealthy               pod/cdn-cdn-control-plane-api-c544d66cf-txfm4            Startup probe failed: Get "http://10.244.0.48:8000/health": dial tcp 10.244.0.48:8000: connect: connection refused
+18m         Warning   Unhealthy               pod/cdn-cdn-control-plane-api-c544d66cf-9lbnq            Startup probe failed: Get "http://10.244.0.47:8000/health": dial tcp 10.244.0.47:8000: connect: connection refused
+18m         Normal    Completed               job/cdn-cdn-control-plane-migrate                        Job completed
+18m         Normal    Pulling                 pod/cdn-cdn-control-plane-seed-vfb8n                     Pulling image "ghcr.io/ostrrovska/cdn-control-plane:1.3.0"
+18m         Normal    SuccessfulCreate        job/cdn-cdn-control-plane-seed                           Created pod: cdn-cdn-control-plane-seed-vfb8n
+18m         Normal    Scheduled               pod/cdn-cdn-control-plane-seed-vfb8n                     Successfully assigned cdn-gitops/cdn-cdn-control-plane-seed-vfb8n to minikube
+18m         Normal    Pulled                  pod/cdn-cdn-control-plane-seed-vfb8n                     Successfully pulled image "ghcr.io/ostrrovska/cdn-control-plane:1.3.0" in 823ms (823ms including waiting). Image size: 94213446 bytes.
+18m         Normal    Created                 pod/cdn-cdn-control-plane-seed-vfb8n                     Container created
+18m         Normal    Started                 pod/cdn-cdn-control-plane-seed-vfb8n                     Container started
+17m         Normal    Completed               job/cdn-cdn-control-plane-seed                           Job completed
+17m         Normal    SuccessfulDelete        replicaset/cdn-cdn-control-plane-api-c544d66cf           Deleted pod: cdn-cdn-control-plane-api-c544d66cf-txfm4
+17m         Normal    Killing                 pod/cdn-cdn-control-plane-api-c544d66cf-txfm4            Stopping container api
+17m         Normal    SuccessfulDelete        replicaset/cdn-cdn-control-plane-api-c544d66cf           Deleted pod: cdn-cdn-control-plane-api-c544d66cf-9lbnq
+17m         Normal    Killing                 pod/cdn-cdn-control-plane-api-c544d66cf-9lbnq            Stopping container api
+17m         Normal    Pulling                 pod/cdn-cdn-control-plane-migrate-6rklq                  Pulling image "ghcr.io/ostrrovska/cdn-control-plane:1.3.0"
+17m         Normal    Scheduled               pod/cdn-cdn-control-plane-migrate-6rklq                  Successfully assigned cdn-gitops/cdn-cdn-control-plane-migrate-6rklq to minikube
+17m         Normal    SuccessfulCreate        job/cdn-cdn-control-plane-migrate                        Created pod: cdn-cdn-control-plane-migrate-6rklq
+17m         Normal    Started                 pod/cdn-cdn-control-plane-migrate-6rklq                  Container started
+17m         Normal    Created                 pod/cdn-cdn-control-plane-migrate-6rklq                  Container created
+17m         Normal    Pulled                  pod/cdn-cdn-control-plane-migrate-6rklq                  Successfully pulled image "ghcr.io/ostrrovska/cdn-control-plane:1.3.0" in 689ms (689ms including waiting). Image size: 94213446 bytes.
+17m         Warning   Unhealthy               pod/cdn-cdn-control-plane-api-c544d66cf-9lbnq            Readiness probe failed: Get "http://10.244.0.47:8000/health/ready": dial tcp 10.244.0.47:8000: connect: connection refused
+17m         Warning   Unhealthy               pod/cdn-cdn-control-plane-api-c544d66cf-txfm4            Readiness probe failed: Get "http://10.244.0.48:8000/health/ready": dial tcp 10.244.0.48:8000: connect: connection refused
+17m         Normal    SuccessfulCreate        job/cdn-cdn-control-plane-seed                           Created pod: cdn-cdn-control-plane-seed-vdqcb
+17m         Normal    Scheduled               pod/cdn-cdn-control-plane-seed-vdqcb                     Successfully assigned cdn-gitops/cdn-cdn-control-plane-seed-vdqcb to minikube
+17m         Normal    Completed               job/cdn-cdn-control-plane-migrate                        Job completed
+17m         Normal    Pulled                  pod/cdn-cdn-control-plane-seed-vdqcb                     Successfully pulled image "ghcr.io/ostrrovska/cdn-control-plane:1.3.0" in 750ms (750ms including waiting). Image size: 94213446 bytes.
+17m         Normal    Pulling                 pod/cdn-cdn-control-plane-seed-vdqcb                     Pulling image "ghcr.io/ostrrovska/cdn-control-plane:1.3.0"
+17m         Normal    Created                 pod/cdn-cdn-control-plane-seed-vdqcb                     Container created
+17m         Normal    Started                 pod/cdn-cdn-control-plane-seed-vdqcb                     Container started
+17m         Normal    Completed               job/cdn-cdn-control-plane-seed                           Job completed
+17m         Normal    Killing                 pod/cdn-cdn-control-plane-agents-7ccd8db8b9-wmcj7        Stopping container agents
+17m         Normal    SuccessfulCreate        replicaset/cdn-cdn-control-plane-api-7f8dbbcbf5          Created pod: cdn-cdn-control-plane-api-7f8dbbcbf5-p9b6g
+17m         Normal    SuccessfulDelete        replicaset/cdn-cdn-control-plane-agents-7ccd8db8b9       Deleted pod: cdn-cdn-control-plane-agents-7ccd8db8b9-wmcj7
+17m         Normal    Scheduled               pod/cdn-cdn-control-plane-api-7f8dbbcbf5-p9b6g           Successfully assigned cdn-gitops/cdn-cdn-control-plane-api-7f8dbbcbf5-p9b6g to minikube
+17m         Normal    Scheduled               pod/cdn-cdn-control-plane-agents-8f4bff549-hrn94         Successfully assigned cdn-gitops/cdn-cdn-control-plane-agents-8f4bff549-hrn94 to minikube
+17m         Normal    SuccessfulCreate        replicaset/cdn-cdn-control-plane-agents-8f4bff549        Created pod: cdn-cdn-control-plane-agents-8f4bff549-hrn94
+14m         Normal    Pulling                 pod/cdn-cdn-control-plane-api-7f8dbbcbf5-p9b6g           Pulling image "ghcr.io/ostrrovska/cdn-control-plane:0.0.0-does-not-exist"
+14m         Warning   Failed                  pod/cdn-cdn-control-plane-api-7f8dbbcbf5-p9b6g           Failed to pull image "ghcr.io/ostrrovska/cdn-control-plane:0.0.0-does-not-exist": rpc error: code = NotFound desc = failed to pull and unpack image "ghcr.io/ostrrovska/cdn-control-plane:0.0.0-does-not-exist": failed to resolve reference "ghcr.io/ostrrovska/cdn-control-plane:0.0.0-does-not-exist": ghcr.io/ostrrovska/cdn-control-plane:0.0.0-does-not-exist: not found
+14m         Warning   Failed                  pod/cdn-cdn-control-plane-api-7f8dbbcbf5-p9b6g           Error: ErrImagePull
+14m         Normal    Pulling                 pod/cdn-cdn-control-plane-agents-8f4bff549-hrn94         Pulling image "ghcr.io/ostrrovska/cdn-control-plane:0.0.0-does-not-exist"
+14m         Warning   Failed                  pod/cdn-cdn-control-plane-agents-8f4bff549-hrn94         Failed to pull image "ghcr.io/ostrrovska/cdn-control-plane:0.0.0-does-not-exist": rpc error: code = NotFound desc = failed to pull and unpack image "ghcr.io/ostrrovska/cdn-control-plane:0.0.0-does-not-exist": failed to resolve reference "ghcr.io/ostrrovska/cdn-control-plane:0.0.0-does-not-exist": ghcr.io/ostrrovska/cdn-control-plane:0.0.0-does-not-exist: not found
+14m         Warning   Failed                  pod/cdn-cdn-control-plane-agents-8f4bff549-hrn94         Error: ErrImagePull
+7m32s       Normal    BackOff                 pod/cdn-cdn-control-plane-api-7f8dbbcbf5-p9b6g           Back-off pulling image "ghcr.io/ostrrovska/cdn-control-plane:0.0.0-does-not-exist"
+7m32s       Warning   Failed                  pod/cdn-cdn-control-plane-api-7f8dbbcbf5-p9b6g           Error: ImagePullBackOff
+6m55s       Normal    BackOff                 pod/cdn-cdn-control-plane-agents-8f4bff549-hrn94         Back-off pulling image "ghcr.io/ostrrovska/cdn-control-plane:0.0.0-does-not-exist"
+6m55s       Warning   Failed                  pod/cdn-cdn-control-plane-agents-8f4bff549-hrn94         Error: ImagePullBackOff
+6m37s       Normal    SuccessfulDelete        replicaset/cdn-cdn-control-plane-agents-8f4bff549        Deleted pod: cdn-cdn-control-plane-agents-8f4bff549-hrn94
+6m37s       Normal    SuccessfulDelete        replicaset/cdn-cdn-control-plane-api-7f8dbbcbf5          Deleted pod: cdn-cdn-control-plane-api-7f8dbbcbf5-p9b6g
+6m37s       Normal    ScalingReplicaSet       deployment/cdn-cdn-control-plane-agents                  Scaled down replica set cdn-cdn-control-plane-agents-8f4bff549 from 1 to 0
+6m37s       Normal    ScalingReplicaSet       deployment/cdn-cdn-control-plane-api                     Scaled down replica set cdn-cdn-control-plane-api-7f8dbbcbf5 from 1 to 0
+6m34s       Normal    Scheduled               pod/cdn-cdn-control-plane-agents-7ccd8db8b9-fxp8t        Successfully assigned cdn-gitops/cdn-cdn-control-plane-agents-7ccd8db8b9-fxp8t to minikube
+6m34s       Normal    SuccessfulCreate        replicaset/cdn-cdn-control-plane-agents-7ccd8db8b9       Created pod: cdn-cdn-control-plane-agents-7ccd8db8b9-fxp8t
+6m33s       Normal    Pulled                  pod/cdn-cdn-control-plane-agents-7ccd8db8b9-fxp8t        Successfully pulled image "ghcr.io/ostrrovska/cdn-control-plane:1.3.0" in 641ms (641ms including waiting). Image size: 94213446 bytes.
+6m33s       Normal    Started                 pod/cdn-cdn-control-plane-agents-7ccd8db8b9-fxp8t        Container started
+6m33s       Normal    Created                 pod/cdn-cdn-control-plane-agents-7ccd8db8b9-fxp8t        Container created
+6m33s       Normal    Pulling                 pod/cdn-cdn-control-plane-agents-7ccd8db8b9-fxp8t        Pulling image "ghcr.io/ostrrovska/cdn-control-plane:1.3.0"
+6m32s       Normal    SuccessfulCreate        job/cdn-cdn-control-plane-migrate                        Created pod: cdn-cdn-control-plane-migrate-bhnl7
+6m32s       Normal    Scheduled               pod/cdn-cdn-control-plane-migrate-bhnl7                  Successfully assigned cdn-gitops/cdn-cdn-control-plane-migrate-bhnl7 to minikube
+6m31s       Normal    Pulling                 pod/cdn-cdn-control-plane-migrate-bhnl7                  Pulling image "ghcr.io/ostrrovska/cdn-control-plane:1.3.0"
+6m31s       Normal    Pulled                  pod/cdn-cdn-control-plane-migrate-bhnl7                  Successfully pulled image "ghcr.io/ostrrovska/cdn-control-plane:1.3.0" in 854ms (854ms including waiting). Image size: 94213446 bytes.
+6m31s       Normal    Created                 pod/cdn-cdn-control-plane-migrate-bhnl7                  Container created
+6m30s       Normal    Started                 pod/cdn-cdn-control-plane-migrate-bhnl7                  Container started
+6m24s       Normal    Completed               job/cdn-cdn-control-plane-migrate                        Job completed
+6m23s       Normal    SuccessfulCreate        job/cdn-cdn-control-plane-seed                           Created pod: cdn-cdn-control-plane-seed-hql9d
+6m23s       Normal    Scheduled               pod/cdn-cdn-control-plane-seed-hql9d                     Successfully assigned cdn-gitops/cdn-cdn-control-plane-seed-hql9d to minikube
+6m22s       Normal    Pulling                 pod/cdn-cdn-control-plane-seed-hql9d                     Pulling image "ghcr.io/ostrrovska/cdn-control-plane:1.3.0"
+6m22s       Normal    Pulled                  pod/cdn-cdn-control-plane-seed-hql9d                     Successfully pulled image "ghcr.io/ostrrovska/cdn-control-plane:1.3.0" in 622ms (622ms including waiting). Image size: 94213446 bytes.
+6m22s       Normal    Created                 pod/cdn-cdn-control-plane-seed-hql9d                     Container created
+6m22s       Normal    Started                 pod/cdn-cdn-control-plane-seed-hql9d                     Container started
+6m15s       Normal    Completed               job/cdn-cdn-control-plane-seed                           Job completed
+4m40s       Normal    Scheduled               pod/cdn-cdn-control-plane-api-6cc96d77c5-86hwp           Successfully assigned cdn-gitops/cdn-cdn-control-plane-api-6cc96d77c5-86hwp to minikube
+4m40s       Normal    Killing                 pod/cdn-cdn-control-plane-agents-7ccd8db8b9-fxp8t        Stopping container agents
+4m40s       Normal    SuccessfulDelete        replicaset/cdn-cdn-control-plane-agents-7ccd8db8b9       Deleted pod: cdn-cdn-control-plane-agents-7ccd8db8b9-fxp8t
+4m40s       Normal    ScalingReplicaSet       deployment/cdn-cdn-control-plane-api                     Scaled up replica set cdn-cdn-control-plane-api-6cc96d77c5 from 0 to 1
+4m40s       Normal    SuccessfulCreate        replicaset/cdn-cdn-control-plane-api-6cc96d77c5          Created pod: cdn-cdn-control-plane-api-6cc96d77c5-86hwp
+4m39s       Normal    Pulled                  pod/cdn-cdn-control-plane-api-6cc96d77c5-86hwp           Successfully pulled image "ghcr.io/ostrrovska/cdn-control-plane:1.2.1" in 565ms (565ms including waiting). Image size: 94211628 bytes.
+4m39s       Normal    Pulling                 pod/cdn-cdn-control-plane-api-6cc96d77c5-86hwp           Pulling image "ghcr.io/ostrrovska/cdn-control-plane:1.2.1"
+4m39s       Normal    Started                 pod/cdn-cdn-control-plane-api-6cc96d77c5-86hwp           Container started
+4m39s       Normal    Created                 pod/cdn-cdn-control-plane-api-6cc96d77c5-86hwp           Container created
+4m37s       Warning   Unhealthy               pod/cdn-cdn-control-plane-api-6cc96d77c5-86hwp           Startup probe failed: Get "http://10.244.0.57:8000/health": dial tcp 10.244.0.57:8000: connect: connection refused
+4m31s       Normal    Killing                 pod/cdn-cdn-control-plane-api-c544d66cf-qk5kb            Stopping container api
+4m31s       Normal    ScalingReplicaSet       deployment/cdn-cdn-control-plane-api                     Scaled down replica set cdn-cdn-control-plane-api-c544d66cf from 1 to 0
+4m31s       Normal    SuccessfulDelete        replicaset/cdn-cdn-control-plane-api-c544d66cf           Deleted pod: cdn-cdn-control-plane-api-c544d66cf-qk5kb
+4m25s       Warning   Unhealthy               pod/cdn-cdn-control-plane-api-c544d66cf-qk5kb            Readiness probe failed: Get "http://10.244.0.44:8000/health/ready": dial tcp 10.244.0.44:8000: connect: connection refused
+4m10s       Normal    SuccessfulCreate        replicaset/cdn-cdn-control-plane-agents-78c47cc4bf       Created pod: cdn-cdn-control-plane-agents-78c47cc4bf-9vlb5
+4m10s       Normal    Scheduled               pod/cdn-cdn-control-plane-agents-78c47cc4bf-9vlb5        Successfully assigned cdn-gitops/cdn-cdn-control-plane-agents-78c47cc4bf-9vlb5 to minikube
+4m10s       Normal    ScalingReplicaSet       deployment/cdn-cdn-control-plane-agents                  Scaled up replica set cdn-cdn-control-plane-agents-78c47cc4bf from 0 to 1
+4m9s        Normal    Pulling                 pod/cdn-cdn-control-plane-agents-78c47cc4bf-9vlb5        Pulling image "ghcr.io/ostrrovska/cdn-control-plane:1.2.1"
+4m8s        Normal    Started                 pod/cdn-cdn-control-plane-agents-78c47cc4bf-9vlb5        Container started
+4m8s        Normal    Pulled                  pod/cdn-cdn-control-plane-agents-78c47cc4bf-9vlb5        Successfully pulled image "ghcr.io/ostrrovska/cdn-control-plane:1.2.1" in 722ms (722ms including waiting). Image size: 94211628 bytes.
+4m8s        Normal    Created                 pod/cdn-cdn-control-plane-agents-78c47cc4bf-9vlb5        Container created
+4m8s        Normal    SuccessfulCreate        job/cdn-cdn-control-plane-migrate                        Created pod: cdn-cdn-control-plane-migrate-cmf6m
+4m8s        Normal    Scheduled               pod/cdn-cdn-control-plane-migrate-cmf6m                  Successfully assigned cdn-gitops/cdn-cdn-control-plane-migrate-cmf6m to minikube
+4m7s        Normal    Created                 pod/cdn-cdn-control-plane-migrate-cmf6m                  Container created
+4m7s        Normal    Pulled                  pod/cdn-cdn-control-plane-migrate-cmf6m                  Successfully pulled image "ghcr.io/ostrrovska/cdn-control-plane:1.2.1" in 761ms (761ms including waiting). Image size: 94211628 bytes.
+4m7s        Normal    Pulling                 pod/cdn-cdn-control-plane-migrate-cmf6m                  Pulling image "ghcr.io/ostrrovska/cdn-control-plane:1.2.1"
+4m6s        Normal    Started                 pod/cdn-cdn-control-plane-migrate-cmf6m                  Container started
+4m1s        Normal    Scheduled               pod/cdn-cdn-control-plane-seed-qq9d5                     Successfully assigned cdn-gitops/cdn-cdn-control-plane-seed-qq9d5 to minikube
+4m1s        Normal    SuccessfulCreate        job/cdn-cdn-control-plane-seed                           Created pod: cdn-cdn-control-plane-seed-qq9d5
+4m1s        Normal    Completed               job/cdn-cdn-control-plane-migrate                        Job completed
+4m          Normal    Pulled                  pod/cdn-cdn-control-plane-seed-qq9d5                     Successfully pulled image "ghcr.io/ostrrovska/cdn-control-plane:1.2.1" in 762ms (762ms including waiting). Image size: 94211628 bytes.
+4m          Normal    Pulling                 pod/cdn-cdn-control-plane-seed-qq9d5                     Pulling image "ghcr.io/ostrrovska/cdn-control-plane:1.2.1"
+4m          Normal    Created                 pod/cdn-cdn-control-plane-seed-qq9d5                     Container created
+4m          Normal    Started                 pod/cdn-cdn-control-plane-seed-qq9d5                     Container started
+3m54s       Normal    Completed               job/cdn-cdn-control-plane-seed                           Job completed
+3m14s       Normal    SuccessfulCreate        replicaset/cdn-cdn-control-plane-api-c544d66cf           Created pod: cdn-cdn-control-plane-api-c544d66cf-ww4kj
+3m14s       Normal    ScalingReplicaSet       deployment/cdn-cdn-control-plane-agents                  Scaled down replica set cdn-cdn-control-plane-agents-78c47cc4bf from 1 to 0
+3m14s       Normal    Scheduled               pod/cdn-cdn-control-plane-api-c544d66cf-ww4kj            Successfully assigned cdn-gitops/cdn-cdn-control-plane-api-c544d66cf-ww4kj to minikube
+3m14s       Normal    SuccessfulDelete        replicaset/cdn-cdn-control-plane-agents-78c47cc4bf       Deleted pod: cdn-cdn-control-plane-agents-78c47cc4bf-9vlb5
+3m14s       Normal    Killing                 pod/cdn-cdn-control-plane-agents-78c47cc4bf-9vlb5        Stopping container agents
+3m14s       Normal    ScalingReplicaSet       deployment/cdn-cdn-control-plane-api                     Scaled up replica set cdn-cdn-control-plane-api-c544d66cf from 0 to 1
+3m13s       Normal    Created                 pod/cdn-cdn-control-plane-api-c544d66cf-ww4kj            Container created
+3m13s       Normal    Pulling                 pod/cdn-cdn-control-plane-api-c544d66cf-ww4kj            Pulling image "ghcr.io/ostrrovska/cdn-control-plane:1.3.0"
+3m13s       Normal    Pulled                  pod/cdn-cdn-control-plane-api-c544d66cf-ww4kj            Successfully pulled image "ghcr.io/ostrrovska/cdn-control-plane:1.3.0" in 833ms (833ms including waiting). Image size: 94213446 bytes.
+3m12s       Normal    Started                 pod/cdn-cdn-control-plane-api-c544d66cf-ww4kj            Container started
+3m11s       Warning   Unhealthy               pod/cdn-cdn-control-plane-api-c544d66cf-ww4kj            Startup probe failed: Get "http://10.244.0.61:8000/health": dial tcp 10.244.0.61:8000: connect: connection refused
+3m5s        Normal    Killing                 pod/cdn-cdn-control-plane-api-6cc96d77c5-86hwp           Stopping container api
+3m5s        Normal    ScalingReplicaSet       deployment/cdn-cdn-control-plane-api                     Scaled down replica set cdn-cdn-control-plane-api-6cc96d77c5 from 1 to 0
+3m5s        Normal    SuccessfulDelete        replicaset/cdn-cdn-control-plane-api-6cc96d77c5          Deleted pod: cdn-cdn-control-plane-api-6cc96d77c5-86hwp
+2m59s       Warning   Unhealthy               pod/cdn-cdn-control-plane-api-6cc96d77c5-86hwp           Readiness probe failed: Get "http://10.244.0.57:8000/health/ready": dial tcp 10.244.0.57:8000: connect: connection refused
+2m44s       Normal    SuccessfulCreate        replicaset/cdn-cdn-control-plane-agents-7ccd8db8b9       Created pod: cdn-cdn-control-plane-agents-7ccd8db8b9-jnjcp
+2m44s       Normal    ScalingReplicaSet       deployment/cdn-cdn-control-plane-agents                  Scaled up replica set cdn-cdn-control-plane-agents-7ccd8db8b9 from 0 to 1
+2m44s       Normal    Scheduled               pod/cdn-cdn-control-plane-agents-7ccd8db8b9-jnjcp        Successfully assigned cdn-gitops/cdn-cdn-control-plane-agents-7ccd8db8b9-jnjcp to minikube
+2m43s       Normal    Pulling                 pod/cdn-cdn-control-plane-agents-7ccd8db8b9-jnjcp        Pulling image "ghcr.io/ostrrovska/cdn-control-plane:1.3.0"
+2m42s       Normal    Created                 pod/cdn-cdn-control-plane-agents-7ccd8db8b9-jnjcp        Container created
+2m42s       Normal    Pulling                 pod/cdn-cdn-control-plane-migrate-z54fw                  Pulling image "ghcr.io/ostrrovska/cdn-control-plane:1.3.0"
+2m42s       Normal    Started                 pod/cdn-cdn-control-plane-agents-7ccd8db8b9-jnjcp        Container started
+2m42s       Normal    SuccessfulCreate        job/cdn-cdn-control-plane-migrate                        Created pod: cdn-cdn-control-plane-migrate-z54fw
+2m42s       Normal    Pulled                  pod/cdn-cdn-control-plane-agents-7ccd8db8b9-jnjcp        Successfully pulled image "ghcr.io/ostrrovska/cdn-control-plane:1.3.0" in 687ms (687ms including waiting). Image size: 94213446 bytes.
+2m42s       Normal    Scheduled               pod/cdn-cdn-control-plane-migrate-z54fw                  Successfully assigned cdn-gitops/cdn-cdn-control-plane-migrate-z54fw to minikube
+2m41s       Normal    Started                 pod/cdn-cdn-control-plane-migrate-z54fw                  Container started
+2m41s       Normal    Created                 pod/cdn-cdn-control-plane-migrate-z54fw                  Container created
+2m41s       Normal    Pulled                  pod/cdn-cdn-control-plane-migrate-z54fw                  Successfully pulled image "ghcr.io/ostrrovska/cdn-control-plane:1.3.0" in 651ms (651ms including waiting). Image size: 94213446 bytes.
+2m36s       Normal    SuccessfulCreate        replicaset/cdn-cdn-control-plane-api-c544d66cf           Created pod: cdn-cdn-control-plane-api-c544d66cf-mprvf
+2m36s       Normal    Scheduled               pod/cdn-cdn-control-plane-api-c544d66cf-zlfqp            Successfully assigned cdn-gitops/cdn-cdn-control-plane-api-c544d66cf-zlfqp to minikube
+2m36s       Normal    Scheduled               pod/cdn-cdn-control-plane-api-c544d66cf-mprvf            Successfully assigned cdn-gitops/cdn-cdn-control-plane-api-c544d66cf-mprvf to minikube
+2m36s       Normal    SuccessfulCreate        replicaset/cdn-cdn-control-plane-api-c544d66cf           Created pod: cdn-cdn-control-plane-api-c544d66cf-zlfqp
+2m36s       Normal    ScalingReplicaSet       deployment/cdn-cdn-control-plane-api                     Scaled up replica set cdn-cdn-control-plane-api-c544d66cf from 1 to 3
+2m35s       Normal    Pulling                 pod/cdn-cdn-control-plane-api-c544d66cf-mprvf            Pulling image "ghcr.io/ostrrovska/cdn-control-plane:1.3.0"
+2m35s       Normal    Completed               job/cdn-cdn-control-plane-migrate                        Job completed
+2m35s       Normal    Pulling                 pod/cdn-cdn-control-plane-api-c544d66cf-zlfqp            Pulling image "ghcr.io/ostrrovska/cdn-control-plane:1.3.0"
+2m34s       Normal    SuccessfulCreate        job/cdn-cdn-control-plane-seed                           Created pod: cdn-cdn-control-plane-seed-9vdpr
+2m34s       Normal    Pulled                  pod/cdn-cdn-control-plane-api-c544d66cf-mprvf            Successfully pulled image "ghcr.io/ostrrovska/cdn-control-plane:1.3.0" in 1.474s (1.474s including waiting). Image size: 94213446 bytes.
+2m34s       Normal    Created                 pod/cdn-cdn-control-plane-api-c544d66cf-mprvf            Container created
+2m34s       Normal    Scheduled               pod/cdn-cdn-control-plane-seed-9vdpr                     Successfully assigned cdn-gitops/cdn-cdn-control-plane-seed-9vdpr to minikube
+2m34s       Normal    Started                 pod/cdn-cdn-control-plane-api-c544d66cf-mprvf            Container started
+2m33s       Normal    Started                 pod/cdn-cdn-control-plane-api-c544d66cf-zlfqp            Container started
+2m33s       Normal    Created                 pod/cdn-cdn-control-plane-api-c544d66cf-zlfqp            Container created
+2m33s       Normal    Pulled                  pod/cdn-cdn-control-plane-api-c544d66cf-zlfqp            Successfully pulled image "ghcr.io/ostrrovska/cdn-control-plane:1.3.0" in 917ms (2.313s including waiting). Image size: 94213446 bytes.
+2m33s       Normal    Pulling                 pod/cdn-cdn-control-plane-seed-9vdpr                     Pulling image "ghcr.io/ostrrovska/cdn-control-plane:1.3.0"
+2m33s       Warning   Unhealthy               pod/cdn-cdn-control-plane-api-c544d66cf-mprvf            Startup probe failed: Get "http://10.244.0.64:8000/health": dial tcp 10.244.0.64:8000: connect: connection refused
+2m32s       Warning   Unhealthy               pod/cdn-cdn-control-plane-api-c544d66cf-zlfqp            Startup probe failed: Get "http://10.244.0.65:8000/health": dial tcp 10.244.0.65:8000: connect: connection refused
+2m32s       Normal    Started                 pod/cdn-cdn-control-plane-seed-9vdpr                     Container started
+2m32s       Normal    Created                 pod/cdn-cdn-control-plane-seed-9vdpr                     Container created
+2m32s       Normal    Pulled                  pod/cdn-cdn-control-plane-seed-9vdpr                     Successfully pulled image "ghcr.io/ostrrovska/cdn-control-plane:1.3.0" in 769ms (1.066s including waiting). Image size: 94213446 bytes.
+2m26s       Normal    Completed               job/cdn-cdn-control-plane-seed                           Job completed
+2m25s       Normal    ScalingReplicaSet       deployment/cdn-cdn-control-plane-api                     Scaled down replica set cdn-cdn-control-plane-api-c544d66cf from 3 to 1
+2m25s       Normal    Killing                 pod/cdn-cdn-control-plane-api-c544d66cf-mprvf            Stopping container api
+2m25s       Normal    Killing                 pod/cdn-cdn-control-plane-api-c544d66cf-zlfqp            Stopping container api
+2m25s       Normal    SuccessfulDelete        replicaset/cdn-cdn-control-plane-api-c544d66cf           Deleted pod: cdn-cdn-control-plane-api-c544d66cf-zlfqp
+2m25s       Normal    SuccessfulDelete        replicaset/cdn-cdn-control-plane-api-c544d66cf           Deleted pod: cdn-cdn-control-plane-api-c544d66cf-mprvf
+2m23s       Normal    SuccessfulCreate        job/cdn-cdn-control-plane-migrate                        Created pod: cdn-cdn-control-plane-migrate-w2gn9
+2m23s       Normal    Scheduled               pod/cdn-cdn-control-plane-migrate-w2gn9                  Successfully assigned cdn-gitops/cdn-cdn-control-plane-migrate-w2gn9 to minikube
+2m22s       Normal    Started                 pod/cdn-cdn-control-plane-migrate-w2gn9                  Container started
+2m22s       Normal    Pulled                  pod/cdn-cdn-control-plane-migrate-w2gn9                  Successfully pulled image "ghcr.io/ostrrovska/cdn-control-plane:1.3.0" in 603ms (603ms including waiting). Image size: 94213446 bytes.
+2m22s       Normal    Created                 pod/cdn-cdn-control-plane-migrate-w2gn9                  Container created
+2m22s       Normal    Pulling                 pod/cdn-cdn-control-plane-migrate-w2gn9                  Pulling image "ghcr.io/ostrrovska/cdn-control-plane:1.3.0"
+2m20s       Warning   Unhealthy               pod/cdn-cdn-control-plane-api-c544d66cf-mprvf            Readiness probe failed: Get "http://10.244.0.64:8000/health/ready": dial tcp 10.244.0.64:8000: connect: connection refused
+2m19s       Warning   Unhealthy               pod/cdn-cdn-control-plane-api-c544d66cf-zlfqp            Readiness probe failed: Get "http://10.244.0.65:8000/health/ready": dial tcp 10.244.0.65:8000: connect: connection refused
+2m15s       Normal    Completed               job/cdn-cdn-control-plane-migrate                        Job completed
+2m14s       Normal    SuccessfulCreate        job/cdn-cdn-control-plane-seed                           Created pod: cdn-cdn-control-plane-seed-th59v
+2m14s       Normal    Scheduled               pod/cdn-cdn-control-plane-seed-th59v                     Successfully assigned cdn-gitops/cdn-cdn-control-plane-seed-th59v to minikube
+2m14s       Normal    Pulling                 pod/cdn-cdn-control-plane-seed-th59v                     Pulling image "ghcr.io/ostrrovska/cdn-control-plane:1.3.0"
+2m13s       Normal    Pulled                  pod/cdn-cdn-control-plane-seed-th59v                     Successfully pulled image "ghcr.io/ostrrovska/cdn-control-plane:1.3.0" in 617ms (617ms including waiting). Image size: 94213446 bytes.
+2m13s       Normal    Created                 pod/cdn-cdn-control-plane-seed-th59v                     Container created
+2m13s       Normal    Started                 pod/cdn-cdn-control-plane-seed-th59v                     Container started
+2m8s        Normal    Completed               job/cdn-cdn-control-plane-seed                           Job completed
+2m6s        Normal    Scheduled               pod/cdn-cdn-control-plane-api-7f8dbbcbf5-fq9pv           Successfully assigned cdn-gitops/cdn-cdn-control-plane-api-7f8dbbcbf5-fq9pv to minikube
+2m6s        Normal    SuccessfulCreate        replicaset/cdn-cdn-control-plane-api-7f8dbbcbf5          Created pod: cdn-cdn-control-plane-api-7f8dbbcbf5-fq9pv
+2m6s        Normal    SuccessfulDelete        replicaset/cdn-cdn-control-plane-agents-7ccd8db8b9       Deleted pod: cdn-cdn-control-plane-agents-7ccd8db8b9-jnjcp
+2m6s        Normal    Killing                 pod/cdn-cdn-control-plane-agents-7ccd8db8b9-jnjcp        Stopping container agents
+2m6s        Normal    ScalingReplicaSet       deployment/cdn-cdn-control-plane-agents                  Scaled down replica set cdn-cdn-control-plane-agents-7ccd8db8b9 from 1 to 0
+2m6s        Normal    ScalingReplicaSet       deployment/cdn-cdn-control-plane-api                     Scaled up replica set cdn-cdn-control-plane-api-7f8dbbcbf5 from 0 to 1
+96s         Normal    ScalingReplicaSet       deployment/cdn-cdn-control-plane-agents                  Scaled up replica set cdn-cdn-control-plane-agents-8f4bff549 from 0 to 1
+96s         Normal    Scheduled               pod/cdn-cdn-control-plane-agents-8f4bff549-pqmwq         Successfully assigned cdn-gitops/cdn-cdn-control-plane-agents-8f4bff549-pqmwq to minikube
+96s         Normal    SuccessfulCreate        replicaset/cdn-cdn-control-plane-agents-8f4bff549        Created pod: cdn-cdn-control-plane-agents-8f4bff549-pqmwq
+32s         Warning   Failed                  pod/cdn-cdn-control-plane-api-7f8dbbcbf5-fq9pv           Failed to pull image "ghcr.io/ostrrovska/cdn-control-plane:0.0.0-does-not-exist": rpc error: code = NotFound desc = failed to pull and unpack image "ghcr.io/ostrrovska/cdn-control-plane:0.0.0-does-not-exist": failed to resolve reference "ghcr.io/ostrrovska/cdn-control-plane:0.0.0-does-not-exist": ghcr.io/ostrrovska/cdn-control-plane:0.0.0-does-not-exist: not found
+32s         Warning   Failed                  pod/cdn-cdn-control-plane-api-7f8dbbcbf5-fq9pv           Error: ErrImagePull
+32s         Normal    Pulling                 pod/cdn-cdn-control-plane-api-7f8dbbcbf5-fq9pv           Pulling image "ghcr.io/ostrrovska/cdn-control-plane:0.0.0-does-not-exist"
+23s         Warning   Failed                  pod/cdn-cdn-control-plane-agents-8f4bff549-pqmwq         Error: ImagePullBackOff
+23s         Normal    BackOff                 pod/cdn-cdn-control-plane-agents-8f4bff549-pqmwq         Back-off pulling image "ghcr.io/ostrrovska/cdn-control-plane:0.0.0-does-not-exist"
+8s          Warning   Failed                  pod/cdn-cdn-control-plane-api-7f8dbbcbf5-fq9pv           Error: ImagePullBackOff
+8s          Normal    BackOff                 pod/cdn-cdn-control-plane-api-7f8dbbcbf5-fq9pv           Back-off pulling image "ghcr.io/ostrrovska/cdn-control-plane:0.0.0-does-not-exist"
+8s          Normal    Pulling                 pod/cdn-cdn-control-plane-agents-8f4bff549-pqmwq         Pulling image "ghcr.io/ostrrovska/cdn-control-plane:0.0.0-does-not-exist"
+7s          Warning   Failed                  pod/cdn-cdn-control-plane-agents-8f4bff549-pqmwq         Error: ErrImagePull
+7s          Warning   Failed                  pod/cdn-cdn-control-plane-agents-8f4bff549-pqmwq         Failed to pull image "ghcr.io/ostrrovska/cdn-control-plane:0.0.0-does-not-exist": rpc error: code = NotFound desc = failed to pull and unpack image "ghcr.io/ostrrovska/cdn-control-plane:0.0.0-does-not-exist": failed to resolve reference "ghcr.io/ostrrovska/cdn-control-plane:0.0.0-does-not-exist": ghcr.io/ostrrovska/cdn-control-plane:0.0.0-does-not-exist: not found
+
+$ argocd.exe app get cdn-control-plane --port-forward --port-forward-namespace argocd --insecure
+Name:               argocd/cdn-control-plane
+Project:            default
+Server:             https://kubernetes.default.svc
+Namespace:          cdn-gitops
+URL:                https://127.0.0.1:55411/applications/cdn-control-plane
+Source:
+- Repo:             https://github.com/ostrrovska/uni_year_4.git
+  Target:           devops-lab-5-gitops
+  Path:             high-load-systems/chart/cdn-control-plane
+  Helm Values:      ../../gitops/values/values-minikube.yaml
+SyncWindow:         Sync Allowed
+Sync Policy:        Automated (Prune)
+Sync Status:        Synced to devops-lab-5-gitops (2af3b25)
+Health Status:      Degraded
+
+GROUP  KIND                   NAMESPACE   NAME                              STATUS  HEALTH       HOOK  MESSAGE
+       ConfigMap              cdn-gitops  cdn-cdn-control-plane-config      Synced                     configmap/cdn-cdn-control-plane-config unchanged
+       PersistentVolumeClaim  cdn-gitops  cdn-cdn-control-plane-postgresql  Synced  Healthy            persistentvolumeclaim/cdn-cdn-control-plane-postgresql unchanged
+       Service                cdn-gitops  cdn-cdn-control-plane-postgresql  Synced  Healthy            service/cdn-cdn-control-plane-postgresql unchanged
+       Service                cdn-gitops  cdn-cdn-control-plane-redis       Synced  Healthy            service/cdn-cdn-control-plane-redis unchanged
+       Service                cdn-gitops  cdn-cdn-control-plane-api         Synced  Healthy            service/cdn-cdn-control-plane-api unchanged
+apps   Deployment             cdn-gitops  cdn-cdn-control-plane-agents      Synced  Progressing        deployment.apps/cdn-cdn-control-plane-agents configured
+apps   Deployment             cdn-gitops  cdn-cdn-control-plane-postgresql  Synced  Healthy            deployment.apps/cdn-cdn-control-plane-postgresql configured
+apps   Deployment             cdn-gitops  cdn-cdn-control-plane-api         Synced  Degraded           Deployment "cdn-cdn-control-plane-api" exceeded its progress deadline
+apps   Deployment             cdn-gitops  cdn-cdn-control-plane-redis       Synced  Healthy            deployment.apps/cdn-cdn-control-plane-redis configured
+

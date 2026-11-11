@@ -36,8 +36,11 @@ spec:
         dashboard:
           enabled: true
         controller:
-          # Small on purpose: this cluster has 3 GB in total and the controller
-          # is watching exactly one Rollout.
+          # One, not the chart's default two. The second exists for leader-election
+          # failover, and this cluster has 3 GB in total - spending ~100 MiB on
+          # standby capacity for a single-node laptop cluster buys nothing.
+          replicas: 1
+          # Small on purpose: the controller is watching exactly one Rollout.
           resources:
             requests:
               cpu: 50m

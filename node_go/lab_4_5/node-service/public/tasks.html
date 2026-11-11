@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="uk">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Лабораторна 5 — завдання по порядку</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        <h1>Лабораторна 5 — завдання по порядку</h1>
+        <p class="muted">
+          Кожна кнопка виконує справжню дію на сервері й показує, що саме було
+          надіслано і що прийшло у відповідь — із реальними кадрами, шляхами та
+          числами. Жива панель у реальному часі — <a href="/">на головній сторінці</a>.
+        </p>
+      </div>
+
+      <div class="status">
+        <span id="score" class="pill pill-off">0 / 10 виконано</span>
+        <button id="run-all" class="primary">Запустити все по черзі</button>
+        <button id="reset">Очистити</button>
+      </div>
+    </header>
+
+    <main class="tasks" id="tasks">
+      <p class="muted" id="loading">завантаження списку завдань…</p>
+    </main>
+
+    <template id="task-template">
+      <section class="card task">
+        <div class="task-head">
+          <span class="task-number"></span>
+          <div class="task-title">
+            <h2></h2>
+            <p class="hint task-requirement"></p>
+          </div>
+          <span class="pill pill-off task-status">не запускалось</span>
+        </div>
+
+        <div class="row">
+          <button class="primary task-run">Запустити</button>
+          <span class="muted task-timing"></span>
+        </div>
+
+        <div class="task-result" hidden>
+          <h3 class="section-title">Що зроблено і що отримано</h3>
+          <ol class="steps"></ol>
+
+          <h3 class="section-title">Числа цього прогону</h3>
+          <div class="tiles task-facts"></div>
+          <div class="task-table"></div>
+
+          <h3 class="section-title">Що з цього випливає</h3>
+          <ul class="claims"></ul>
+
+          <pre class="log task-log" hidden></pre>
+          <p class="task-note hint"></p>
+        </div>
+      </section>
+    </template>
+
+    <script src="tasks.js"></script>
+  </body>
+</html>

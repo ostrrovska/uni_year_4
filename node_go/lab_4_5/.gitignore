@@ -1,0 +1,7 @@
+node_modules/
+bin/
+*.exe
+data/
+logs/
+out/
+*.ndjson

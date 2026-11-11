@@ -1,0 +1,22 @@
+{
+  "name": "node-service-lab4-5",
+  "version": "1.0.0",
+  "description": "Layered HTTP service (Router -> Controller -> Service -> Repository -> DataStore) with a streaming pipeline and a WebSocket module",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "test": "node --test tests/*.test.js",
+    "test:service": "node --test tests/item.service.test.js",
+    "test:api": "node --test tests/item.api.test.js",
+    "test:streams": "node --test tests/stream.*.test.js",
+    "test:ws": "node --test tests/ws.*.test.js",
+    "gen:data": "node tools/generate-dataset.js",
+    "stream:run": "node tools/stream-run.js",
+    "bp:compare": "node tools/backpressure-compare.js",
+    "ws:client": "node tools/ws-client.js"
+  },
+  "dependencies": {
+    "express": "^5.3.0",
+    "ws": "^8.22.1"
+  }
+}

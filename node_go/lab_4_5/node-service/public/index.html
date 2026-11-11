@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="uk">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Лабораторна 5 — Streams, Backpressure, WebSockets</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        <h1>Streams &middot; Backpressure &middot; WebSockets</h1>
+        <p class="muted">
+          Лабораторна 5 — панель керування сервісом на порту <span id="port">3100</span>.
+          Завдання по порядку, з кнопками й перевірками — <a href="/tasks.html">на сторінці завдань</a>.
+        </p>
+      </div>
+
+      <div class="status">
+        <span id="conn-pill" class="pill pill-off">офлайн</span>
+        <span class="muted" id="conn-detail">не підключено</span>
+      </div>
+    </header>
+
+    <main class="grid">
+      <!-- 1. Connection and identification -->
+      <section class="card">
+        <h2>1. З'єднання та ідентифікація</h2>
+        <p class="hint">
+          Сервер надсилає <code>welcome</code> і чекає кадр <code>hello</code> з токеном.
+          Невірний токен — закриття кодом <code>4401</code>, мовчання — <code>4408</code>.
+        </p>
+
+        <div class="row">
+          <label>Ім'я<input id="name" value="browser" maxlength="40" /></label>
+          <label>Токен<input id="token" value="lab5" /></label>
+        </div>
+
+        <fieldset class="topics">
+          <legend>Підписки</legend>
+          <label><input type="checkbox" value="chat" checked /> chat</label>
+          <label><input type="checkbox" value="presence" checked /> presence</label>
+          <label><input type="checkbox" value="progress" checked /> progress</label>
+          <label><input type="checkbox" value="chunks" checked /> chunks</label>
+          <label><input type="checkbox" value="stats" checked /> stats</label>
+        </fieldset>
+
+        <div class="row">
+          <button id="connect" class="primary">Підключитися</button>
+          <button id="disconnect" disabled>Від'єднатися</button>
+        </div>
+
+        <dl class="facts">
+          <div><dt>clientId</dt><dd id="fact-id">—</dd></div>
+          <div><dt>стан</dt><dd id="fact-state">—</dd></div>
+          <div><dt>підключено о</dt><dd id="fact-since">—</dd></div>
+          <div><dt>отримано кадрів</dt><dd id="fact-frames">0</dd></div>
+        </dl>
+      </section>
+
+      <!-- 2. Stream job -->
+      <section class="card span2">
+        <h2>2. Потокова обробка</h2>
+        <p class="hint">
+          <code>fs.createReadStream</code> → <code>LineSplit</code> → <code>EventAnalyzer</code> →
+          <code>WriteStream</code> або повільний Writable. Прогрес приходить у реальному часі,
+          не чекаючи завершення.
+        </p>
+
+        <div class="row wrap">
+          <label>Режим
+            <select id="mode">
+              <option value="analyze">analyze — у файл</option>
+              <option value="slow">slow — повільний Writable</option>
+              <option value="compare">compare — сценарії A/B/C</option>
+            </select>
+          </label>
+          <label>Ланцюг
+            <select id="chain">
+              <option value="pipe">pipe()</option>
+              <option value="pipeline">pipeline()</option>
+            </select>
+          </label>
+          <label>highWaterMark
+            <select id="hwm">
+              <option value="16384">16 KiB</option>
+              <option value="65536" selected>64 KiB</option>
+              <option value="262144">256 KiB</option>
+              <option value="1048576">1 MiB</option>
+            </select>
+          </label>
+          <label>Затримка споживача, мс<input id="delay" type="number" value="40" min="0" max="5000" /></label>
+          <label>Рівні
+            <select id="levels">
+              <option value="error" selected>error</option>
+              <option value="error,warn">error + warn</option>
+              <option value="all">усі</option>
+            </select>
+          </label>
+          <label>Кожен n-й запис клієнтам<input id="sample" type="number" value="4" min="0" max="10000" /></label>
+        </div>
+
+        <div class="row">
+          <button id="start" class="primary">Запустити</button>
+          <button id="abort" disabled>Перервати</button>
+          <span class="muted" id="dataset">датасет: —</span>
+        </div>
+
+        <div class="progress"><div class="progress-fill" id="bar"></div><span id="bar-label">0%</span></div>
+
+        <div class="tiles">
+          <div class="tile"><span id="m-processed">0</span><label>оброблено, MB</label></div>
+          <div class="tile"><span id="m-speed">0</span><label>MB/с</label></div>
+          <div class="tile"><span id="m-in">0</span><label>рядків прочитано</label></div>
+          <div class="tile"><span id="m-out">0</span><label>рядків записано</label></div>
+          <div class="tile"><span id="m-bad">0</span><label>зіпсованих</label></div>
+          <div class="tile"><span id="m-rss">0</span><label>RSS, MB</label></div>
+          <div class="tile"><span id="m-buf">0</span><label>у буфері, KB</label></div>
+          <div class="tile"><span id="m-time">0</span><label>час, с</label></div>
+        </div>
+      </section>
+
+      <!-- 3. Memory chart -->
+      <section class="card span2">
+        <h2>3. Пам'ять і буфер у часі</h2>
+        <p class="hint">
+          Суцільна лінія — RSS процесу, пунктир — скільки байтів Writable тримає, бо споживач
+          їх ще не забрав. У режимі <code>compare</code> лінії малюються окремо для кожного сценарію.
+        </p>
+        <svg id="chart" viewBox="0 0 600 220" preserveAspectRatio="none" role="img"
+             aria-label="Графік RSS і розміру буфера в часі"></svg>
+        <div class="legend" id="chart-legend"></div>
+      </section>
+
+      <!-- 4. Clients -->
+      <section class="card">
+        <h2>4. Активні клієнти</h2>
+        <p class="hint">
+          Той самий реєстр доступний і через <code>GET /api/ws/clients</code>.
+          <code>bufferedAmount</code> — байти, віддані в <code>send()</code>, які ядро ще не прийняло.
+        </p>
+        <table class="clients">
+          <thead>
+            <tr><th>ім'я</th><th>стан</th><th>буфер</th><th>пік</th><th>надіслано</th><th>відкинуто</th></tr>
+          </thead>
+          <tbody id="clients"><tr><td colspan="6" class="muted">немає даних</td></tr></tbody>
+        </table>
+        <p class="hint" id="policy">політика: —</p>
+      </section>
+
+      <!-- 5. Chat -->
+      <section class="card">
+        <h2>5. Обмін повідомленнями</h2>
+        <p class="hint">
+          <code>{"type":"message","text":"..."}</code> розсилається іншим клієнтам,
+          відправник отримує <code>ack</code> із кількістю доставок.
+        </p>
+        <div id="chat" class="chat"></div>
+        <div class="row">
+          <input id="text" placeholder="повідомлення" maxlength="2000" />
+          <button id="send" class="primary" disabled>Надіслати</button>
+        </div>
+        <div class="row wrap">
+          <button id="bad-json" disabled>Надіслати не-JSON</button>
+          <button id="bad-type" disabled>Надіслати невідомий тип</button>
+        </div>
+      </section>
+
+      <!-- 6. Processed chunks -->
+      <section class="card">
+        <h2>6. Оброблені порції</h2>
+        <p class="hint">
+          Вибірка записів, які щойно пройшли через Transform. Кадр <code>chunk</code> —
+          найбільший за обсягом, тому саме він перший страждає від повільного клієнта.
+        </p>
+        <table class="records">
+          <thead><tr><th>#</th><th>рівень</th><th>сервіс</th><th>мс</th><th>bucket</th><th>подія</th></tr></thead>
+          <tbody id="records"><tr><td colspan="6" class="muted">немає даних</td></tr></tbody>
+        </table>
+        <p class="hint" id="chunk-stats">кадрів chunk: 0</p>
+      </section>
+
+      <!-- 7. Event log -->
+      <section class="card span2">
+        <h2>7. Журнал кадрів</h2>
+        <div class="row wrap" id="filters"></div>
+        <pre id="log" class="log"></pre>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>

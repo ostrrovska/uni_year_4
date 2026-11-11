@@ -4,7 +4,7 @@
 підпапка `high-load-systems/` у монорепозиторії `ostrrovska/uni_year_4`.
 **Конфігурація:** [`gitops/`](../../gitops/) — варіант **(b)** завдання.
 **Чарт:** [`chart/cdn-control-plane/`](../../chart/cdn-control-plane/) — без змін з Лаби 4, окрім `existingSecret`.
-**Образ:** `ghcr.io/ostrrovska/cdn-control-plane` · теги `1.2.0` і `1.3.0`.
+**Образ:** `ghcr.io/ostrrovska/cdn-control-plane` · теги `1.2.1` і `1.3.0`.
 **Argo CD:** v3.1.9 · namespace `argocd` · застосунок `cdn-control-plane` у namespace `cdn-gitops`.
 
 Лаба 4 спакувала застосунок у чарт, але розгортала його командою: хтось мусив
@@ -22,7 +22,7 @@
 | **1.** Репозиторій конфігурації, варіант (a) або (b) | Варіант **(b)**: [`gitops/`](../../gitops/) з `bootstrap/`, `argocd-apps/` і `values/` — §2 |
 | **1.** Перенести чарт із ЛР-4 і файл значень для minikube | Файл значень — [`gitops/values/values-minikube.yaml`](../../gitops/values/values-minikube.yaml). Чарт **свідомо не копіювався**: Application посилається на нього за шляхом, а файл значень підключений відносним `valueFiles` — §2.2 |
 | **1.** Паролі й токени відкритим текстом у Git не зберігати | Жодного пароля в Git: чарт отримав значення `existingSecret`, і при ньому не рендерить власний Secret. Перевірка — §2.3 |
-| **2a.** Образ у реєстрі з конкретним тегом (не `latest`), доступний з кластера | `ghcr.io/ostrrovska/cdn-control-plane:1.2.0` і `:1.3.0`, публікує CI по git-тегу `cdn-v*` — §3 |
+| **2a.** Образ у реєстрі з конкретним тегом (не `latest`), доступний з кластера | `ghcr.io/ostrrovska/cdn-control-plane:1.2.1` і `:1.3.0`, публікує CI по git-тегу `cdn-v*` — §3 |
 | **2b.** Застосунок показує свою версію | Ендпоінт **`/version`** + поле `version` у `/health`; значення вшите в образ через `ARG`/`ENV` у [`docker/Dockerfile`](../../docker/Dockerfile) — §3.2 |
 | **3.** Argo CD у namespace `argocd` і CLI `argocd` | §4; протокол — [`lab-05-output/01-environment.txt`](lab-05-output/01-environment.txt) |
 | **3.** Увійти у веб-інтерфейс, змінити початковий пароль admin | §4.2 — пароль змінено, `argocd-initial-admin-secret` видалено; демо **падає**, якщо секрет ще існує |
@@ -30,7 +30,7 @@
 | **4.** `Application` для свого чарту з автоматичною синхронізацією | [`gitops/argocd-apps/cdn-control-plane.yaml`](../../gitops/argocd-apps/cdn-control-plane.yaml), `syncPolicy.automated` — §5 |
 | **4.** App of Apps: вручну застосовується лише кореневий об'єкт | [`gitops/bootstrap/root-app.yaml`](../../gitops/bootstrap/root-app.yaml) — єдиний `kubectl apply` у всій роботі — §5.1 |
 | **4.** Дерево об'єктів у стані Synced / Healthy | §5.2; `argocd app resources` — [`lab-05-output/04-app-of-apps.txt`](lab-05-output/04-app-of-apps.txt) |
-| **5.** Нова версія з видимою зміною, тег у Git, commit і push | §6 — `1.2.0 → 1.3.0`, видима зміна читається з `/version` |
+| **5.** Нова версія з видимою зміною, тег у Git, commit і push | §6 — `1.2.1 → 1.3.0`, видима зміна читається з `/version` |
 | **5.** Argo CD сам перерозгортає і відповідає нова версія | §6 — жодної команди до кластера між commit і новою відповіддю |
 | **6a.** `kubectl scale` без selfHeal → OutOfSync | §7.1 |
 | **6a.** `selfHeal: true` → Argo CD повертає значення з Git | §7.2 — selfHeal вмикається **комітом**, а не кнопкою |
@@ -174,7 +174,7 @@ CI з Лаби 2 вже збирав образ у `ghcr.io/ostrrovska/cdn-contr
 |---|---|
 | окремий workflow, а не тригер у CI | у CI тригер `push` має фільтр `paths:`, і GitHub поєднує `paths:` з `tags:` через **І**. Push тега не має осмисленого diff по шляхах, тож реліз просто не запускався б — саме тоді, коли потрібен. Це було виявлено й виправлено до першого релізу |
 | `tags: ['cdn-v*']` | реліз робиться git-тегом; префікс `cdn-` — бо монорепозиторій, інші курси теж тегують |
-| `type=raw,value=<version>` | `cdn-v1.2.0` → образ `:1.2.0`, на який посилається файл значень |
+| `type=raw,value=<version>` | `cdn-v1.2.1` → образ `:1.2.1`, на який посилається файл значень |
 | перевірка semver перед збіркою | тег `cdn-vfoo` інакше опублікував би образ `:foo`, і помилка спливла б аж як `ImagePullBackOff` |
 | `build-args: APP_VERSION, GIT_SHA` | версія вшивається в образ, а не в ConfigMap — §3.2 |
 | push конкретних тегів замість `--all-tags` | у демоні після збірки ще лежить `latest` із кешу, і `--all-tags` мовчки зсунув би плаваючий тег назад |
@@ -347,7 +347,7 @@ Argo CD: схема накочується строго до того, як ст
 git tag cdn-v1.3.0 && git push origin cdn-v1.3.0        # CI збирає :1.3.0
 
 # 2. сказати кластеру, що саме він має запустити
-#    gitops/values/values-minikube.yaml:  tag: "1.2.0" -> "1.3.0"
+#    gitops/values/values-minikube.yaml:  tag: "1.2.1" -> "1.3.0"
 git commit -am "gitops: roll the CDN Control Plane to 1.3.0"
 git push
 ```
@@ -361,7 +361,7 @@ git push
 Видима зміна — у самій відповіді:
 
 ```
-до:    GET /version -> {"version": "1.2.0", ...}
+до:    GET /version -> {"version": "1.2.1", ...}
 після: GET /version -> {"version": "1.3.0", ...}
 ```
 
@@ -494,7 +494,7 @@ Argo CD кнопка, яка знімає операцію.
 | 02 | 3 | под `argocd-server` готовий, CLI бачить версію |
 | 03 | 3 | `argocd-initial-admin-secret` **відсутній**, CLI залогінений |
 | 04 | 4 | кореневий Application дивиться на `gitops/argocd-apps`, `cdn-control-plane` існує |
-| 05 | 4 | `Synced` + `Healthy`, є Deployment-и, `/version` = `1.2.0` |
+| 05 | 4 | `Synced` + `Healthy`, є Deployment-и, `/version` = `1.2.1` |
 | 06 | 5 | після коміту тег у Deployment і `/version` обидва = `1.3.0` |
 | 07 | 6a | після `kubectl scale` — `OutOfSync`, у кластері 3 репліки |
 | 08 | 6a | після коміту `selfHeal: true` репліки самі повертаються до 1 |

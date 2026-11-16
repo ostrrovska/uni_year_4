@@ -1,0 +1,19 @@
+,precision,recall,f1-score,support
+Vincent van Gogh,0.875,0.902,0.888,132.0
+Edgar Degas,0.925,0.925,0.925,106.0
+Pablo Picasso,0.651,0.831,0.73,65.0
+Pierre-Auguste Renoir,0.957,0.882,0.918,51.0
+Albrecht Dürer,0.941,0.98,0.96,49.0
+Paul Gauguin,0.812,0.848,0.83,46.0
+Francisco Goya,0.865,0.744,0.8,43.0
+Rembrandt,0.935,0.725,0.817,40.0
+Alfred Sisley,0.872,0.872,0.872,39.0
+Titian,0.729,0.921,0.814,38.0
+Marc Chagall,0.897,0.722,0.8,36.0
+Rene Magritte,0.833,0.69,0.755,29.0
+Amedeo Modigliani,0.9,0.931,0.915,29.0
+Paul Klee,0.897,0.929,0.912,28.0
+Henri Matisse,0.857,0.643,0.735,28.0
+accuracy,0.856,0.856,0.856,0.856
+macro avg,0.863,0.836,0.845,759.0
+weighted avg,0.864,0.856,0.856,759.0

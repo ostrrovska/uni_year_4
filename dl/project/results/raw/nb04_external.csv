@@ -1,0 +1,31 @@
+файл,насправді,прогноз,впевненість,вгадано
+Albrecht_Dürer_ext_1.jpg,Albrecht Dürer,Titian,0.831,False
+Albrecht_Dürer_ext_2.jpg,Albrecht Dürer,Pablo Picasso,0.503,False
+Alfred_Sisley_ext_1.jpg,Alfred Sisley,Vincent van Gogh,0.874,False
+Alfred_Sisley_ext_2.jpg,Alfred Sisley,Alfred Sisley,0.987,True
+Amedeo_Modigliani_ext_1.jpg,Amedeo Modigliani,Amedeo Modigliani,1.0,True
+Amedeo_Modigliani_ext_2.jpg,Amedeo Modigliani,Amedeo Modigliani,1.0,True
+Edgar_Degas_ext_1.jpg,Edgar Degas,Edgar Degas,0.974,True
+Edgar_Degas_ext_2.jpg,Edgar Degas,Edgar Degas,0.957,True
+Francisco_Goya_ext_1.jpg,Francisco Goya,Pablo Picasso,0.585,False
+Francisco_Goya_ext_2.jpg,Francisco Goya,Francisco Goya,0.899,True
+Henri_Matisse_ext_1.jpg,Henri Matisse,Paul Gauguin,0.96,False
+Henri_Matisse_ext_2.jpg,Henri Matisse,Paul Klee,0.961,False
+Marc_Chagall_ext_1.jpg,Marc Chagall,Marc Chagall,0.961,True
+Marc_Chagall_ext_2.jpg,Marc Chagall,Pablo Picasso,0.99,False
+Pablo_Picasso_ext_1.jpg,Pablo Picasso,Pablo Picasso,1.0,True
+Pablo_Picasso_ext_2.jpg,Pablo Picasso,Pablo Picasso,0.917,True
+Paul_Gauguin_ext_1.jpg,Paul Gauguin,Paul Gauguin,0.964,True
+Paul_Gauguin_ext_2.jpg,Paul Gauguin,Paul Gauguin,0.962,True
+Paul_Klee_ext_1.jpg,Paul Klee,Pablo Picasso,0.992,False
+Paul_Klee_ext_2.jpg,Paul Klee,Paul Klee,1.0,True
+Pierre-Auguste_Renoir_ext_1.jpg,Pierre-Auguste Renoir,Pablo Picasso,0.761,False
+Pierre-Auguste_Renoir_ext_2.jpg,Pierre-Auguste Renoir,Pierre-Auguste Renoir,1.0,True
+Rembrandt_ext_1.jpg,Rembrandt,Rembrandt,0.979,True
+Rembrandt_ext_2.jpg,Rembrandt,Rembrandt,1.0,True
+Rene_Magritte_ext_1.jpg,Rene Magritte,Rene Magritte,1.0,True
+Rene_Magritte_ext_2.jpg,Rene Magritte,Rene Magritte,1.0,True
+Titian_ext_1.jpg,Titian,Titian,0.853,True
+Titian_ext_2.jpg,Titian,Titian,0.996,True
+Vincent_van_Gogh_ext_1.jpg,Vincent van Gogh,Vincent van Gogh,0.998,True
+Vincent_van_Gogh_ext_2.jpg,Vincent van Gogh,Pablo Picasso,0.542,False

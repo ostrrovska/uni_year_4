@@ -61,3 +61,15 @@ dl/lab10/my_images/
 dl/lab10/results/incoming/
 dl/lab10/notebooks/.ipynb_checkpoints/
 dl/lab10/scripts/__pycache__/
+
+# --- Курсовий проєкт з глибокого навчання ---
+dl/project/data/
+dl/project/ckpt/
+dl/project/models/*.keras
+dl/project/my_images.zip
+dl/project/*.zip
+dl/project/results/incoming/
+dl/project/notebooks/.ipynb_checkpoints/
+dl/project/scripts/__pycache__/
+
+dl/project/.smoke/

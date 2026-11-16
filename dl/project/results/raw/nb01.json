@@ -1,0 +1,569 @@
+{
+  "notebook": "nb01",
+  "source": "https://www.kaggle.com/datasets/ikarus777/best-artworks-of-all-time",
+  "archive": "archive (3).zip",
+  "n_folders": 51,
+  "n_classes_total": 50,
+  "merged_classes": {
+    "Albrecht Dürer": [
+      "Albrecht_Du╠êrer",
+      "Albrecht_DuΓòá├¬rer"
+    ]
+  },
+  "n_images_raw": 8774,
+  "n_images_clean": 8435,
+  "n_corrupt": 0,
+  "n_exact_duplicates": 328,
+  "n_near_duplicates": 11,
+  "names_fixed_by_normalisation": [],
+  "names_fixed_by_similarity": [
+    [
+      "Albrecht_Du╠êrer",
+      "Albrecht Dürer",
+      0.966
+    ],
+    [
+      "Albrecht_DuΓòá├¬rer",
+      "Albrecht Dürer",
+      0.933
+    ]
+  ],
+  "unmatched_folders": [],
+  "imbalance_ratio_all": 36.5,
+  "top15_threshold": 186,
+  "top15": [
+    "Vincent_van_Gogh",
+    "Edgar_Degas",
+    "Pablo_Picasso",
+    "Pierre-Auguste_Renoir",
+    "Albrecht_Dürer",
+    "Paul_Gauguin",
+    "Francisco_Goya",
+    "Rembrandt",
+    "Alfred_Sisley",
+    "Titian",
+    "Marc_Chagall",
+    "Rene_Magritte",
+    "Amedeo_Modigliani",
+    "Paul_Klee",
+    "Henri_Matisse"
+  ],
+  "split_fractions": {
+    "train": 0.7,
+    "val": 0.15,
+    "test": 0.15
+  },
+  "split_sizes_all": {
+    "train": 5905,
+    "val": 1265,
+    "test": 1265
+  },
+  "split_sizes_top15": {
+    "train": 3539,
+    "test": 759,
+    "val": 758
+  },
+  "target_short_side": 320,
+  "class_counts": [
+    {
+      "artist": "Vincent van Gogh",
+      "class": "Vincent van Gogh",
+      "class_dir": "Vincent_van_Gogh",
+      "n_folders": 1,
+      "n_files": 877,
+      "n_clean": 876,
+      "genre": "Post-Impressionism",
+      "nationality": "Dutch"
+    },
+    {
+      "artist": "Edgar Degas",
+      "class": "Edgar Degas",
+      "class_dir": "Edgar_Degas",
+      "n_folders": 1,
+      "n_files": 702,
+      "n_clean": 702,
+      "genre": "Impressionism",
+      "nationality": "French"
+    },
+    {
+      "artist": "Pablo Picasso",
+      "class": "Pablo Picasso",
+      "class_dir": "Pablo_Picasso",
+      "n_folders": 1,
+      "n_files": 439,
+      "n_clean": 437,
+      "genre": "Cubism",
+      "nationality": "Spanish"
+    },
+    {
+      "artist": "Pierre-Auguste Renoir",
+      "class": "Pierre-Auguste Renoir",
+      "class_dir": "Pierre-Auguste_Renoir",
+      "n_folders": 1,
+      "n_files": 336,
+      "n_clean": 336,
+      "genre": "Impressionism",
+      "nationality": "French"
+    },
+    {
+      "artist": "Albrecht Dürer",
+      "class": "Albrecht Dürer",
+      "class_dir": "Albrecht_Dürer",
+      "n_folders": 2,
+      "n_files": 656,
+      "n_clean": 328,
+      "genre": "Northern Renaissance",
+      "nationality": "German"
+    },
+    {
+      "artist": "Paul Gauguin",
+      "class": "Paul Gauguin",
+      "class_dir": "Paul_Gauguin",
+      "n_folders": 1,
+      "n_files": 311,
+      "n_clean": 311,
+      "genre": "Symbolism,Post-Impressionism",
+      "nationality": "French"
+    },
+    {
+      "artist": "Francisco Goya",
+      "class": "Francisco Goya",
+      "class_dir": "Francisco_Goya",
+      "n_folders": 1,
+      "n_files": 291,
+      "n_clean": 291,
+      "genre": "Romanticism",
+      "nationality": "Spanish"
+    },
+    {
+      "artist": "Rembrandt",
+      "class": "Rembrandt",
+      "class_dir": "Rembrandt",
+      "n_folders": 1,
+      "n_files": 262,
+      "n_clean": 262,
+      "genre": "Baroque",
+      "nationality": "Dutch"
+    },
+    {
+      "artist": "Alfred Sisley",
+      "class": "Alfred Sisley",
+      "class_dir": "Alfred_Sisley",
+      "n_folders": 1,
+      "n_files": 259,
+      "n_clean": 259,
+      "genre": "Impressionism",
+      "nationality": "French,British"
+    },
+    {
+      "artist": "Titian",
+      "class": "Titian",
+      "class_dir": "Titian",
+      "n_folders": 1,
+      "n_files": 255,
+      "n_clean": 254,
+      "genre": "High Renaissance,Mannerism",
+      "nationality": "Italian"
+    },
+    {
+      "artist": "Marc Chagall",
+      "class": "Marc Chagall",
+      "class_dir": "Marc_Chagall",
+      "n_folders": 1,
+      "n_files": 239,
+      "n_clean": 239,
+      "genre": "Primitivism",
+      "nationality": "French,Jewish,Belarusian"
+    },
+    {
+      "artist": "Rene Magritte",
+      "class": "Rene Magritte",
+      "class_dir": "Rene_Magritte",
+      "n_folders": 1,
+      "n_files": 194,
+      "n_clean": 194,
+      "genre": "Surrealism,Impressionism",
+      "nationality": "Belgian"
+    },
+    {
+      "artist": "Amedeo Modigliani",
+      "class": "Amedeo Modigliani",
+      "class_dir": "Amedeo_Modigliani",
+      "n_folders": 1,
+      "n_files": 193,
+      "n_clean": 193,
+      "genre": "Expressionism",
+      "nationality": "Italian"
+    },
+    {
+      "artist": "Paul Klee",
+      "class": "Paul Klee",
+      "class_dir": "Paul_Klee",
+      "n_folders": 1,
+      "n_files": 188,
+      "n_clean": 188,
+      "genre": "Expressionism,Abstractionism,Surrealism",
+      "nationality": "German,Swiss"
+    },
+    {
+      "artist": "Henri Matisse",
+      "class": "Henri Matisse",
+      "class_dir": "Henri_Matisse",
+      "n_folders": 1,
+      "n_files": 186,
+      "n_clean": 186,
+      "genre": "Impressionism,Post-Impressionism",
+      "nationality": "French"
+    },
+    {
+      "artist": "Andy Warhol",
+      "class": "Andy Warhol",
+      "class_dir": "Andy_Warhol",
+      "n_folders": 1,
+      "n_files": 181,
+      "n_clean": 181,
+      "genre": "Pop Art",
+      "nationality": "American"
+    },
+    {
+      "artist": "Mikhail Vrubel",
+      "class": "Mikhail Vrubel",
+      "class_dir": "Mikhail_Vrubel",
+      "n_folders": 1,
+      "n_files": 171,
+      "n_clean": 171,
+      "genre": "Symbolism",
+      "nationality": "Russian"
+    },
+    {
+      "artist": "Sandro Botticelli",
+      "class": "Sandro Botticelli",
+      "class_dir": "Sandro_Botticelli",
+      "n_folders": 1,
+      "n_files": 164,
+      "n_clean": 164,
+      "genre": "Early Renaissance",
+      "nationality": "Italian"
+    },
+    {
+      "artist": "Leonardo da Vinci",
+      "class": "Leonardo da Vinci",
+      "class_dir": "Leonardo_da_Vinci",
+      "n_folders": 1,
+      "n_files": 143,
+      "n_clean": 143,
+      "genre": "High Renaissance",
+      "nationality": "Italian"
+    },
+    {
+      "artist": "Salvador Dali",
+      "class": "Salvador Dali",
+      "class_dir": "Salvador_Dali",
+      "n_folders": 1,
+      "n_files": 139,
+      "n_clean": 139,
+      "genre": "Surrealism",
+      "nationality": "Spanish"
+    },
+    {
+      "artist": "Peter Paul Rubens",
+      "class": "Peter Paul Rubens",
+      "class_dir": "Peter_Paul_Rubens",
+      "n_folders": 1,
+      "n_files": 141,
+      "n_clean": 137,
+      "genre": "Baroque",
+      "nationality": "Flemish"
+    },
+    {
+      "artist": "Hieronymus Bosch",
+      "class": "Hieronymus Bosch",
+      "class_dir": "Hieronymus_Bosch",
+      "n_folders": 1,
+      "n_files": 137,
+      "n_clean": 136,
+      "genre": "Northern Renaissance",
+      "nationality": "Dutch"
+    },
+    {
+      "artist": "Pieter Bruegel",
+      "class": "Pieter Bruegel",
+      "class_dir": "Pieter_Bruegel",
+      "n_folders": 1,
+      "n_files": 134,
+      "n_clean": 134,
+      "genre": "Northern Renaissance",
+      "nationality": "Flemish"
+    },
+    {
+      "artist": "Diego Velazquez",
+      "class": "Diego Velazquez",
+      "class_dir": "Diego_Velazquez",
+      "n_folders": 1,
+      "n_files": 128,
+      "n_clean": 128,
+      "genre": "Baroque",
+      "nationality": "Spanish"
+    },
+    {
+      "artist": "Kazimir Malevich",
+      "class": "Kazimir Malevich",
+      "class_dir": "Kazimir_Malevich",
+      "n_folders": 1,
+      "n_files": 126,
+      "n_clean": 126,
+      "genre": "Suprematism",
+      "nationality": "Russian"
+    },
+    {
+      "artist": "Frida Kahlo",
+      "class": "Frida Kahlo",
+      "class_dir": "Frida_Kahlo",
+      "n_folders": 1,
+      "n_files": 120,
+      "n_clean": 119,
+      "genre": "Primitivism,Surrealism",
+      "nationality": "Mexican"
+    },
+    {
+      "artist": "Giotto di Bondone",
+      "class": "Giotto di Bondone",
+      "class_dir": "Giotto_di_Bondone",
+      "n_folders": 1,
+      "n_files": 119,
+      "n_clean": 119,
+      "genre": "Proto Renaissance",
+      "nationality": "Italian"
+    },
+    {
+      "artist": "Gustav Klimt",
+      "class": "Gustav Klimt",
+      "class_dir": "Gustav_Klimt",
+      "n_folders": 1,
+      "n_files": 117,
+      "n_clean": 117,
+      "genre": "Symbolism,Art Nouveau",
+      "nationality": "Austrian"
+    },
+    {
+      "artist": "Raphael",
+      "class": "Raphael",
+      "class_dir": "Raphael",
+      "n_folders": 1,
+      "n_files": 109,
+      "n_clean": 109,
+      "genre": "High Renaissance",
+      "nationality": "Italian"
+    },
+    {
+      "artist": "Joan Miro",
+      "class": "Joan Miro",
+      "class_dir": "Joan_Miro",
+      "n_folders": 1,
+      "n_files": 102,
+      "n_clean": 102,
+      "genre": "Surrealism",
+      "nationality": "Spanish"
+    },
+    {
+      "artist": "Andrei Rublev",
+      "class": "Andrei Rublev",
+      "class_dir": "Andrei_Rublev",
+      "n_folders": 1,
+      "n_files": 99,
+      "n_clean": 99,
+      "genre": "Byzantine Art",
+      "nationality": "Russian"
+    },
+    {
+      "artist": "Camille Pissarro",
+      "class": "Camille Pissarro",
+      "class_dir": "Camille_Pissarro",
+      "n_folders": 1,
+      "n_files": 91,
+      "n_clean": 91,
+      "genre": "Impressionism,Post-Impressionism",
+      "nationality": "French"
+    },
+    {
+      "artist": "Edouard Manet",
+      "class": "Edouard Manet",
+      "class_dir": "Edouard_Manet",
+      "n_folders": 1,
+      "n_files": 90,
+      "n_clean": 90,
+      "genre": "Realism,Impressionism",
+      "nationality": "French"
+    },
+    {
+      "artist": "Vasiliy Kandinskiy",
+      "class": "Vasiliy Kandinskiy",
+      "class_dir": "Vasiliy_Kandinskiy",
+      "n_folders": 1,
+      "n_files": 88,
+      "n_clean": 88,
+      "genre": "Expressionism,Abstractionism",
+      "nationality": "Russian"
+    },
+    {
+      "artist": "El Greco",
+      "class": "El Greco",
+      "class_dir": "El_Greco",
+      "n_folders": 1,
+      "n_files": 87,
+      "n_clean": 87,
+      "genre": "Mannerism",
+      "nationality": "Spanish,Greek"
+    },
+    {
+      "artist": "Piet Mondrian",
+      "class": "Piet Mondrian",
+      "class_dir": "Piet_Mondrian",
+      "n_folders": 1,
+      "n_files": 84,
+      "n_clean": 84,
+      "genre": "Neoplasticism",
+      "nationality": "Dutch"
+    },
+    {
+      "artist": "Henri de Toulouse-Lautrec",
+      "class": "Henri de Toulouse-Lautrec",
+      "class_dir": "Henri_de_Toulouse-Lautrec",
+      "n_folders": 1,
+      "n_files": 81,
+      "n_clean": 81,
+      "genre": "Post-Impressionism",
+      "nationality": "French"
+    },
+    {
+      "artist": "Jan van Eyck",
+      "class": "Jan van Eyck",
+      "class_dir": "Jan_van_Eyck",
+      "n_folders": 1,
+      "n_files": 81,
+      "n_clean": 81,
+      "genre": "Northern Renaissance",
+      "nationality": "Flemish"
+    },
+    {
+      "artist": "Claude Monet",
+      "class": "Claude Monet",
+      "class_dir": "Claude_Monet",
+      "n_folders": 1,
+      "n_files": 73,
+      "n_clean": 73,
+      "genre": "Impressionism",
+      "nationality": "French"
+    },
+    {
+      "artist": "Diego Rivera",
+      "class": "Diego Rivera",
+      "class_dir": "Diego_Rivera",
+      "n_folders": 1,
+      "n_files": 70,
+      "n_clean": 70,
+      "genre": "Social Realism,Muralism",
+      "nationality": "Mexican"
+    },
+    {
+      "artist": "Henri Rousseau",
+      "class": "Henri Rousseau",
+      "class_dir": "Henri_Rousseau",
+      "n_folders": 1,
+      "n_files": 70,
+      "n_clean": 70,
+      "genre": "Primitivism",
+      "nationality": "French"
+    },
+    {
+      "artist": "Edvard Munch",
+      "class": "Edvard Munch",
+      "class_dir": "Edvard_Munch",
+      "n_folders": 1,
+      "n_files": 67,
+      "n_clean": 67,
+      "genre": "Symbolism,Expressionism",
+      "nationality": "Norwegian"
+    },
+    {
+      "artist": "William Turner",
+      "class": "William Turner",
+      "class_dir": "William_Turner",
+      "n_folders": 1,
+      "n_files": 66,
+      "n_clean": 65,
+      "genre": "Romanticism",
+      "nationality": "British"
+    },
+    {
+      "artist": "Gustave Courbet",
+      "class": "Gustave Courbet",
+      "class_dir": "Gustave_Courbet",
+      "n_folders": 1,
+      "n_files": 59,
+      "n_clean": 59,
+      "genre": "Realism",
+      "nationality": "French"
+    },
+    {
+      "artist": "Caravaggio",
+      "class": "Caravaggio",
+      "class_dir": "Caravaggio",
+      "n_folders": 1,
+      "n_files": 55,
+      "n_clean": 55,
+      "genre": "Baroque",
+      "nationality": "Italian"
+    },
+    {
+      "artist": "Michelangelo",
+      "class": "Michelangelo",
+      "class_dir": "Michelangelo",
+      "n_folders": 1,
+      "n_files": 49,
+      "n_clean": 49,
+      "genre": "High Renaissance",
+      "nationality": "Italian"
+    },
+    {
+      "artist": "Paul Cezanne",
+      "class": "Paul Cezanne",
+      "class_dir": "Paul_Cezanne",
+      "n_folders": 1,
+      "n_files": 47,
+      "n_clean": 47,
+      "genre": "Post-Impressionism",
+      "nationality": "French"
+    },
+    {
+      "artist": "Georges Seurat",
+      "class": "Georges Seurat",
+      "class_dir": "Georges_Seurat",
+      "n_folders": 1,
+      "n_files": 43,
+      "n_clean": 43,
+      "genre": "Post-Impressionism",
+      "nationality": "French"
+    },
+    {
+      "artist": "Eugene Delacroix",
+      "class": "Eugene Delacroix",
+      "class_dir": "Eugene_Delacroix",
+      "n_folders": 1,
+      "n_files": 31,
+      "n_clean": 31,
+      "genre": "Romanticism",
+      "nationality": "French"
+    },
+    {
+      "artist": "Jackson Pollock",
+      "class": "Jackson Pollock",
+      "class_dir": "Jackson_Pollock",
+      "n_folders": 1,
+      "n_files": 24,
+      "n_clean": 24,
+      "genre": "Abstract Expressionism",
+      "nationality": "American"
+    }
+  ]
+}
